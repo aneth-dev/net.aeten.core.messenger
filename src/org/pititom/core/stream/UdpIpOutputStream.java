@@ -31,12 +31,15 @@ public class UdpIpOutputStream extends OutputStream {
 
 	@Override
 	public void write(int b) throws IOException {
+		if (this.buffer.position() == this.buffer.capacity())
+			this.flush();
 		this.buffer.put((byte) b);
 	}
 
 	@Override
 	public void write(byte[] data, int offset, int length) throws IOException {
-		this.buffer.put(data, offset, length);
+		for (int i=offset; i<length ; i++)
+			this.write(data[i]);
 	}
 
 	public void flush() throws IOException {

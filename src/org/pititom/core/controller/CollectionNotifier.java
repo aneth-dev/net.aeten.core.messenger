@@ -7,7 +7,7 @@ import org.pititom.core.extersion.Notifier;
 public class CollectionNotifier<Value> implements Notifier<Value> {
 	private final Collection<Notifier<Value>> notifierCollection;
 
-	CollectionNotifier(Collection<Notifier<Value>> notifierCollection) {
+	public CollectionNotifier(Collection<Notifier<Value>> notifierCollection) {
 		this.notifierCollection = notifierCollection;
 	}
 
