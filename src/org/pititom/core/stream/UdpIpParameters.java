@@ -6,50 +6,40 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.SocketAddress;
-import java.net.UnknownHostException;
 
-import org.pititom.core.data.Parameters;
-import org.pititom.core.stream.controller.ConfigurationException;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.Option;
+import org.pititom.core.args4j.CommandLineParser;
 
 public class UdpIpParameters {
-	public static enum ParameterKey {
-		SOURCE_ADDRESS, DESTINATION_ADDRESS, DESTINATION_PORT, PACKET_MAX_LENGTH, REUSE;
-	}
 
-	private final InetSocketAddress destinationInetSocketAddress;
-	private final int maxPacketSize;
-	private final boolean reuse;
-	private InetAddress sourceInetAddress;
+	@Option(name="-d", required=true)
+	private InetSocketAddress destinationInetSocketAddress;
+	
+	@Option(name="-p", required=true)
+	private int maxPacketSize;
+	
+	@Option(name="-r", required=false)
+	private boolean reuse = false;
+	
+	@Option(name="-s", required=false)
+	private InetAddress sourceInetAddress = null;
+	
 	private DatagramSocket socket;
 
-	public UdpIpParameters(Parameters<ParameterKey> parameters)
-	        throws IOException, ConfigurationException {
-		this.destinationInetSocketAddress = new InetSocketAddress(parameters
-		        .get(ParameterKey.DESTINATION_ADDRESS), Integer
-		        .valueOf(parameters.get(ParameterKey.DESTINATION_PORT)));
-		final String sourceAddressParameter = parameters
-		        .get(ParameterKey.SOURCE_ADDRESS);
-		this.sourceInetAddress = null;
-		if ((sourceAddressParameter != null)
-		        && !sourceAddressParameter.equals("")) {
-			try {
-				this.sourceInetAddress = InetAddress
-				        .getByName(sourceAddressParameter);
-			} catch (UnknownHostException exception) {
-				throw new ConfigurationException("Unknown host : "
-				        + sourceAddressParameter, exception);
-			}
-		}
-		this.maxPacketSize = Integer.valueOf(parameters
-		        .get(ParameterKey.PACKET_MAX_LENGTH));
-		this.reuse = Boolean.valueOf(parameters.get(ParameterKey.REUSE));
-
+	public UdpIpParameters(String configuration) throws CmdLineException, IOException {
+		this(CommandLineParser.splitArguments(configuration));
+	}
+	public UdpIpParameters(String... arguments) throws CmdLineException, IOException {
+		CommandLineParser parser = new CommandLineParser(this);
+		parser.parseArgument(arguments);
+		
 		this.createSocket();
 	}
-
+	
 	public UdpIpParameters(InetSocketAddress destinationInetSocketAddress,
 	        InetAddress sourceInetAddress, boolean reuse, int maxPacketSize)
-	        throws IOException, ConfigurationException {
+	        throws IOException {
 		this.destinationInetSocketAddress = destinationInetSocketAddress;
 		this.sourceInetAddress = sourceInetAddress;
 		this.reuse = reuse;

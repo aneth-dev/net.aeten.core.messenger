@@ -4,5 +4,6 @@
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="tests/stream"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.kohsuke.args4j"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
