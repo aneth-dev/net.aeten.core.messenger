@@ -13,30 +13,34 @@ import org.pititom.core.args4j.CommandLineParser;
 
 public class UdpIpParameters {
 
-	@Option(name="-d", required=true)
+	@Option(name = "-d", aliases = { "--destination",
+	        "--destination-inet-socket-adress" }, required = true)
 	private InetSocketAddress destinationInetSocketAddress;
-	
-	@Option(name="-p", required=true)
+
+	@Option(name = "-p", aliases = "--max-packet-size", required = true)
 	private int maxPacketSize;
-	
-	@Option(name="-r", required=false)
+
+	@Option(name = "-r", aliases = "--reuse", required = false)
 	private boolean reuse = false;
-	
-	@Option(name="-s", required=false)
+
+	@Option(name = "-s", aliases = { "--source", "--source-inet-adress" }, required = false)
 	private InetAddress sourceInetAddress = null;
-	
+
 	private DatagramSocket socket;
 
-	public UdpIpParameters(String configuration) throws CmdLineException, IOException {
+	public UdpIpParameters(String configuration) throws CmdLineException,
+	        IOException {
 		this(CommandLineParser.splitArguments(configuration));
 	}
-	public UdpIpParameters(String... arguments) throws CmdLineException, IOException {
+
+	public UdpIpParameters(String... arguments) throws CmdLineException,
+	        IOException {
 		CommandLineParser parser = new CommandLineParser(this);
 		parser.parseArgument(arguments);
-		
+
 		this.createSocket();
 	}
-	
+
 	public UdpIpParameters(InetSocketAddress destinationInetSocketAddress,
 	        InetAddress sourceInetAddress, boolean reuse, int maxPacketSize)
 	        throws IOException {

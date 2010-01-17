@@ -6,28 +6,71 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 
+import org.pititom.core.extersion.Configurable;
+import org.pititom.core.extersion.ConfigurationException;
+import org.pititom.core.stream.dada.StreamControllerConfiguration;
+import org.pititom.core.stream.dada.StreamEditorStack.EditorEntry;
 import org.pititom.core.stream.extension.Connection;
 import org.pititom.core.stream.extension.StreamEditor;
 
 public class StreamControllerConnection implements Connection {
-	private final InputStream input;
-	private final OutputStream output;
-	private final StreamEditor[] editorStack;
+	private InputStream input;
+	private OutputStream output;
+	private StreamEditor[] editorStack;
 	private StreamEditorController[] controllerStack;
 	private boolean isConnected;
 
-	public StreamControllerConnection(final InputStream input, final OutputStream output,
-	        final StreamEditor... editorStack) {
+	public StreamControllerConnection(final InputStream input,
+	        final OutputStream output, final StreamEditor... editorStack) {
 		this.input = input;
 		this.output = output;
 		this.editorStack = editorStack;
+	}
+
+	public StreamControllerConnection(
+	        final StreamControllerConfiguration configuration,
+	        final InputStream input, final OutputStream output)
+	        throws ConfigurationException {
+		this(configuration);
+		this.input = input;
+		this.output = output;
+	}
+
+	public StreamControllerConnection(
+	        final StreamControllerConfiguration configuration,
+	        final InputStream input) throws ConfigurationException {
+		this(configuration);
+		this.input = input;
+	}
+
+	public StreamControllerConnection(
+	        final StreamControllerConfiguration configuration,
+	        final OutputStream output) throws ConfigurationException {
+		this(configuration);
+		this.output = output;
+	}
+
+	public StreamControllerConnection(
+	        final StreamControllerConfiguration configuration)
+	        throws ConfigurationException {
+		this.input = instantiate(configuration.getInputStreamClass(),
+		        configuration.getInputStreamConfiguration());
+		this.output = instantiate(configuration.getOutputStreamClass(),
+		        configuration.getOutputStreamConfiguration());
+		this.editorStack = new StreamEditor[configuration.getEditorStack()
+		        .getStack().size()];
+		int index = 0;
+		for (EditorEntry editorEntry : configuration.getEditorStack()
+		        .getStack())
+			this.editorStack[index++] = instantiate(editorEntry.getEditor(),
+			        editorEntry.getConfiguration());
 	}
 
 	@Override
 	public void connect() throws IOException {
 		if (this.isConnected)
 			return;
-		
+
 		// Build controller stack
 		this.controllerStack = new StreamEditorController[this.editorStack.length];
 		PipedInputStream pipedInputStream = null;
@@ -45,7 +88,7 @@ public class StreamControllerConnection implements Connection {
 
 		for (StreamEditorController controller : this.controllerStack)
 			controller.edit();
-		
+
 		this.isConnected = true;
 	}
 
@@ -62,6 +105,32 @@ public class StreamControllerConnection implements Connection {
 	@Override
 	public boolean isConnected() {
 		return this.isConnected;
+	}
+
+	private static <T> T instantiate(Class<T> clazz, String configuration)
+	        throws ConfigurationException {
+		if (clazz == null)
+			return null;
+		T bean;
+		try {
+			bean = clazz.newInstance();
+			if (configuration != null) {
+				if (!(bean instanceof Configurable))
+					throw new ConfigurationException(configuration, clazz
+					        .getCanonicalName()
+					        + " is not instance of "
+					        + Configurable.class.getCanonicalName());
+				((Configurable) bean).configure(configuration);
+			}
+			return bean;
+		} catch (ConfigurationException exception) {
+			throw exception;
+		} catch (Exception exception) {
+			throw new ConfigurationException(configuration, clazz
+			        .getCanonicalName()
+			        + " can not be instanciate", exception);
+		}
+
 	}
 
 }

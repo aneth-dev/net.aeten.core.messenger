@@ -8,7 +8,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 
-import org.kohsuke.args4j.CmdLineException;
 import org.pititom.core.extersion.Configurable;
 import org.pititom.core.extersion.ConfigurationException;
 
