@@ -31,8 +31,6 @@ public abstract class ObjectOutputStream extends java.io.ObjectOutputStream {
                     WRITE_OBJECT_METHOD_NAME, java.io.ObjectOutputStream.class);
             Method.setAccessible(new Method[]{writeMethod}, true);
             writeMethod.invoke(object, this);
-            
-            this.flush();
         } catch (Exception exception) {
             throw new IOException(exception);
         }

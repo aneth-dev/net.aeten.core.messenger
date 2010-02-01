@@ -196,6 +196,7 @@ public class Messenger<Message, Acknowledge extends Enum<?>> implements
 					Messenger.this.waitingForAcknowledgeDeadLine = timeout > 0 ? now + timeout : 0;
 				}
 				Messenger.this.emissionStream.writeObject(message);
+				Messenger.this.emissionStream.flush();
 				Messenger.this.notificationQueue.put(new MessengerNotification<Message, Acknowledge>(Messenger.this, MessengerEvent.SENT, new MessengerEventData<Message, Acknowledge>(message, null, null)));
 
 			} catch (Exception exception) {
