@@ -30,34 +30,29 @@ public class StreamEditorStackOptionHandler extends OptionHandler<StreamEditorSt
 		int i = 0;
 		try {
 			StreamEditorStack editorStackOption = new StreamEditorStack();
-			Class<?> clazz;
+			Class<?> clazz = null;
 			for (;; i++) {
 				try {
-					if (EDITOR_OPTION_NAME.equals(params.getParameter(i)) || contains(params.getParameter(i), EDITOR_OPTION_ALIASES))
+					if (EDITOR_OPTION_NAME.equals(params.getParameter(i)) || contains(params.getParameter(i), EDITOR_OPTION_ALIASES)) {
 						++i;
+					}
 					clazz = Class.forName(params.getParameter(i));
 				} catch (CmdLineException exception) {
 					break;
 				}
 
-				String configuration = null;
-				try {
-					try {
+				String configuration;
+
+
 						if (EDITOR_CONFIGURATION_OPTION_NAME.equals(params.getParameter(i + 1)) || contains(params.getParameter(i + 1), EDITOR_CONFIGURATION_OPTION_ALIASES)) {
-							editorStackOption.getStack().add(new EditorEntry(clazz.asSubclass(StreamEditor.class), configuration));
-							continue;
+							i += 2;
+							configuration = params.getParameter(i);
+						} else {
+					configuration = null;
 						}
 						
-					} catch (CmdLineException exception) {
-						configuration = null;
-					}
-					if (params.getParameter(i + 1).equals("-ec")) {
-						configuration = params.getParameter(i + 2);
-						i += 2;
-					}
-				} catch (CmdLineException exception) {
-					configuration = null;
-				}
+
+
 
 				editorStackOption.getStack().add(new EditorEntry(clazz.asSubclass(StreamEditor.class), configuration));
 			}

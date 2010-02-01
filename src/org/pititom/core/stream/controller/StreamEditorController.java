@@ -1,6 +1,8 @@
 package org.pititom.core.stream.controller;
 
+import java.io.DataInput;
 import java.io.DataInputStream;
+import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,19 +13,18 @@ import org.pititom.core.stream.extension.StreamEditor;
 public class StreamEditorController {
 
 	public static enum State {
+
 		NOT_STARTED, IN_PROGRESS, FINISHED, FAILED, KILL_SIGNAL_SENT, KILLED, INTERRUPTED, ALLREADY_LAUNCHED
 	}
-
 	private final OutputStream out;
 	private final InputStream in;
-
 	private final StreamEditor editor;
 	private State state;
 	private Thread editorThread;
 	private final Runnable editorLoop;
 
 	public StreamEditorController(InputStream inputStream,
-	        OutputStream outputStream, StreamEditor editor) {
+			OutputStream outputStream, StreamEditor editor) {
 		this.in = inputStream;
 		this.out = outputStream;
 		this.editor = editor;
@@ -31,7 +32,6 @@ public class StreamEditorController {
 		this.state = State.NOT_STARTED;
 	}
 
-	
 	public State edit() {
 		if (this.state == State.NOT_STARTED) {
 			this.editorThread = new Thread(this.editorLoop, "Stream Editor" + this.editor);
@@ -45,11 +45,11 @@ public class StreamEditorController {
 	public void kill() {
 		this.state = State.KILLED;
 	}
-	
+
 	public void forceKill() throws Exception {
 		this.in.close();
 	}
-	
+
 	public State editAndWait() {
 		if (this.state == State.NOT_STARTED) {
 			this.editorThread = new Thread(this.editorLoop, "Stream Editor" + this.editor);
@@ -65,25 +65,38 @@ public class StreamEditorController {
 	}
 
 	private class EditorLoop implements Runnable {
+
 		@Override
 		public void run() {
-			DataInputStream in = new DataInputStream(StreamEditorController.this.in);
-			DataOutputStream out = new DataOutputStream(StreamEditorController.this.out);
+			final DataInputStream in;
+			if (StreamEditorController.this.in instanceof DataInput) {
+				in = (DataInputStream) StreamEditorController.this.in;
+			} else {
+				in = new DataInputStream(StreamEditorController.this.in);
+			}
+
+			final DataOutputStream out;
+			if (StreamEditorController.this.out instanceof DataOutput) {
+				out = (DataOutputStream) StreamEditorController.this.out;
+			} else {
+				out = new DataOutputStream(StreamEditorController.this.out);
+			}
+
 			StreamEditorController.this.state = State.IN_PROGRESS;
 			try {
 				while (state == State.IN_PROGRESS) {
 					editor.edit(in, out);
-					out.flush();
+					StreamEditorController.this.out.flush();
 				}
 			} catch (IOException exception) {
 				StreamEditorController.this.state = State.FAILED;
 			}
-			if (StreamEditorController.this.state == State.KILL_SIGNAL_SENT)
+			if (StreamEditorController.this.state == State.KILL_SIGNAL_SENT) {
 				StreamEditorController.this.state = State.KILLED;
-			else
+			} else {
 				StreamEditorController.this.state = State.FINISHED;
+			}
 			StreamEditorController.this.editorThread = null;
 		}
 	}
-	
 }

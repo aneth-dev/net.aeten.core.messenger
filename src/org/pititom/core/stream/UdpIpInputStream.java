@@ -54,8 +54,12 @@ public class UdpIpInputStream extends PipedInputStream implements Configurable {
 					try {
 						UdpIpInputStream.this.parameters.getSocket().receive(
 						        packet);
+
 						UdpIpInputStream.this.pipedOutputStream.write(packet
 						        .getData(), 0, packet.getLength());
+						
+						UdpIpInputStream.this.pipedOutputStream.flush();
+						
 					} catch (SocketTimeoutException exception) {
 						continue;
 					}

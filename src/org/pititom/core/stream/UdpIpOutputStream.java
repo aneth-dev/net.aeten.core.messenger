@@ -42,6 +42,7 @@ public class UdpIpOutputStream extends OutputStream implements Configurable {
 	public void write(byte[] data, int offset, int length) throws IOException {
 		for (int i=offset; i<length ; i++)
 			this.write(data[i]);
+		this.flush();
 	}
 
 	public void flush() throws IOException {

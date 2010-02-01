@@ -37,7 +37,7 @@ public class CommandLineParser extends CmdLineParser {
 			begin = findNextQuote(arguments, i);
 			if (begin > i)
 				splittedArguments.addAll(new String(arguments.getBytes(), i,
-				        begin).trim().split("\\s+"));
+				        begin - i).trim().split("\\s+"));
 			if (begin == -1) {
 				splittedArguments.addAll(new String(arguments.getBytes(), i,
 				        arguments.length() - i).trim().split("\\s+"));
