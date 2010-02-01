@@ -15,9 +15,9 @@ public class Decoder implements StreamEditor {
 			this.out = new ObjectOutputStream(out);
 		int length = in.readInt();
 		if (length > 4) {
-		byte[] data = new byte[length - 4];
-		in.read(data);
-		this.out.writeObject(new String(data));
+			byte[] data = new byte[length - 4];
+			in.read(data);
+			this.out.writeObject(new String(data));
 		}
 	}
 

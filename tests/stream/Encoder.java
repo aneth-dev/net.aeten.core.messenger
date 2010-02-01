@@ -1,3 +1,4 @@
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -6,13 +7,15 @@ import java.io.ObjectInputStream;
 import org.pititom.core.stream.extension.StreamEditor;
 
 public class Encoder implements StreamEditor {
+
 	private ObjectInputStream in = null;
 
 	@Override
 	public void edit(DataInputStream in, DataOutputStream out)
-	        throws IOException {
-		if (this.in == null)
+			throws IOException {
+		if (this.in == null) {
 			this.in = new ObjectInputStream(in);
+		}
 		try {
 			Object object = this.in.readObject();
 			if (object instanceof String) {
@@ -25,5 +28,4 @@ public class Encoder implements StreamEditor {
 			exception.printStackTrace();
 		}
 	}
-
 }
