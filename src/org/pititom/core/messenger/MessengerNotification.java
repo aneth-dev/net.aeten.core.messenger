@@ -1,26 +1,10 @@
 package org.pititom.core.messenger;
 
-class MessengerNotification<Message, Acknowledge extends Enum<?>> {
-	private final Messenger<Message, Acknowledge> messenger;
-	private final MessengerEvent event;
-	private final MessengerEventData<Message, Acknowledge> eventData;
-	
-	public MessengerNotification(Messenger<Message, Acknowledge> messenger, MessengerEvent event, MessengerEventData<Message, Acknowledge> eventData) {
-		super();
-		this.messenger = messenger;
-		this.event = event;
-		this.eventData = eventData;
-	}
+import org.pititom.core.controller.EventEntry;
+import org.pititom.core.messenger.extension.Messenger;
 
-	public Messenger<Message, Acknowledge> getMessenger() {
-		return messenger;
-	}
-	
-	public MessengerEvent getEvent() {
-		return event;
-	}
-
-	public MessengerEventData<Message, Acknowledge> getEventData() {
-		return eventData;
+class MessengerNotification<Message, Acknowledge extends Enum<?>> extends EventEntry<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> {
+	public MessengerNotification(Messenger<Message, Acknowledge> source, MessengerEvent event, MessengerEventData<Message, Acknowledge> data) {
+		super(source, event, data);
 	}
 }

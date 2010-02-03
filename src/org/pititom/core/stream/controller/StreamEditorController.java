@@ -34,7 +34,7 @@ public class StreamEditorController {
 
 	public State edit() {
 		if (this.state == State.NOT_STARTED) {
-			this.editorThread = new Thread(this.editorLoop, "Stream Editor" + this.editor);
+			this.editorThread = new Thread(this.editorLoop, "Stream Editor " + this.editor);
 			this.editorThread.start();
 		} else {
 			this.state = State.ALLREADY_LAUNCHED;

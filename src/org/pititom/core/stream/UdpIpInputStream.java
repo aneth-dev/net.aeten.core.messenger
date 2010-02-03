@@ -32,7 +32,7 @@ public class UdpIpInputStream extends PipedInputStream implements Configurable {
 		        sourceInetAddress, reuse, maxPacketSize);
 		this.pipedOutputStream = new PipedOutputStream();
 		this.connect(this.pipedOutputStream);
-		this.receptionThread = new Thread(new ReceptionThread());
+		this.receptionThread = new Thread(new ReceptionThread(), this.toString());
 		this.receptionThread.start();
 	}
 
@@ -92,4 +92,8 @@ public class UdpIpInputStream extends PipedInputStream implements Configurable {
 		}
 	}
 
+	@Override
+	public String toString() {
+		return UdpIpInputStream.class.getName() + " (" + this.parameters + ")";
+	}
 }

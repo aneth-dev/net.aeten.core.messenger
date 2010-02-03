@@ -66,27 +66,34 @@ public class UdpIpParameters {
 		} else {
 			this.socket = new DatagramSocket(this.destinationInetSocketAddress);
 		}
-		this.socket.setReuseAddress(reuse);
+		this.socket.setReuseAddress(this.reuse);
 	}
 
 	public DatagramSocket getSocket() {
-		return socket;
+		return this.socket;
 	}
 
 	public InetSocketAddress getDestinationInetSocketAddress() {
-		return destinationInetSocketAddress;
+		return this.destinationInetSocketAddress;
 	}
 
 	public int getMaxPacketSize() {
-		return maxPacketSize;
+		return this.maxPacketSize;
 	}
 
 	public boolean isReuse() {
-		return reuse;
+		return this.reuse;
 	}
 
 	public InetAddress getSourceInetAddress() {
-		return sourceInetAddress;
+		return this.sourceInetAddress;
 	}
+	
+
+	@Override
+	public String toString() {
+		return this.destinationInetSocketAddress.toString();
+	}
+
 
 }
