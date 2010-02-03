@@ -1,17 +1,9 @@
-import org.pititom.core.messenger.MessengerAcknowledgeProtocol;
+import org.pititom.core.messenger.DefaultMessengerAcknowledgeProtocol;
 
 public class AcknowledgeProtocol implements
-		MessengerAcknowledgeProtocol<AbstractMessage, Acknowledge> {
+		DefaultMessengerAcknowledgeProtocol<AbstractMessage, Acknowledge> {
 
 	private static final long TIMEOUT = 1000;
-
-	private static final AcknowledgeProtocol INSTANCE = new AcknowledgeProtocol();
-
-	private AcknowledgeProtocol() {}
-
-	public static AcknowledgeProtocol getInstance() {
-		return INSTANCE;
-	}
 
 	@Override
 	public boolean isSuccess(Acknowledge acknowledge) {

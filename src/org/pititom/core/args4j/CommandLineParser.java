@@ -21,6 +21,11 @@ public class CommandLineParser extends CmdLineParser {
 
 	public static String[] splitArguments(String arguments)
 	        throws CmdLineException {
+		if (arguments == null) {
+			return new String[] {};
+		}
+		
+		
 		final class SplittedArguments extends LinkedList<String> {
 			private static final long serialVersionUID = 5477163044056835635L;
 

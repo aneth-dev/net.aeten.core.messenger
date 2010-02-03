@@ -4,11 +4,14 @@ package org.pititom.core.messenger;
  *
  * @author Thomas Pérennou
  */
-public class MessengerEventData<Message, Acknowledge extends Enum<?>> {
+public class MessengerEventData<Message, Acknowledge extends Enum<?>> implements org.pititom.core.Cloneable<MessengerEventData<Message, Acknowledge>> {
 
-	private Message sentMessage;
-	private Message recievedMessage;
-	private Acknowledge acknowledge;
+	private Message sentMessage = null;
+	private Message recievedMessage = null;
+	private Acknowledge acknowledge = null;
+
+	public MessengerEventData() {
+	}
 
 	public MessengerEventData(Message sentMessage, Message recievedMessage, Acknowledge acknowledge) {
 		this.sentMessage = sentMessage;
@@ -43,5 +46,10 @@ public class MessengerEventData<Message, Acknowledge extends Enum<?>> {
 	@Override
 	public String toString() {
 		return "sent Message={" + this.sentMessage + "}; recieved message={" + this.recievedMessage + "}; acknowledge={" + this.acknowledge + "}";
+	}
+	
+	@Override
+	public MessengerEventData<Message, Acknowledge> clone() {
+		return new MessengerEventData<Message, Acknowledge>(this.sentMessage, this.recievedMessage, this.acknowledge);
 	}
 }

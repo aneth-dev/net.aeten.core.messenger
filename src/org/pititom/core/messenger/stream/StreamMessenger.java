@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 import org.kohsuke.args4j.CmdLineException;
 import org.pititom.core.extersion.ConfigurationException;
 import org.pititom.core.messenger.AbstractMessenger;
-import org.pititom.core.messenger.MessengerAcknowledgeProtocol;
 import org.pititom.core.stream.controller.StreamControllerConnection;
 import org.pititom.core.stream.dada.StreamControllerConfiguration;
 
@@ -25,21 +24,33 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>> extends Abstr
 	private MessengerObjectOutputStream emissionStream;
 	private StreamControllerConnection emissionConnection;
 
-	public StreamMessenger(String name, MessengerAcknowledgeProtocol<Message, Acknowledge> acknowledgeProtocol, String emissionConfiguration, String... receptionConfigurationList) throws CmdLineException {
-		super(name, acknowledgeProtocol);
-
-		this.emissionConfiguration = new StreamControllerConfiguration(emissionConfiguration);
-		
-		this.receptionConfigurationList = new StreamControllerConfiguration[receptionConfigurationList.length];
-		this.receptionConnectionList = new StreamControllerConnection[receptionConfigurationList.length];
-		this.recieverList = new ArrayList<Reciever>(receptionConfigurationList.length);
-		for (int i=0; i<receptionConfigurationList.length; i++) {
-			this.receptionConfigurationList[i] = new StreamControllerConfiguration(receptionConfigurationList[i]);
+	public StreamMessenger(String name, boolean autoConnect, String hookConfiguration, String emissionConfiguration, String... receptionConfigurationList) throws ConfigurationException, IOException {
+		this(name, hookConfiguration, emissionConfiguration, receptionConfigurationList);
+		if (autoConnect) {
+			this.connect();
 		}
 	}
 
-	public StreamMessenger(String name, String emissionConfiguration, String receptionConfiguration) throws CmdLineException {
-		this(name, null, emissionConfiguration, receptionConfiguration);
+	public StreamMessenger(String name, String hookConfiguration, String emissionConfiguration, String... receptionConfigurationList) throws ConfigurationException {
+		super(name);
+		this.configure(hookConfiguration);
+
+		try {
+			this.emissionConfiguration = new StreamControllerConfiguration(emissionConfiguration);
+		} catch (CmdLineException exception) {
+			throw new ConfigurationException(emissionConfiguration, exception);
+		}
+
+		this.receptionConfigurationList = new StreamControllerConfiguration[receptionConfigurationList.length];
+		this.receptionConnectionList = new StreamControllerConnection[receptionConfigurationList.length];
+		this.recieverList = new ArrayList<Reciever>(receptionConfigurationList.length);
+		for (int i = 0; i < receptionConfigurationList.length; i++) {
+			try {
+				this.receptionConfigurationList[i] = new StreamControllerConfiguration(receptionConfigurationList[i]);
+			} catch (CmdLineException exception) {
+				throw new ConfigurationException(receptionConfigurationList[i], exception);
+			}
+		}
 	}
 
 	protected void doConnect() throws IOException {
@@ -49,7 +60,7 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>> extends Abstr
 			this.emissionStream = new MessengerObjectOutputStream(new PipedOutputStream(pipedIn));
 
 			PipedOutputStream pipedOut;
-			for (int i=0; i<this.receptionConfigurationList.length; i++) {
+			for (int i = 0; i < this.receptionConfigurationList.length; i++) {
 				pipedOut = new PipedOutputStream();
 				this.receptionConnectionList[i] = new StreamControllerConnection(this.receptionConfigurationList[i], pipedOut);
 				this.recieverList.add(new Reciever(this, new MessengerObjectInputStream(new PipedInputStream(pipedOut))));
@@ -57,7 +68,7 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>> extends Abstr
 			}
 
 			this.emissionConnection.connect();
-			
+
 		} catch (ConfigurationException exception) {
 			this.setConnected(false);
 			throw new IOException(exception);
@@ -81,12 +92,12 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>> extends Abstr
 	private class Reciever implements Runnable {
 		private final AbstractMessenger<Message, ? extends Enum<?>> messenger;
 		private final MessengerObjectInputStream in;
-		
+
 		public Reciever(AbstractMessenger<Message, ? extends Enum<?>> messenger, MessengerObjectInputStream in) {
 			this.messenger = messenger;
 			this.in = in;
 		}
-		
+
 		@Override
 		public void run() {
 			try {
@@ -120,4 +131,5 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>> extends Abstr
 			Logger.getLogger(StreamMessenger.class.getName()).log(Level.SEVERE, null, exception);
 		}
 	}
+
 }

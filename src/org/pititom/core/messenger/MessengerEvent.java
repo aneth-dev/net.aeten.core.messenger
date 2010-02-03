@@ -6,8 +6,10 @@ package org.pititom.core.messenger;
  */
 public enum MessengerEvent {
 
+	RECIEVE,
 	RECIEVED,
 	ACKNOWLEDGED,
 	UNACKNOWLEDGED,
+	SEND,
 	SENT
 }

@@ -6,50 +6,52 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.kohsuke.args4j.Option;
+import org.pititom.core.args4j.CommandLineParser;
 import org.pititom.core.controller.EventEntry;
 import org.pititom.core.controller.EventForwarder;
 import org.pititom.core.controller.QueueEventForwarder;
+import org.pititom.core.extersion.Configurable;
+import org.pititom.core.extersion.ConfigurationException;
 import org.pititom.core.extersion.EventHandler;
 import org.pititom.core.messenger.extension.Messenger;
+import org.pititom.core.messenger.stream.StreamMessenger;
 
 public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>> implements
-		Messenger<Message, Acknowledge> {
+		Messenger<Message, Acknowledge>, Configurable {
+	
+	@Option(name = "-h", aliases = "--hook", required = false)
+	private Class<? extends DefaultMessengerAcknowledgeProtocol<Message, Acknowledge>> hookClass;
+
+	@Option(name = "-hc", aliases = "--hook-configuration", required = false)
+	private String hookConfiguration;
+
 
 	private final String name;
 	private final EventForwarder<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventForwarder;
+	private final EventForwarder<Messenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>> hookForwarder;
 	private final BlockingQueue<EventEntry<Messenger<Message, Acknowledge>, Enum<?>, Message>> emissionQueue;
 	private final BlockingQueue<EventEntry<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>> notificationQueue;
-	private final MessengerAcknowledgeProtocol<Message, Acknowledge> acknowledgeProtocol;
-	private final Object acknowledgeMutex;
+
 
 	private QueueEventForwarder<Messenger<Message, Acknowledge>, Enum<?>, Message> emissionController;
 	private QueueEventForwarder<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> notifierController;
-	private boolean waitingForAcknowledgeBlocking;
-	private long waitingForAcknowledgeDeadLine;
 	private MessengerEventData<Message, Acknowledge> currentEventData;
 	private boolean connected;
 
-	public AbstractMessenger(String name, MessengerAcknowledgeProtocol<Message, Acknowledge> acknowledgeProtocol) {
+	public AbstractMessenger(String name) {
 		this.name = name == null ? super.toString() : name;
-		this.acknowledgeProtocol = acknowledgeProtocol;
-
+		
 		this.eventForwarder = new EventForwarder<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>();
-
-		this.acknowledgeMutex = new Object();
-		this.waitingForAcknowledgeBlocking = true;
-		this.waitingForAcknowledgeDeadLine = 0L;
+		this.hookForwarder = new EventForwarder<Messenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>>();
 
 		this.emissionQueue = new LinkedBlockingQueue<EventEntry<Messenger<Message, Acknowledge>, Enum<?>, Message>>();
 		this.notificationQueue = new LinkedBlockingQueue<EventEntry<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>>();
 
-		this.currentEventData = null;
+		this.currentEventData = new MessengerEventData<Message, Acknowledge>();
 
 		this.notifierController = null;
 		this.emissionController = null;
-	}
-
-	public AbstractMessenger(String name) {
-		this(name, null);
 	}
 
 	public void emit(Message message) {
@@ -74,51 +76,19 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>> im
 
 	private class Transmitter implements
 			EventHandler<Messenger<Message, Acknowledge>, Enum<?>, Message> {
-		private long now;
 
 		@Override
 		public void handleEvent(Messenger<Message, Acknowledge> source, Enum<?> event, Message message) {
-			try {
-				now = System.currentTimeMillis();
-				for (; now < AbstractMessenger.this.waitingForAcknowledgeDeadLine; now = System.currentTimeMillis()) {
-					if (AbstractMessenger.this.waitingForAcknowledgeBlocking && (AbstractMessenger.this.currentEventData.getAcknowledge() == null)) {
-						synchronized (AbstractMessenger.this.acknowledgeMutex) {
-							AbstractMessenger.this.acknowledgeMutex.wait(AbstractMessenger.this.waitingForAcknowledgeDeadLine - now);
-						}
-					}
-					now = System.currentTimeMillis();
+			MessengerHookData<Message, Acknowledge> hookData = new MessengerHookData<Message, Acknowledge>(AbstractMessenger.this.notificationQueue);
+			hookData.setCurrentEventData(AbstractMessenger.this.currentEventData);
+			hookData.setMessageToSend(message);
+			
+			AbstractMessenger.this.hookForwarder.forward(AbstractMessenger.this, MessengerHook.START_SEND, hookData);
+			AbstractMessenger.this.sendMessage(message);
+			AbstractMessenger.this.hookForwarder.forward(AbstractMessenger.this, MessengerHook.END_SEND, hookData);
+			
+			AbstractMessenger.this.notificationQueue.add(new MessengerNotification<Message, Acknowledge>(AbstractMessenger.this, MessengerEvent.SENT, new MessengerEventData<Message, Acknowledge>(message, null, null)));
 
-					if (AbstractMessenger.this.waitingForAcknowledgeDeadLine < now) {
-						break;
-					}
-					AbstractMessenger.this.waitingForAcknowledgeDeadLine = 0;
-					final MessengerNotification<Message, Acknowledge> notification;
-					if (AbstractMessenger.this.currentEventData.getRecievedMessage() == null) {
-						notification = new MessengerNotification<Message, Acknowledge>(AbstractMessenger.this, MessengerEvent.UNACKNOWLEDGED, AbstractMessenger.this.currentEventData);
-					} else {
-						final boolean success = (AbstractMessenger.this.currentEventData.getAcknowledge() == null) ? false : AbstractMessenger.this.acknowledgeProtocol.isSuccess(AbstractMessenger.this.currentEventData.getAcknowledge());
-						notification = new MessengerNotification<Message, Acknowledge>(AbstractMessenger.this, success ? MessengerEvent.ACKNOWLEDGED : MessengerEvent.UNACKNOWLEDGED, AbstractMessenger.this.currentEventData);
-					}
-					AbstractMessenger.this.notificationQueue.put(notification);
-				}
-
-				AbstractMessenger.this.currentEventData = new MessengerEventData<Message, Acknowledge>(message, null, null);
-				if (AbstractMessenger.this.acknowledgeProtocol == null) {
-					AbstractMessenger.this.waitingForAcknowledgeDeadLine = 0;
-				} else {
-					long timeout = AbstractMessenger.this.acknowledgeProtocol.getAcknowledgedTimeout(message);
-					AbstractMessenger.this.waitingForAcknowledgeDeadLine = timeout > 0 ? now + timeout : 0;
-
-					// TODO: Does not works yet
-					// AbstractMessenger.this.waitingForAcknowledgeBlocking =
-					// AbstractMessenger.this.acknowledgeProtocol.isBlocking(AbstractMessenger.this.currentEventData.getSentMessage());
-				}
-				AbstractMessenger.this.sendMessage(message);
-				AbstractMessenger.this.notificationQueue.put(new MessengerNotification<Message, Acknowledge>(AbstractMessenger.this, MessengerEvent.SENT, new MessengerEventData<Message, Acknowledge>(message, null, null)));
-
-			} catch (Exception exception) {
-				Logger.getLogger(AbstractMessenger.class.getName()).log(Level.SEVERE, null, exception);
-			}
 		}
 	}
 
@@ -151,6 +121,14 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>> im
 		this.eventForwarder.removeEventHandler(eventHandler, eventList);
 	}
 
+	public void addHook(EventHandler<Messenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>> hookHandler, MessengerHook... hookList) {
+		this.hookForwarder.addEventHandler(hookHandler, hookList);
+	}
+
+	public void removeHook(EventHandler<Messenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>> hookHandler, MessengerHook... hookList) {
+		this.hookForwarder.removeEventHandler(hookHandler, hookList);
+	}
+
 	protected void doConnect() throws IOException {
 		this.notifierController = new QueueEventForwarder<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>(this.name + " notifier", this.notificationQueue, this.eventForwarder);
 		this.emissionController = new QueueEventForwarder<Messenger<Message, Acknowledge>, Enum<?>, Message>(this.name + " : emission controller", this.emissionQueue, new Transmitter());
@@ -177,24 +155,45 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>> im
 		if (!this.connected) {
 			return;
 		}
-		try {
-			AbstractMessenger.this.notificationQueue.put(new MessengerNotification<Message, Acknowledge>(AbstractMessenger.this, MessengerEvent.RECIEVED, new MessengerEventData<Message, Acknowledge>(null, message, null)));
-
-			if (AbstractMessenger.this.waitingForAcknowledgeDeadLine < System.currentTimeMillis()) {
-				return;
-			}
-			final Acknowledge acknowledge = AbstractMessenger.this.acknowledgeProtocol.getAcknowledge(AbstractMessenger.this.currentEventData.getSentMessage(), message);
-
-			if (acknowledge != null) {
-				AbstractMessenger.this.currentEventData.setRecievedMessage(message);
-				AbstractMessenger.this.currentEventData.setAcknowledge(acknowledge);
-				synchronized (AbstractMessenger.this.acknowledgeMutex) {
-					AbstractMessenger.this.acknowledgeMutex.notifyAll();
-				}
-			}
-
-		} catch (Exception exception) {
-			Logger.getLogger(AbstractMessenger.class.getName()).log(Level.SEVERE, null, exception);
-		}
+		
+		MessengerHookData<Message, Acknowledge> hookData = new MessengerHookData<Message, Acknowledge>(AbstractMessenger.this.notificationQueue);
+		hookData.setCurrentEventData(AbstractMessenger.this.currentEventData);
+		hookData.setRecievedMessage(message);
+		
+		this.hookForwarder.forward(this, MessengerHook.START_RECEPTION, hookData);
+		this.notificationQueue.add(new MessengerNotification<Message, Acknowledge>(AbstractMessenger.this, MessengerEvent.RECIEVED, new MessengerEventData<Message, Acknowledge>(null, message, null)));
+		this.hookForwarder.forward(this, MessengerHook.END_RECEPTION, hookData);
+		
 	}
+	
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void configure(String configuration) throws ConfigurationException {
+		if (this.hookClass != null) {
+			throw new ConfigurationException(configuration, this.name +" is allready configured");
+		}
+		
+		CommandLineParser commandLineParser = new CommandLineParser(this);
+		try {
+			commandLineParser.parseArgument(CommandLineParser.splitArguments(configuration));
+
+			try {
+				DefaultMessengerHooks<Message, Acknowledge> hook = (DefaultMessengerHooks<Message, Acknowledge>) this.hookClass.newInstance();
+				if ((this.hookConfiguration != null) && hook instanceof Configurable) {
+					((Configurable)hook).configure(this.hookConfiguration);
+				}
+				this.addHook(hook, MessengerHook.START_RECEPTION, MessengerHook.START_SEND);
+			} catch (Exception exception) {
+				Logger.getLogger(StreamMessenger.class.getName()).log(Level.SEVERE, null, exception);
+			}
+			
+			
+		} catch (Exception exception) {
+			throw new ConfigurationException(configuration, exception);
+		}
+		
+		
+	}
+
 }

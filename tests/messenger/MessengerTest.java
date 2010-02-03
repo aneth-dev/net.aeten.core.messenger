@@ -15,11 +15,17 @@ import org.pititom.core.messenger.stream.StreamMessenger;
 public class MessengerTest {
 
 	public static void main(String[] arguments) throws Exception {
-		final String messageTable = "1=Message\n2=AcknowledgeMessage";
-		final String emission = "-n emission -c -os org.pititom.core.stream.UdpIpOutputStream -osc \"-d 230.2.15.2:5200 -p 64 -r\" -se MessengerEncoder -sec \"" + messageTable + "\"";
-		final String reception = "-n reception -c -is org.pititom.core.stream.UdpIpInputStream -isc \"-d 230.2.15.2:5200 -p 64 -r\" -se MessengerDecoder -sec \"" + messageTable + "\"";
+		final String messageTable = "1: Message\n	2: AcknowledgeMessage";
+		final String hook = "--hook org.pititom.core.messenger.DefaultMessengerHooks --hook-configuration \"--name test --acknowledge-protocol AcknowledgeProtocol\"";
+		final String stream = "--destination-inet-socket-adress 230.2.15.2:5200 --max-packet-size 64 --reuse";
+		final String editor = "--stream-editor-configuration \"" + messageTable + "\"";
+		final String emissionOutput = "--output-stream org.pititom.core.stream.UdpIpOutputStream --output-stream-configuration \"" + stream;
+		final String emission = "--name emission --auto-connect "+ emissionOutput + "\" --stream-editor MessengerEncoder " + editor;
+		final String receptionInput = "--input-stream org.pititom.core.stream.UdpIpInputStream --input-stream-configuration \"" + stream;
+		final String reception = "--name reception --auto-connect "+ receptionInput + "\" --stream-editor MessengerDecoder " + editor;
+		final boolean autoConnect = true;
 
-		Messenger<AbstractMessage, Acknowledge> server = new StreamMessenger<AbstractMessage, Acknowledge>("server", emission, reception);
+		Messenger<AbstractMessage, Acknowledge> server = new StreamMessenger<AbstractMessage, Acknowledge>("server", autoConnect, hook, emission, reception);
 		server.addEventHandler(new MessengerEventHandler<AbstractMessage, Acknowledge>() {
 
 			@Override
@@ -49,7 +55,7 @@ public class MessengerTest {
 
 		}, MessengerEvent.RECIEVED);
 
-		Messenger<AbstractMessage, Acknowledge> client = new StreamMessenger<AbstractMessage, Acknowledge>("client", AcknowledgeProtocol.getInstance(), emission, reception);
+		Messenger<AbstractMessage, Acknowledge> client = new StreamMessenger<AbstractMessage, Acknowledge>("client", autoConnect, hook, emission, reception);
 		client.addEventHandler(new MessengerEventHandler<AbstractMessage, Acknowledge>() {
 
 			public void handleEvent(Messenger<AbstractMessage, Acknowledge> messenger, MessengerEvent event, MessengerEventData<AbstractMessage, Acknowledge> eventData) {
@@ -60,8 +66,10 @@ public class MessengerTest {
 			}
 		}, MessengerEvent.SENT, MessengerEvent.RECIEVED, MessengerEvent.ACKNOWLEDGED, MessengerEvent.UNACKNOWLEDGED);
 
-		server.connect();
-		client.connect();
+		if (!autoConnect) {
+			server.connect();
+			client.connect();
+		}
 
 		Message valid = new Message();
 		valid.setAcknowledge(Acknowledge.UNSOLLICITED_NEED_ACKNOWLEDGE);
@@ -75,5 +83,6 @@ public class MessengerTest {
 
 		Message invalidDataMessage = new Message();
 		client.emit(invalidDataMessage);
+		
 	}
 }
