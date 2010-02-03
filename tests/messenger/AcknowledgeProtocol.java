@@ -1,14 +1,13 @@
-import org.pititom.core.messenger.extension.MessengerAcknowledgeProtocol;
+import org.pititom.core.messenger.MessengerAcknowledgeProtocol;
 
 public class AcknowledgeProtocol implements
 		MessengerAcknowledgeProtocol<AbstractMessage, Acknowledge> {
 
-	private final static long TIMEOUT = 1000;
-	
-	private AcknowledgeProtocol() {
-	}
+	private static final long TIMEOUT = 1000;
 
-	public static final AcknowledgeProtocol INSTANCE = new AcknowledgeProtocol();
+	private static final AcknowledgeProtocol INSTANCE = new AcknowledgeProtocol();
+
+	private AcknowledgeProtocol() {}
 
 	public static AcknowledgeProtocol getInstance() {
 		return INSTANCE;
@@ -52,6 +51,11 @@ public class AcknowledgeProtocol implements
 			default:
 				return 0;
 		}
+	}
+
+	@Override
+	public boolean isBlocking(AbstractMessage message) {
+		return false;
 	}
 
 }

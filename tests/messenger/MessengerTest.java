@@ -1,9 +1,12 @@
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.pititom.core.messenger.Messenger;
+
+import org.pititom.core.messenger.AbstractMessenger;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.MessengerEventHandler;
+import org.pititom.core.messenger.extension.Messenger;
+import org.pititom.core.messenger.stream.StreamMessenger;
 
 /**
  * 
@@ -16,9 +19,10 @@ public class MessengerTest {
 		final String emission = "-n emission -c -os org.pititom.core.stream.UdpIpOutputStream -osc \"-d 230.2.15.2:5200 -p 64 -r\" -se MessengerEncoder -sec \"" + messageTable + "\"";
 		final String reception = "-n reception -c -is org.pititom.core.stream.UdpIpInputStream -isc \"-d 230.2.15.2:5200 -p 64 -r\" -se MessengerDecoder -sec \"" + messageTable + "\"";
 
-		Messenger<AbstractMessage, Acknowledge> server = new Messenger<AbstractMessage, Acknowledge>("server", emission, reception);
+		Messenger<AbstractMessage, Acknowledge> server = new StreamMessenger<AbstractMessage, Acknowledge>("server", emission, reception);
 		server.addEventHandler(new MessengerEventHandler<AbstractMessage, Acknowledge>() {
 
+			@Override
 			public void handleEvent(Messenger<AbstractMessage, Acknowledge> messenger, MessengerEvent event, MessengerEventData<AbstractMessage, Acknowledge> eventData) {
 				if (eventData.getRecievedMessage() instanceof AcknowledgeMessage) {
 					return;
@@ -42,16 +46,17 @@ public class MessengerTest {
 				}
 
 			}
+
 		}, MessengerEvent.RECIEVED);
 
-		Messenger<AbstractMessage, Acknowledge> client = new Messenger<AbstractMessage, Acknowledge>(AcknowledgeProtocol.getInstance(), "client", emission, reception);
+		Messenger<AbstractMessage, Acknowledge> client = new StreamMessenger<AbstractMessage, Acknowledge>("client", AcknowledgeProtocol.getInstance(), emission, reception);
 		client.addEventHandler(new MessengerEventHandler<AbstractMessage, Acknowledge>() {
 
 			public void handleEvent(Messenger<AbstractMessage, Acknowledge> messenger, MessengerEvent event, MessengerEventData<AbstractMessage, Acknowledge> eventData) {
 				if ((event == MessengerEvent.RECIEVED) && (!(eventData.getRecievedMessage() instanceof AcknowledgeMessage))) {
 					return;
 				}
-				Logger.getLogger(Messenger.class.getName()).log(Level.INFO, "messenger={" + messenger + "}; event={" + event + "}; eventData={" + eventData + "}");
+				Logger.getLogger(AbstractMessenger.class.getName()).log(Level.INFO, "messenger={" + messenger + "}; event={" + event + "}; eventData={" + eventData + "}");
 			}
 		}, MessengerEvent.SENT, MessengerEvent.RECIEVED, MessengerEvent.ACKNOWLEDGED, MessengerEvent.UNACKNOWLEDGED);
 

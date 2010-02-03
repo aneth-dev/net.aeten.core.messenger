@@ -3,6 +3,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 public class AcknowledgeMessage extends AbstractMessage {
+	private static final long serialVersionUID = -1074995809088143529L;
 
 	public AcknowledgeMessage() {
 	}
