@@ -16,7 +16,7 @@ public class MessengerTest {
 
 	public static void main(String[] arguments) throws Exception {
 		final String messageTable = "1: Message\n	2: AcknowledgeMessage";
-		final String hook = "--hook org.pititom.core.messenger.DefaultMessengerHooks --hook-configuration \"--name test --acknowledge-protocol AcknowledgeProtocol\"";
+		final String hook = "--hook org.pititom.core.messenger.DefaultMessengerHooks --configuration \"--name test --acknowledge-protocol AcknowledgeProtocol\"";
 		final String stream = "--destination-inet-socket-adress 230.2.15.2:5200 --max-packet-size 64 --reuse";
 		final String editor = "--stream-editor-configuration \"" + messageTable + "\"";
 		final String emissionOutput = "--output-stream org.pititom.core.stream.UdpIpOutputStream --output-stream-configuration \"" + stream;

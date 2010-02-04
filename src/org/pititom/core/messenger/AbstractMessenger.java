@@ -3,10 +3,9 @@ package org.pititom.core.messenger;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.kohsuke.args4j.Option;
+import org.pititom.core.ContributionFactory;
 import org.pititom.core.args4j.CommandLineParser;
 import org.pititom.core.controller.EventEntry;
 import org.pititom.core.controller.EventForwarder;
@@ -15,25 +14,19 @@ import org.pititom.core.extersion.Configurable;
 import org.pititom.core.extersion.ConfigurationException;
 import org.pititom.core.extersion.EventHandler;
 import org.pititom.core.messenger.extension.Messenger;
-import org.pititom.core.messenger.stream.StreamMessenger;
 
-public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>> implements
+public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>   implements
 		Messenger<Message, Acknowledge>, Configurable {
-	
+
 	@Option(name = "-h", aliases = "--hook", required = false)
-	private Class<? extends DefaultMessengerAcknowledgeProtocol<Message, Acknowledge>> hookClass;
+	private ContributionFactory<DefaultMessengerHooks<Message, Acknowledge>> hookFactory;
 
-	@Option(name = "-hc", aliases = "--hook-configuration", required = false)
-	private String hookConfiguration;
-
-
+	
 	private final String name;
 	private final EventForwarder<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventForwarder;
 	private final EventForwarder<Messenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>> hookForwarder;
 	private final BlockingQueue<EventEntry<Messenger<Message, Acknowledge>, Enum<?>, Message>> emissionQueue;
 	private final BlockingQueue<EventEntry<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>> notificationQueue;
-
-
 	private QueueEventForwarder<Messenger<Message, Acknowledge>, Enum<?>, Message> emissionController;
 	private QueueEventForwarder<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> notifierController;
 	private MessengerEventData<Message, Acknowledge> currentEventData;
@@ -41,7 +34,7 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>> im
 
 	public AbstractMessenger(String name) {
 		this.name = name == null ? super.toString() : name;
-		
+
 		this.eventForwarder = new EventForwarder<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>();
 		this.hookForwarder = new EventForwarder<Messenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>>();
 
@@ -82,11 +75,11 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>> im
 			MessengerHookData<Message, Acknowledge> hookData = new MessengerHookData<Message, Acknowledge>(AbstractMessenger.this.notificationQueue);
 			hookData.setCurrentEventData(AbstractMessenger.this.currentEventData);
 			hookData.setMessageToSend(message);
-			
+
 			AbstractMessenger.this.hookForwarder.forward(AbstractMessenger.this, MessengerHook.START_SEND, hookData);
 			AbstractMessenger.this.sendMessage(message);
 			AbstractMessenger.this.hookForwarder.forward(AbstractMessenger.this, MessengerHook.END_SEND, hookData);
-			
+
 			AbstractMessenger.this.notificationQueue.add(new MessengerNotification<Message, Acknowledge>(AbstractMessenger.this, MessengerEvent.SENT, new MessengerEventData<Message, Acknowledge>(message, null, null)));
 
 		}
@@ -122,7 +115,9 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>> im
 	}
 
 	public void addHook(EventHandler<Messenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>> hookHandler, MessengerHook... hookList) {
-		this.hookForwarder.addEventHandler(hookHandler, hookList);
+		if (hookHandler != null) {
+			this.hookForwarder.addEventHandler(hookHandler, hookList);
+		}
 	}
 
 	public void removeHook(EventHandler<Messenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>> hookHandler, MessengerHook... hookList) {
@@ -155,45 +150,28 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>> im
 		if (!this.connected) {
 			return;
 		}
-		
+
 		MessengerHookData<Message, Acknowledge> hookData = new MessengerHookData<Message, Acknowledge>(AbstractMessenger.this.notificationQueue);
 		hookData.setCurrentEventData(AbstractMessenger.this.currentEventData);
 		hookData.setRecievedMessage(message);
-		
+
 		this.hookForwarder.forward(this, MessengerHook.START_RECEPTION, hookData);
 		this.notificationQueue.add(new MessengerNotification<Message, Acknowledge>(AbstractMessenger.this, MessengerEvent.RECIEVED, new MessengerEventData<Message, Acknowledge>(null, message, null)));
 		this.hookForwarder.forward(this, MessengerHook.END_RECEPTION, hookData);
-		
-	}
-	
 
-	@SuppressWarnings("unchecked")
+	}
+
 	@Override
 	public void configure(String configuration) throws ConfigurationException {
-		if (this.hookClass != null) {
-			throw new ConfigurationException(configuration, this.name +" is allready configured");
+		if (this.hookFactory != null) {
+			throw new ConfigurationException(configuration, this.name + " is allready configured");
 		}
-		
 		CommandLineParser commandLineParser = new CommandLineParser(this);
 		try {
 			commandLineParser.parseArgument(CommandLineParser.splitArguments(configuration));
-
-			try {
-				DefaultMessengerHooks<Message, Acknowledge> hook = (DefaultMessengerHooks<Message, Acknowledge>) this.hookClass.newInstance();
-				if ((this.hookConfiguration != null) && hook instanceof Configurable) {
-					((Configurable)hook).configure(this.hookConfiguration);
-				}
-				this.addHook(hook, MessengerHook.START_RECEPTION, MessengerHook.START_SEND);
-			} catch (Exception exception) {
-				Logger.getLogger(StreamMessenger.class.getName()).log(Level.SEVERE, null, exception);
-			}
-			
-			
+			this.addHook(this.hookFactory.getInstance(), MessengerHook.START_RECEPTION, MessengerHook.START_SEND);
 		} catch (Exception exception) {
 			throw new ConfigurationException(configuration, exception);
 		}
-		
-		
 	}
-
 }

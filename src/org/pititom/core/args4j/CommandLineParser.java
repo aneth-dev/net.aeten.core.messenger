@@ -6,6 +6,7 @@ import java.util.LinkedList;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
+import org.pititom.core.ContributionFactory;
 
 public class CommandLineParser extends CmdLineParser {
 	static {
@@ -13,6 +14,8 @@ public class CommandLineParser extends CmdLineParser {
 		registerHandler(InetAddress.class, InetAddressOptionHandler.class);
 		registerHandler(InetSocketAddress.class,
 		        InetSocketAddressOptionHandler.class);
+		registerHandler(ContributionFactory.class,
+		        ContributionOptionHandler.class);
 	}
 
 	public CommandLineParser(Object bean) {
