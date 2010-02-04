@@ -1,4 +1,4 @@
-package org.pititom.core.extersion;
+package org.pititom.core;
 
 public class ConfigurationException extends Exception {
     private static final long serialVersionUID = 2207797241241980028L;

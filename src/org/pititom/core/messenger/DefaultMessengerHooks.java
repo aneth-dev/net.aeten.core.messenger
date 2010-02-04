@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 import org.kohsuke.args4j.Option;
 import org.pititom.core.args4j.CommandLineParser;
 import org.pititom.core.extersion.Configurable;
-import org.pititom.core.extersion.ConfigurationException;
+import org.pititom.core.ConfigurationException;
 import org.pititom.core.extersion.EventHandler;
 import org.pititom.core.messenger.extension.Messenger;
 

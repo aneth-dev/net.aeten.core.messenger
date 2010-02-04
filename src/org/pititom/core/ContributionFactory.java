@@ -17,7 +17,7 @@ public class ContributionFactory<T> {
 		this.configuration = configuration;
 	}
 
-	public T getInstance() throws ContributionException {
+	public T getInstance() throws ConfigurationException {
 		if (this.bean == null) {
 			try {
 				this.bean = (T) clazz.newInstance();
@@ -25,7 +25,7 @@ public class ContributionFactory<T> {
 					((Configurable) bean).configure(configuration);
 				}
 			} catch (Exception exception) {
-				throw new ContributionException(exception);
+				throw new ConfigurationException(this.configuration, exception);
 			}
 		}
 		return this.bean;

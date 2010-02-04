@@ -5,56 +5,59 @@ import java.io.OutputStream;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.Option;
+import org.pititom.core.ConfigurationException;
+import org.pititom.core.ContributionFactory;
 import org.pititom.core.args4j.CommandLineParser;
 
 public class StreamControllerConfiguration {
 
 	@Option(name = "-n", aliases = "--name", required = true)
 	private String name;
-
 	@Option(name = "-c", aliases = "--auto-connect", required = false)
 	private boolean isAutoConnect = true;
-
 	@Option(name = "-is", aliases = "--input-stream", required = false)
-	private Class<? extends InputStream> inputStreamClass;
-
-	@Option(name = "-isc", aliases = "--input-stream-configuration", required = false)
-	private String inputStreamConfiguration;
-
+	private ContributionFactory<? extends InputStream> inputStreamFactory = new NullContributionFactory<InputStream>();
 	@Option(name = "-os", aliases = "--output-stream", required = false)
-	private Class<? extends OutputStream> outputStreamClass;
-
-	@Option(name = "-osc", aliases = "--output-stream-configuration", required = false)
-	private String outputStreamConfiguration;
-
+	private ContributionFactory<? extends OutputStream> outputStreamFactory = new NullContributionFactory<OutputStream>();
 	@Option(name = "-se", aliases = "--stream-editor", required = true)
 	private StreamEditorStack editorStack;
 
+	private static class NullContributionFactory<T> extends ContributionFactory<T> {
+
+		public NullContributionFactory() {
+			super(null, null);
+		}
+
+		@Override
+		public T getInstance() throws ConfigurationException {
+			return null;
+		}
+	}
+
 	public StreamControllerConfiguration(String... arguments)
-	        throws CmdLineException {
+			throws CmdLineException {
 		CommandLineParser.registerHandler(StreamEditorStack.class,
-		        StreamEditorStackOptionHandler.class);
+				StreamEditorStackOptionHandler.class);
 		CommandLineParser commandLineParser = new CommandLineParser(this);
 		commandLineParser.parseArgument(arguments);
 	}
 
 	public StreamControllerConfiguration(String name, boolean isAutoConnect,
-	        Class<? extends InputStream> inputStreamClass,
-	        String inputStreamConfiguration,
-	        Class<? extends OutputStream> outputStreamClass,
-	        String outputStreamConfiguration, StreamEditorStack editorStack) {
+			Class<? extends InputStream> inputStreamClass,
+			String inputStreamConfiguration,
+			Class<? extends OutputStream> outputStreamClass,
+			String outputStreamConfiguration, StreamEditorStack editorStack) {
 		super();
 		this.name = name;
 		this.isAutoConnect = isAutoConnect;
-		this.inputStreamClass = inputStreamClass;
-		this.inputStreamConfiguration = inputStreamConfiguration;
-		this.outputStreamClass = outputStreamClass;
-		this.outputStreamConfiguration = outputStreamConfiguration;
+		this.inputStreamFactory = new ContributionFactory(inputStreamClass, inputStreamConfiguration);
+		this.outputStreamFactory = new ContributionFactory(outputStreamClass, outputStreamConfiguration);
+		;
 		this.editorStack = editorStack;
 	}
 
 	public StreamControllerConfiguration(String configuration)
-	        throws CmdLineException {
+			throws CmdLineException {
 		this(CommandLineParser.splitArguments(configuration));
 	}
 
@@ -66,24 +69,15 @@ public class StreamControllerConfiguration {
 		return isAutoConnect;
 	}
 
-	public Class<? extends InputStream> getInputStreamClass() {
-		return inputStreamClass;
-	}
-
-	public String getInputStreamConfiguration() {
-		return inputStreamConfiguration;
-	}
-
-	public Class<? extends OutputStream> getOutputStreamClass() {
-		return outputStreamClass;
-	}
-
-	public String getOutputStreamConfiguration() {
-		return outputStreamConfiguration;
-	}
-
 	public StreamEditorStack getEditorStack() {
 		return editorStack;
 	}
 
+	public ContributionFactory<? extends InputStream> getInputStreamFactory() {
+		return inputStreamFactory;
+	}
+
+	public ContributionFactory<? extends OutputStream> getOutputStreamFactory() {
+		return outputStreamFactory;
+	}
 }

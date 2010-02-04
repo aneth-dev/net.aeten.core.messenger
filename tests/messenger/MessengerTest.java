@@ -18,10 +18,10 @@ public class MessengerTest {
 		final String messageTable = "1: Message\n	2: AcknowledgeMessage";
 		final String hook = "--hook org.pititom.core.messenger.DefaultMessengerHooks --configuration \"--name test --acknowledge-protocol AcknowledgeProtocol\"";
 		final String stream = "--destination-inet-socket-adress 230.2.15.2:5200 --max-packet-size 64 --reuse";
-		final String editor = "--stream-editor-configuration \"" + messageTable + "\"";
-		final String emissionOutput = "--output-stream org.pititom.core.stream.UdpIpOutputStream --output-stream-configuration \"" + stream;
+		final String editor = "--configuration \"" + messageTable + "\"";
+		final String emissionOutput = "--output-stream org.pititom.core.stream.UdpIpOutputStream --configuration \"" + stream;
 		final String emission = "--name emission --auto-connect "+ emissionOutput + "\" --stream-editor MessengerEncoder " + editor;
-		final String receptionInput = "--input-stream org.pititom.core.stream.UdpIpInputStream --input-stream-configuration \"" + stream;
+		final String receptionInput = "--input-stream org.pititom.core.stream.UdpIpInputStream --configuration \"" + stream;
 		final String reception = "--name reception --auto-connect "+ receptionInput + "\" --stream-editor MessengerDecoder " + editor;
 		final boolean autoConnect = true;
 

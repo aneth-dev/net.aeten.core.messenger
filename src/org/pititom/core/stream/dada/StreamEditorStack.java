@@ -3,35 +3,15 @@ package org.pititom.core.stream.dada;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.pititom.core.ContributionFactory;
 
 import org.pititom.core.stream.extension.StreamEditor;
 
 public class StreamEditorStack {
 	
-	private final List<EditorEntry> stack = new ArrayList<EditorEntry>();
+	private final List<ContributionFactory<StreamEditor>> stack = new ArrayList<ContributionFactory<StreamEditor>>();
 	
-	public List<EditorEntry> getStack() {
+	public List<ContributionFactory<StreamEditor>> getStack() {
 		return this.stack;
-		
-	}
-	
-	public static class EditorEntry {
-		private final Class<? extends StreamEditor> editor;
-		private final String configuration;
-		
-		public EditorEntry(Class<? extends StreamEditor> editor, String configuration) {
-	        super();
-	        this.configuration = configuration;
-	        this.editor = editor;
-        }
-		
-		public Class<? extends StreamEditor> getEditor() {
-        	return editor;
-        }
-		
-		public String getConfiguration() {
-        	return configuration;
-        }
-	}
-	
+	}	
 }

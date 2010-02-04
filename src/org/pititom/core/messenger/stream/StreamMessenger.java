@@ -9,7 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.kohsuke.args4j.CmdLineException;
-import org.pititom.core.extersion.ConfigurationException;
+import org.pititom.core.ConfigurationException;
 import org.pititom.core.messenger.AbstractMessenger;
 import org.pititom.core.stream.controller.StreamControllerConnection;
 import org.pititom.core.stream.dada.StreamControllerConfiguration;

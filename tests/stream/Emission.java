@@ -10,7 +10,7 @@ public class Emission {
 
 	public static void main(String[] arguments) throws Exception {
 		final StreamControllerConfiguration configuration = new StreamControllerConfiguration(
-		        "-n emission -c -os org.pititom.core.stream.UdpIpOutputStream -osc \"-d 230.2.15.2:5200 -p 64 -r\" -se Encoder");
+		        "-n emission -c -os org.pititom.core.stream.UdpIpOutputStream -c \"-d 230.2.15.2:5200 -p 64 -r\" -se Encoder");
 
 		final PipedInputStream pipedIn = new PipedInputStream();
 		final StreamControllerConnection connection = new StreamControllerConnection(

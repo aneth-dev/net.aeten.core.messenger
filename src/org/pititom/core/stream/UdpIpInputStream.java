@@ -9,7 +9,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 
 import org.pititom.core.extersion.Configurable;
-import org.pititom.core.extersion.ConfigurationException;
+import org.pititom.core.ConfigurationException;
 
 public class UdpIpInputStream extends PipedInputStream implements Configurable {
 

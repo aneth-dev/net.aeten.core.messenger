@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.pititom.core.extersion.Configurable;
-import org.pititom.core.extersion.ConfigurationException;
+import org.pititom.core.ConfigurationException;
 
 public class UdpIpOutputStream extends OutputStream implements Configurable {
 	private UdpIpParameters parameters;

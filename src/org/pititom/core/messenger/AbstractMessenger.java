@@ -11,7 +11,7 @@ import org.pititom.core.controller.EventEntry;
 import org.pititom.core.controller.EventForwarder;
 import org.pititom.core.controller.QueueEventForwarder;
 import org.pititom.core.extersion.Configurable;
-import org.pititom.core.extersion.ConfigurationException;
+import org.pititom.core.ConfigurationException;
 import org.pititom.core.extersion.EventHandler;
 import org.pititom.core.messenger.extension.Messenger;
 
