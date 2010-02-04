@@ -7,12 +7,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.kohsuke.args4j.Option;
 import org.pititom.core.ContributionFactory;
 import org.pititom.core.args4j.CommandLineParser;
-import org.pititom.core.EventEntry;
-import org.pititom.core.EventForwarder;
-import org.pititom.core.QueueEventForwarder;
+import org.pititom.core.event.EventEntry;
+import org.pititom.core.event.EventForwarder;
+import org.pititom.core.event.QueueEventForwarder;
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
-import org.pititom.core.EventHandler;
+import org.pititom.core.event.EventHandler;
 import org.pititom.core.messenger.extension.Messenger;
 
 /**

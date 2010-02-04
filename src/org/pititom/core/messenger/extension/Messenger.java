@@ -1,6 +1,6 @@
 package org.pititom.core.messenger.extension;
 
-import org.pititom.core.EventPerformer;
+import org.pititom.core.event.EventPerformer;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.stream.controller.Connection;

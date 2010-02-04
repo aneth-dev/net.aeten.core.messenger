@@ -12,7 +12,7 @@ import java.util.Set;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.pititom.core.ConfigurationException;
-import org.pititom.core.EventHandler;
+import org.pititom.core.event.EventHandler;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.extension.Messenger;

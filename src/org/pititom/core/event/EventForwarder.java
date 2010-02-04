@@ -1,4 +1,4 @@
-package org.pititom.core;
+package org.pititom.core.event;
 
 import java.util.HashMap;
 import java.util.HashSet;

@@ -9,7 +9,7 @@ import org.kohsuke.args4j.Option;
 import org.pititom.core.args4j.CommandLineParser;
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
-import org.pititom.core.EventHandler;
+import org.pititom.core.event.EventHandler;
 import org.pititom.core.messenger.extension.Messenger;
 
 /**
