@@ -3,9 +3,13 @@ package org.pititom.core.messenger.stream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.pititom.core.messenger.extension.MessengerEditor;
+import org.pititom.core.messenger.MessengerEditor;
 import org.pititom.core.stream.ObjectInputStream;
 
+/**
+*
+* @author Thomas Pérennou
+*/
 public class MessengerObjectInputStream extends ObjectInputStream {
 
 	public MessengerObjectInputStream(InputStream in) throws IOException {

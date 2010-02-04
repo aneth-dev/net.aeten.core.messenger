@@ -6,7 +6,7 @@ import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.MessengerEventHandler;
 import org.pititom.core.messenger.extension.Messenger;
-import org.pititom.core.messenger.stream.StreamMessenger;
+import org.pititom.core.messenger.stream.StreamEditorMessenger;
 
 /**
  * 
@@ -25,7 +25,7 @@ public class MessengerTest {
 		final String reception = "--name reception --auto-connect "+ receptionInput + "\" --stream-editor MessengerDecoder " + editor;
 		final boolean autoConnect = true;
 
-		Messenger<AbstractMessage, Acknowledge> server = new StreamMessenger<AbstractMessage, Acknowledge>("server", autoConnect, hook, emission, reception);
+		Messenger<AbstractMessage, Acknowledge> server = new StreamEditorMessenger<AbstractMessage, Acknowledge>("server", autoConnect, hook, emission, reception);
 		server.addEventHandler(new MessengerEventHandler<AbstractMessage, Acknowledge>() {
 
 			@Override
@@ -55,7 +55,7 @@ public class MessengerTest {
 
 		}, MessengerEvent.RECIEVED);
 
-		Messenger<AbstractMessage, Acknowledge> client = new StreamMessenger<AbstractMessage, Acknowledge>("client", autoConnect, hook, emission, reception);
+		Messenger<AbstractMessage, Acknowledge> client = new StreamEditorMessenger<AbstractMessage, Acknowledge>("client", autoConnect, hook, emission, reception);
 		client.addEventHandler(new MessengerEventHandler<AbstractMessage, Acknowledge>() {
 
 			public void handleEvent(Messenger<AbstractMessage, Acknowledge> messenger, MessengerEvent event, MessengerEventData<AbstractMessage, Acknowledge> eventData) {

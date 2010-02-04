@@ -4,7 +4,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 
 import org.pititom.core.stream.controller.StreamControllerConnection;
-import org.pititom.core.stream.dada.StreamControllerConfiguration;
+import org.pititom.core.stream.StreamControllerConfiguration;
 
 public class Reception {
 

@@ -13,19 +13,18 @@ import org.pititom.core.ContributionFactory;
  * 
  * @author Thomas Pérennou
  */
-public class ContributionOptionHandler extends OptionHandler<ContributionFactory> {
+public class ContributionOptionHandler extends OptionHandler<ContributionFactory<?>> {
 
 	public static final String CONFIGURATION_OPTION_NAME = "-c";
 	public static final String[] CONFIGURATION_OPTION_ALIASES = {"--configuration"};
 
 	public ContributionOptionHandler(CmdLineParser parser, OptionDef option,
-			Setter<ContributionFactory> setter) {
+			Setter<ContributionFactory<?>> setter) {
 		super(parser, option, setter);
 	}
 
 	@Override
 	public int parseArguments(Parameters params) throws CmdLineException {
-		int i = 0;
 		String className = params.getParameter(0);
 		String configuration;
 		try {
@@ -39,7 +38,7 @@ public class ContributionOptionHandler extends OptionHandler<ContributionFactory
 		}
 
 		try {
-			ContributionFactory factory = new ContributionFactory(Class.forName(className), configuration);
+			ContributionFactory<Object> factory = new ContributionFactory<Object>(Class.forName(className), configuration);
 			setter.addValue(factory);
 		} catch (ClassNotFoundException exception) {
 			throw new CmdLineException(this.owner, exception);

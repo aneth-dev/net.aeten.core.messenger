@@ -8,7 +8,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
 import org.kohsuke.args4j.CmdLineException;
-import org.pititom.core.extersion.Configurable;
+import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
 
 public class UdpIpOutputStream extends OutputStream implements Configurable {

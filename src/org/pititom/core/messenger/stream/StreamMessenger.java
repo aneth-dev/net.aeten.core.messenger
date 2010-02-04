@@ -1,99 +1,61 @@
 package org.pititom.core.messenger.stream;
 
 import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.kohsuke.args4j.CmdLineException;
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.messenger.AbstractMessenger;
-import org.pititom.core.stream.controller.StreamControllerConnection;
-import org.pititom.core.stream.dada.StreamControllerConfiguration;
 
+/**
+*
+* @author Thomas Pérennou
+*/
 public class StreamMessenger<Message, Acknowledge extends Enum<?>> extends AbstractMessenger<Message, Acknowledge> {
 
-	private final StreamControllerConfiguration emissionConfiguration;
-	private final StreamControllerConfiguration[] receptionConfigurationList;
+	private final ObjectOutputStream outputStream;
+	private final ObjectInputStream[] inputStreamList;
 	private final Collection<Reciever> recieverList;
-	private final StreamControllerConnection receptionConnectionList[];
 
-	private MessengerObjectOutputStream emissionStream;
-	private StreamControllerConnection emissionConnection;
-
-	public StreamMessenger(String name, boolean autoConnect, String hookConfiguration, String emissionConfiguration, String... receptionConfigurationList) throws ConfigurationException, IOException {
-		this(name, hookConfiguration, emissionConfiguration, receptionConfigurationList);
-		if (autoConnect) {
-			this.connect();
-		}
-	}
-
-	public StreamMessenger(String name, String hookConfiguration, String emissionConfiguration, String... receptionConfigurationList) throws ConfigurationException {
+	public StreamMessenger(String name, String hookConfiguration, ObjectOutputStream outputStream, ObjectInputStream... inputStreamList) throws ConfigurationException, IOException {
 		super(name);
 		this.configure(hookConfiguration);
 
-		try {
-			this.emissionConfiguration = new StreamControllerConfiguration(emissionConfiguration);
-		} catch (CmdLineException exception) {
-			throw new ConfigurationException(emissionConfiguration, exception);
-		}
+		this.outputStream = outputStream;
+		this.inputStreamList = inputStreamList;
 
-		this.receptionConfigurationList = new StreamControllerConfiguration[receptionConfigurationList.length];
-		this.receptionConnectionList = new StreamControllerConnection[receptionConfigurationList.length];
-		this.recieverList = new ArrayList<Reciever>(receptionConfigurationList.length);
-		for (int i = 0; i < receptionConfigurationList.length; i++) {
-			try {
-				this.receptionConfigurationList[i] = new StreamControllerConfiguration(receptionConfigurationList[i]);
-			} catch (CmdLineException exception) {
-				throw new ConfigurationException(receptionConfigurationList[i], exception);
-			}
-		}
+		this.recieverList = new ArrayList<Reciever>(inputStreamList.length);
+		
+		this.connect();
 	}
 
 	protected void doConnect() throws IOException {
-		try {
-			final PipedInputStream pipedIn = new PipedInputStream();
-			this.emissionConnection = new StreamControllerConnection(this.emissionConfiguration, pipedIn);
-			this.emissionStream = new MessengerObjectOutputStream(new PipedOutputStream(pipedIn));
-
-			PipedOutputStream pipedOut;
-			for (int i = 0; i < this.receptionConfigurationList.length; i++) {
-				pipedOut = new PipedOutputStream();
-				this.receptionConnectionList[i] = new StreamControllerConnection(this.receptionConfigurationList[i], pipedOut);
-				this.recieverList.add(new Reciever(this, new MessengerObjectInputStream(new PipedInputStream(pipedOut))));
-				this.receptionConnectionList[i].connect();
-			}
-
-			this.emissionConnection.connect();
-
-		} catch (ConfigurationException exception) {
-			this.setConnected(false);
-			throw new IOException(exception);
-		}
-
 		super.doConnect();
-
-		for (Reciever reciever : this.recieverList) {
+		Reciever reciever;
+		for (int i = 0; i < this.inputStreamList.length; i++) {
+			reciever = new Reciever(this, this.inputStreamList[i]);
+			this.recieverList.add(reciever);
 			new Thread(reciever).start();
 		}
 	}
 
 	protected void doDisconnect() throws IOException {
 		super.doDisconnect();
-		for (StreamControllerConnection receptionConnection : this.receptionConnectionList) {
-			receptionConnection.disconnect();
+		for (ObjectInputStream inputStream : this.inputStreamList) {
+			inputStream.close();
 		}
-		this.emissionConnection.disconnect();
+		this.outputStream.close();
 	}
 
 	private class Reciever implements Runnable {
 		private final AbstractMessenger<Message, ? extends Enum<?>> messenger;
-		private final MessengerObjectInputStream in;
+		private final ObjectInputStream in;
 
-		public Reciever(AbstractMessenger<Message, ? extends Enum<?>> messenger, MessengerObjectInputStream in) {
+		public Reciever(AbstractMessenger<Message, ? extends Enum<?>> messenger, ObjectInputStream in) {
 			this.messenger = messenger;
 			this.in = in;
 		}
@@ -125,8 +87,8 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>> extends Abstr
 	@Override
 	protected void sendMessage(Message message) {
 		try {
-			this.emissionStream.writeObject(message);
-			this.emissionStream.flush();
+			this.outputStream.writeObject(message);
+			this.outputStream.flush();
 		} catch (IOException exception) {
 			Logger.getLogger(StreamMessenger.class.getName()).log(Level.SEVERE, null, exception);
 		}

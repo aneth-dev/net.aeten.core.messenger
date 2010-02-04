@@ -1,4 +1,4 @@
-package org.pititom.core.stream.dada;
+package org.pititom.core.stream;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -50,8 +50,8 @@ public class StreamControllerConfiguration {
 		super();
 		this.name = name;
 		this.isAutoConnect = isAutoConnect;
-		this.inputStreamFactory = new ContributionFactory(inputStreamClass, inputStreamConfiguration);
-		this.outputStreamFactory = new ContributionFactory(outputStreamClass, outputStreamConfiguration);
+		this.inputStreamFactory = new ContributionFactory<InputStream>(inputStreamClass, inputStreamConfiguration);
+		this.outputStreamFactory = new ContributionFactory<OutputStream>(outputStreamClass, outputStreamConfiguration);
 		;
 		this.editorStack = editorStack;
 	}

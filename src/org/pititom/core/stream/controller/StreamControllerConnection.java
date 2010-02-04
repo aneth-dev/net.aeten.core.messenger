@@ -6,12 +6,9 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 
-import org.pititom.core.extersion.Configurable;
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.ContributionFactory;
-import org.pititom.core.stream.dada.StreamControllerConfiguration;
-import org.pititom.core.stream.extension.Connection;
-import org.pititom.core.stream.extension.StreamEditor;
+import org.pititom.core.stream.StreamControllerConfiguration;
 
 public class StreamControllerConnection implements Connection {
 
@@ -112,29 +109,4 @@ public class StreamControllerConnection implements Connection {
 		return this.isConnected;
 	}
 
-	private static <T> T instantiate(Class<T> clazz, String configuration)
-			throws ConfigurationException {
-		if (clazz == null) {
-			return null;
-		}
-		T bean;
-		try {
-			bean = clazz.newInstance();
-			if (configuration != null) {
-				if (!(bean instanceof Configurable)) {
-					throw new ConfigurationException(configuration, clazz.getCanonicalName()
-							+ " is not instance of "
-							+ Configurable.class.getCanonicalName());
-				}
-				((Configurable) bean).configure(configuration);
-			}
-			return bean;
-		} catch (ConfigurationException exception) {
-			throw exception;
-		} catch (Exception exception) {
-			throw new ConfigurationException(configuration, clazz.getCanonicalName()
-					+ " can not be instanciate", exception);
-		}
-
-	}
 }

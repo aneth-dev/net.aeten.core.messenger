@@ -1,6 +1,6 @@
 package org.pititom.core.messenger;
 
-import org.pititom.core.extersion.EventHandler;
+import org.pititom.core.EventHandler;
 import org.pititom.core.messenger.extension.Messenger;
 
 /**

@@ -1,4 +1,4 @@
-package org.pititom.core.controller;
+package org.pititom.core;
 
 /**
  *

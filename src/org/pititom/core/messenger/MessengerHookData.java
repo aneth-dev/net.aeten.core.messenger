@@ -2,7 +2,7 @@ package org.pititom.core.messenger;
 
 import java.util.concurrent.BlockingQueue;
 
-import org.pititom.core.controller.EventEntry;
+import org.pititom.core.EventEntry;
 import org.pititom.core.messenger.extension.Messenger;
 
 /**

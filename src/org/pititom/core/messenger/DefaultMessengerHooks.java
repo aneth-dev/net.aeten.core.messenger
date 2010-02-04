@@ -7,11 +7,15 @@ import java.util.logging.Logger;
 
 import org.kohsuke.args4j.Option;
 import org.pititom.core.args4j.CommandLineParser;
-import org.pititom.core.extersion.Configurable;
+import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
-import org.pititom.core.extersion.EventHandler;
+import org.pititom.core.EventHandler;
 import org.pititom.core.messenger.extension.Messenger;
 
+/**
+*
+* @author Thomas Pérennou
+*/
 public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>> implements
 		EventHandler<Messenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>>, Configurable {
 	

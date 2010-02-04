@@ -1,4 +1,4 @@
-package org.pititom.core.extersion;
+package org.pititom.core;
 
 /**
  *

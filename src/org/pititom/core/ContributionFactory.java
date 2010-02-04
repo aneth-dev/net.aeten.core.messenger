@@ -1,18 +1,16 @@
 package org.pititom.core;
 
-import org.pititom.core.extersion.Configurable;
-
 /**
  *
  * @author Thomas Pérennou
  */
 public class ContributionFactory<T> {
 
-	private Class<T> clazz;
+	private Class<? extends T> clazz;
 	private String configuration;
 	private T bean = null;
 
-	public ContributionFactory(Class<T> clazz, String configuration) {
+	public ContributionFactory(Class<? extends T> clazz, String configuration) {
 		this.clazz = clazz;
 		this.configuration = configuration;
 	}

@@ -12,9 +12,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.pititom.core.extersion.Configurable;
+import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
-import org.pititom.core.messenger.extension.MessengerEditor;
+import org.pititom.core.messenger.MessengerEditor;
 
 public class MessengerEncoder implements MessengerEditor, Configurable {
 

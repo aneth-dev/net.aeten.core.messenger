@@ -12,9 +12,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.pititom.core.extersion.Configurable;
+import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
-import org.pititom.core.stream.extension.StreamEditor;
+import org.pititom.core.stream.controller.StreamEditor;
 
 public class MessengerDecoder implements StreamEditor, Configurable {
 

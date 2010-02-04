@@ -3,7 +3,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
-import org.pititom.core.stream.extension.StreamEditor;
+import org.pititom.core.stream.controller.StreamEditor;
 
 public class Decoder implements StreamEditor {
 	private ObjectOutputStream out = null;

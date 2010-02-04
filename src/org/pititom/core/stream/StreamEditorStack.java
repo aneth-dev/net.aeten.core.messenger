@@ -1,11 +1,11 @@
-package org.pititom.core.stream.dada;
+package org.pititom.core.stream;
 
 
 import java.util.ArrayList;
 import java.util.List;
 import org.pititom.core.ContributionFactory;
 
-import org.pititom.core.stream.extension.StreamEditor;
+import org.pititom.core.stream.controller.StreamEditor;
 
 public class StreamEditorStack {
 	

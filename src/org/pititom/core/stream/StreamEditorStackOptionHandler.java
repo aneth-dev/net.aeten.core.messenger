@@ -1,4 +1,4 @@
-package org.pititom.core.stream.dada;
+package org.pititom.core.stream;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -7,7 +7,7 @@ import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.Parameters;
 import org.kohsuke.args4j.spi.Setter;
 import org.pititom.core.ContributionFactory;
-import org.pititom.core.stream.extension.StreamEditor;
+import org.pititom.core.stream.controller.StreamEditor;
 
 /**
  * {@link Class} {@link OptionHandler}.
@@ -54,11 +54,8 @@ public class StreamEditorStackOptionHandler extends OptionHandler<StreamEditorSt
 							} catch (CmdLineException exception) {
 					configuration = null;
 				}
-			
 
-
-
-				editorStackOption.getStack().add(new ContributionFactory(clazz.asSubclass(StreamEditor.class), configuration));
+				editorStackOption.getStack().add(new ContributionFactory<StreamEditor>(clazz.asSubclass(StreamEditor.class), configuration));
 			}
 			setter.addValue(editorStackOption);
 		} catch (ClassNotFoundException exception) {

@@ -4,7 +4,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
-import org.pititom.core.stream.extension.StreamEditor;
+import org.pititom.core.stream.controller.StreamEditor;
 
 public class Encoder implements StreamEditor {
 

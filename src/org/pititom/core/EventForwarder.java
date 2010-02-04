@@ -1,11 +1,10 @@
-package org.pititom.core.controller;
+package org.pititom.core;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.pititom.core.extersion.EventHandler;
 
 public class EventForwarder<Source, Event extends Enum<?>, Data> implements EventHandler<Source, Event, Data> {
 	

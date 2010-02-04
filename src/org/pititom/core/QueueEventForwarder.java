@@ -1,8 +1,7 @@
-package org.pititom.core.controller;
+package org.pititom.core;
 
 import java.util.concurrent.BlockingQueue;
 
-import org.pititom.core.extersion.EventHandler;
 
 public class QueueEventForwarder<Source, Event extends Enum<?>, Data> extends Thread {
 
