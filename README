@@ -1,0 +1,9 @@
+org.pititom.core is a java tool provider
+
+Provides :
+        - stream stack editor
+        - generic event emitter and handler
+        - extensible messenger 
+
+Requires :
+	- org.kohsuke.args4j
