@@ -1,4 +1,4 @@
-package org.pititom.core.messenger.stream;
+package org.pititom.core.messenger.stream.contribution;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -16,8 +16,10 @@ import org.pititom.core.EventHandler;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.extension.Messenger;
+import org.pititom.core.messenger.stream.MessengerObjectInputStream;
+import org.pititom.core.messenger.stream.MessengerObjectOutputStream;
 import org.pititom.core.stream.controller.StreamControllerConnection;
-import org.pititom.core.stream.StreamControllerConfiguration;
+import org.pititom.core.stream.controller.StreamControllerConfiguration;
 
 /**
 *

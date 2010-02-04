@@ -1,4 +1,4 @@
-package org.pititom.core.messenger;
+package org.pititom.core.messenger.stream;
 
 import java.nio.charset.Charset;
 

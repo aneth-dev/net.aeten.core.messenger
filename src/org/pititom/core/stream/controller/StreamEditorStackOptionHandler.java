@@ -1,4 +1,4 @@
-package org.pititom.core.stream;
+package org.pititom.core.stream.controller;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;

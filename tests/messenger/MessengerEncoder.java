@@ -14,7 +14,7 @@ import java.util.Properties;
 
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
-import org.pititom.core.messenger.MessengerEditor;
+import org.pititom.core.messenger.stream.MessengerEditor;
 
 public class MessengerEncoder implements MessengerEditor, Configurable {
 

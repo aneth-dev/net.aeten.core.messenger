@@ -8,7 +8,6 @@ import java.io.PipedOutputStream;
 
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.ContributionFactory;
-import org.pititom.core.stream.StreamControllerConfiguration;
 
 public class StreamControllerConnection implements Connection {
 
