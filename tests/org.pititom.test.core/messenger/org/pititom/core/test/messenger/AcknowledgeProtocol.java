@@ -2,6 +2,10 @@ package org.pititom.core.test.messenger;
 
 import org.pititom.core.messenger.DefaultMessengerAcknowledgeProtocol;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class AcknowledgeProtocol implements
 		DefaultMessengerAcknowledgeProtocol<AbstractMessage, Acknowledge> {
 

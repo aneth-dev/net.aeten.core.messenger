@@ -2,6 +2,10 @@ package org.pititom.core.test.messenger;
 
 
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public enum Acknowledge {
 
 	SOLLICITED,

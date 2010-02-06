@@ -1,5 +1,9 @@
 package org.pititom.core.event;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 class AsynchronousEventTransmitterMultiHandler<Source, Event extends Enum<?>, Data> extends AsynchronousEventTransmitter<Source, Event, Data> implements RegisterableEventTransmitter<Source, Event, Data>, Runnable {
 
 	private final RegisterableEventTransmitter<Source, Event, Data> eventTransmitter;

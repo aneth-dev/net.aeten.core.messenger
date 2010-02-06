@@ -6,6 +6,10 @@ import java.lang.reflect.Constructor;
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class OutputStreamFactory<T extends OutputStream> {
 
 	private Class<T> clazz;

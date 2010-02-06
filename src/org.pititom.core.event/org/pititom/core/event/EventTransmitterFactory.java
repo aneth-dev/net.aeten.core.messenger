@@ -1,12 +1,8 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.pititom.core.event;
 
 /**
  *
- * @author thomas
+ * @author Thomas Pérennou
  */
 public class EventTransmitterFactory {
 

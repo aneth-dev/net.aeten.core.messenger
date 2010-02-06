@@ -11,6 +11,10 @@ import java.net.SocketTimeoutException;
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class UdpIpInputStream extends PipedInputStream implements Configurable {
 
 	private UdpIpParameters parameters;

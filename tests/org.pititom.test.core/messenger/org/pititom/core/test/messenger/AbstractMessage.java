@@ -5,6 +5,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public abstract class AbstractMessage implements Serializable {
 	private static final long serialVersionUID = -1149769829841085667L;
 	

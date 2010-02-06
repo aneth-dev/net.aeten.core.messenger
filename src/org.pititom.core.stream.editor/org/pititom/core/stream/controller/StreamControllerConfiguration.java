@@ -8,6 +8,10 @@ import org.kohsuke.args4j.Option;
 import org.pititom.core.Factory;
 import org.pititom.core.args4j.CommandLineParser;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class StreamControllerConfiguration {
 
 	@Option(name = "-n", aliases = "--name", required = true)
@@ -39,7 +43,6 @@ public class StreamControllerConfiguration {
 		this.isAutoConnect = isAutoConnect;
 		this.inputStreamFactory = new Factory<InputStream>(inputStreamClass, inputStreamConfiguration);
 		this.outputStreamFactory = new Factory<OutputStream>(outputStreamClass, outputStreamConfiguration);
-		;
 		this.editorStack = editorStack;
 	}
 

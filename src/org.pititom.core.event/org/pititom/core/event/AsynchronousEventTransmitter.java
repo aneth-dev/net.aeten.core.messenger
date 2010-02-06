@@ -3,6 +3,10 @@ package org.pititom.core.event;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 class AsynchronousEventTransmitter<Source, Event extends Enum<?>, Data> implements EventTransmitter<Event, Data>, Runnable {
 
 	private final EventTransmitter<Event, Data> eventTransmitter;

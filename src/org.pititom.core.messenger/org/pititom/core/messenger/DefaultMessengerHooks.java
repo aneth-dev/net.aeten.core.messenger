@@ -8,6 +8,9 @@ import org.pititom.core.args4j.CommandLineParser;
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.event.EventHandler;
+import org.pititom.core.logging.LoggingData;
+import org.pititom.core.logging.LoggingEvent;
+import org.pititom.core.logging.LoggingTransmitter;
 
 /**
  *
@@ -88,7 +91,7 @@ public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>>  implem
 			}
 
 		} catch (Exception exception) {
-			source.error(exception);
+			LoggingTransmitter.getInstance().transmit(LoggingEvent.ERROR, new LoggingData(source, exception));
 		}
 	}
 
@@ -109,7 +112,7 @@ public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>>  implem
 			}
 
 		} catch (Exception exception) {
-			source.error(exception);
+			LoggingTransmitter.getInstance().transmit(LoggingEvent.ERROR, new LoggingData(source, exception));
 		}
 	}
 

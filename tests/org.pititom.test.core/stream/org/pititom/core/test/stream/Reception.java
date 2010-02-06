@@ -8,6 +8,10 @@ import java.io.PipedOutputStream;
 import org.pititom.core.stream.controller.StreamControllerConnection;
 import org.pititom.core.stream.controller.StreamControllerConfiguration;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class Reception {
 
 	public static void main(String[] arguments) throws Exception {

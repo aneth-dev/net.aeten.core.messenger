@@ -11,6 +11,5 @@ public enum MessengerEvent {
 	ACKNOWLEDGED,
 	UNACKNOWLEDGED,
 	SEND,
-	SENT,
-	ERROR
+	SENT
 }

@@ -7,6 +7,10 @@ import java.io.ObjectOutputStream;
 
 import org.pititom.core.stream.controller.StreamEditor;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class Decoder implements StreamEditor {
 	private ObjectOutputStream out = null;
 

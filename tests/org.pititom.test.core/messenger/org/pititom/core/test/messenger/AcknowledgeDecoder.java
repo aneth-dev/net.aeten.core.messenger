@@ -7,6 +7,10 @@ import java.io.IOException;
 import org.pititom.core.stream.controller.StreamEditor;
 
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class AcknowledgeDecoder implements StreamEditor {
 
 	@Override

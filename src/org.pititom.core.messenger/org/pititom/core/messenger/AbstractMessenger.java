@@ -85,7 +85,7 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>  i
 			AbstractMessenger.this.send(message);
 			AbstractMessenger.this.hookEventTransmitter.transmit(MessengerHook.END_SEND, hookData);
 
-			AbstractMessenger.this.eventTransmitter.transmit(MessengerEvent.SENT, new MessengerEventData<Message, Acknowledge>(message, null, null, null));
+			AbstractMessenger.this.eventTransmitter.transmit(MessengerEvent.SENT, new MessengerEventData<Message, Acknowledge>(message, null, null));
 
 		}
 	}
@@ -149,17 +149,9 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>  i
 		hookData.setRecievedMessage(message);
 
 		this.hookEventTransmitter.transmit(MessengerHook.START_RECEPTION, hookData);
-		this.eventTransmitter.transmit(MessengerEvent.RECIEVED, new MessengerEventData<Message, Acknowledge>(null, message, null, null));
+		this.eventTransmitter.transmit(MessengerEvent.RECIEVED, new MessengerEventData<Message, Acknowledge>(null, message, null));
 		this.hookEventTransmitter.transmit(MessengerHook.END_RECEPTION, hookData);
 	}
-
-	public void error(Throwable exception) {
-		MessengerEventData<Message, Acknowledge> data = this.currentEventData.clone();
-		data.setException(exception);
-		this.eventTransmitter.transmit(MessengerEvent.ERROR, data);
-	}
-
-
 
 	@Override
 	public void configure(String configuration) throws ConfigurationException {

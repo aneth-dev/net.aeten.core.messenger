@@ -18,6 +18,10 @@ import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.messenger.stream.MessengerEditor;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class MessengerEncoder implements MessengerEditor, Configurable {
 
 	private Map<String, Integer> table;

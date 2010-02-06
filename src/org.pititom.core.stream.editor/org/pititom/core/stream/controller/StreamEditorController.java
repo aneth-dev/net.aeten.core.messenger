@@ -9,6 +9,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class StreamEditorController {
 
 	public static enum State {

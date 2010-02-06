@@ -6,6 +6,10 @@ import java.util.Map;
 import java.util.Set;
 
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 class SynchronousEventTransmitterMultiHandlers<Source, Event extends Enum<?>, Data> implements RegisterableEventTransmitter<Source, Event, Data> {
 	
 	private final Map<Event, Set<EventHandler<Source, Event, Data>>> eventHandlerMap;

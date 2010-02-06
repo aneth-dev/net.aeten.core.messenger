@@ -1,5 +1,9 @@
 package org.pititom.core;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 import java.io.IOException;
 
 public interface Connection {

@@ -1,5 +1,9 @@
 package org.pititom.core.event;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 class SynchronousEventTransmitter<Source, Event extends Enum<?>, Data> implements EventTransmitter<Event, Data> {
 
 	private final Source source;

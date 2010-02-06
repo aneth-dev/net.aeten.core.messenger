@@ -11,6 +11,10 @@ import org.kohsuke.args4j.CmdLineException;
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class UdpIpOutputStream extends OutputStream implements Configurable {
 	private UdpIpParameters parameters;
 	private ByteBuffer buffer;

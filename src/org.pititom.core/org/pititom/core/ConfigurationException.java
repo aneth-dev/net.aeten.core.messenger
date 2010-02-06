@@ -1,5 +1,9 @@
 package org.pititom.core;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class ConfigurationException extends Exception {
     private static final long serialVersionUID = 2207797241241980028L;
     private final String configuration;

@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.pititom.core.ConfigurationException;
+import org.pititom.core.logging.LoggingData;
+import org.pititom.core.logging.LoggingEvent;
+import org.pititom.core.logging.LoggingTransmitter;
 import org.pititom.core.messenger.AbstractMessenger;
 
 /**
@@ -73,7 +76,7 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>>  extends Abst
 					StreamMessenger.this.doRecieve(message);
 
 				} catch (Exception exception) {
-					this.messenger.error(exception);
+					LoggingTransmitter.getInstance().transmit(LoggingEvent.ERROR, new LoggingData(this.messenger, exception));
 				}
 			}
 		}
@@ -85,7 +88,7 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>>  extends Abst
 			this.outputStream.writeObject(message);
 			this.outputStream.flush();
 		} catch (IOException exception) {
-			this.error(exception);
+			LoggingTransmitter.getInstance().transmit(LoggingEvent.ERROR, new LoggingData(this, exception));
 		}
 	}
 }

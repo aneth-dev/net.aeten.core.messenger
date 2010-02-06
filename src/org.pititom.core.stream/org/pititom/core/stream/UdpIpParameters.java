@@ -11,6 +11,10 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.Option;
 import org.pititom.core.args4j.CommandLineParser;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class UdpIpParameters {
 
 	@Option(name = "-d", aliases = { "--destination",

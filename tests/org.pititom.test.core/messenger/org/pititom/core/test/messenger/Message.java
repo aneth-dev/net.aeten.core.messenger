@@ -4,6 +4,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class Message extends AbstractMessage {
 	private static final long serialVersionUID = -1252541775206801257L;
 	public static final int MIN_VALUE = 2;

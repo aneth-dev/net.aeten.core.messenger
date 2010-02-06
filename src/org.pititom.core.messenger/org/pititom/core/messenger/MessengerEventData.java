@@ -6,7 +6,6 @@ package org.pititom.core.messenger;
  */
 public class MessengerEventData<Message, Acknowledge extends Enum<?>>  implements org.pititom.core.Cloneable<MessengerEventData<Message, Acknowledge>> {
 
-	private Throwable exception = null;
 	private Message sentMessage = null;
 	private Message recievedMessage = null;
 	private Acknowledge acknowledge = null;
@@ -14,11 +13,10 @@ public class MessengerEventData<Message, Acknowledge extends Enum<?>>  implement
 	public MessengerEventData() {
 	}
 
-	public MessengerEventData(Message sentMessage, Message recievedMessage, Acknowledge acknowledge, Throwable exception) {
+	public MessengerEventData(Message sentMessage, Message recievedMessage, Acknowledge acknowledge) {
 		this.sentMessage = sentMessage;
 		this.recievedMessage = recievedMessage;
 		this.acknowledge = acknowledge;
-		this.exception = exception;
 	}
 
 	public Acknowledge getAcknowledge() {
@@ -47,19 +45,11 @@ public class MessengerEventData<Message, Acknowledge extends Enum<?>>  implement
 
 	@Override
 	public String toString() {
-		return "sent message={" + this.sentMessage + "}; recieved message={" + this.recievedMessage + "}; acknowledge={" + this.acknowledge + "}; exception={" + this.exception + "}";
-	}
-
-	public Throwable getException() {
-		return exception;
-	}
-
-	public void setException(Throwable exception) {
-		this.exception = exception;
+		return "sent message={" + this.sentMessage + "}; recieved message={" + this.recievedMessage + "}; acknowledge={" + this.acknowledge + "}";
 	}
 
 	@Override
 	public MessengerEventData<Message, Acknowledge> clone() {
-		return new MessengerEventData<Message, Acknowledge>(this.sentMessage, this.recievedMessage, this.acknowledge, this.exception);
+		return new MessengerEventData<Message, Acknowledge>(this.sentMessage, this.recievedMessage, this.acknowledge);
 	}
 }

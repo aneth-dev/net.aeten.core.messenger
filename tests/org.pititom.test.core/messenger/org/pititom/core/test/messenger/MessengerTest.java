@@ -2,6 +2,10 @@ package org.pititom.core.test.messenger;
 
 import java.util.Calendar;
 import java.util.Date;
+import org.pititom.core.event.EventHandler;
+import org.pititom.core.logging.LoggingData;
+import org.pititom.core.logging.LoggingEvent;
+import org.pititom.core.logging.LoggingTransmitter;
 
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
@@ -16,15 +20,26 @@ import org.pititom.core.messenger.stream.StreamEditorMessenger;
 public class MessengerTest {
 
 	public static void main(String[] arguments) throws Exception {
-		final String messageTable = "1: Message\n	2: AcknowledgeMessage";
-		final String hook = "--hook org.pititom.core.messenger.DefaultMessengerHooks --configuration \"--name test --acknowledge-protocol AcknowledgeProtocol\"";
+		final String messageTable = "1: org.pititom.core.test.messenger.Message\n	2: org.pititom.core.test.messenger.AcknowledgeMessage";
+		final String hook = "--hook org.pititom.core.messenger.DefaultMessengerHooks --configuration \"--name test --acknowledge-protocol org.pititom.core.test.messenger.AcknowledgeProtocol\"";
 		final String stream = "--destination-inet-socket-adress 230.2.15.2:5200 --max-packet-size 64 --reuse";
 		final String editor = "--configuration \"" + messageTable + "\"";
 		final String emissionOutput = "--output-stream org.pititom.core.stream.UdpIpOutputStream --configuration \"" + stream;
-		final String emission = "--name emission --auto-connect "+ emissionOutput + "\" --stream-editor MessengerEncoder " + editor;
+		final String emission = "--name emission --auto-connect "+ emissionOutput + "\" --stream-editor org.pititom.core.test.messenger.MessengerEncoder " + editor;
 		final String receptionInput = "--input-stream org.pititom.core.stream.UdpIpInputStream --configuration \"" + stream;
-		final String reception = "--name reception --auto-connect "+ receptionInput + "\" --stream-editor MessengerDecoder " + editor;
+		final String reception = "--name reception --auto-connect "+ receptionInput + "\" --stream-editor org.pititom.core.test.messenger.MessengerDecoder " + editor;
 		final boolean autoConnect = true;
+
+		LoggingTransmitter.getInstance().addEventHandler(new EventHandler<Object, LoggingEvent, LoggingData>() {
+			@Override
+			public void handleEvent(Object source, LoggingEvent event, LoggingData data) {
+				/* Basic logging. Can be plugged to anyone logging tool
+				 * org.pititom.core.messenger.AbstractMessenger exceptions can be caught by this way
+				 */
+				Date date = Calendar.getInstance().getTime();
+				System.out.println(date + " " + (date.getTime() % 1000) + " " + event + " source={" + data.getSource() + "} " + data.getMessage() + ((data.getException() == null) ? "" : " : " + data.getException()));
+			}
+		}, LoggingEvent.values());
 
 		Messenger<AbstractMessage, Acknowledge> server = new StreamEditorMessenger<AbstractMessage, Acknowledge>("server", autoConnect, hook, emission, reception);
 		server.addEventHandler(new MessengerEventHandler<AbstractMessage, Acknowledge>() {
@@ -63,10 +78,9 @@ public class MessengerTest {
 				if ((event == MessengerEvent.RECIEVED) && (!(eventData.getRecievedMessage() instanceof AcknowledgeMessage))) {
 					return;
 				}
-				Date date = Calendar.getInstance().getTime();
-				System.out.println(date + " " + (date.getTime() % 1000) + " messenger={" + messenger + "}; event={" + event + "}; eventData={" + eventData + "}");
+				LoggingTransmitter.getInstance().transmit(LoggingEvent.INFO, new LoggingData(messenger, "event={" + event + "}; eventData={" + eventData + "}"));
 			}
-		}, MessengerEvent.SENT, MessengerEvent.RECIEVED, MessengerEvent.ACKNOWLEDGED, MessengerEvent.UNACKNOWLEDGED, MessengerEvent.ERROR);
+		}, MessengerEvent.SENT, MessengerEvent.RECIEVED, MessengerEvent.ACKNOWLEDGED, MessengerEvent.UNACKNOWLEDGED);
 
 		if (!autoConnect) {
 			server.connect();

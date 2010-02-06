@@ -8,6 +8,10 @@ import java.io.ObjectInputStream;
 
 import org.pititom.core.stream.controller.StreamEditor;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class Encoder implements StreamEditor {
 
 	private ObjectInputStream in = null;

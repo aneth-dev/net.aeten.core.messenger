@@ -8,6 +8,11 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.pititom.core.Factory;
 
+/**
+ * {@link Class} {@link CmdLineParser}.
+ *
+ * @author Thomas Pérennou
+ */
 public class CommandLineParser extends CmdLineParser {
 	static {
 		registerHandler(Class.class, ClassOptionHandler.class);

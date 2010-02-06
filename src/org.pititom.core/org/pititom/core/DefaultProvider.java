@@ -1,5 +1,9 @@
 package org.pititom.core;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class DefaultProvider implements Provider {
 	private final Object[] providedObjectList;
 	public DefaultProvider(Object... objects) {

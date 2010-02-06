@@ -10,6 +10,10 @@ import org.pititom.core.ConfigurationException;
 import org.pititom.core.Connection;
 import org.pititom.core.Factory;
 
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public class StreamControllerConnection implements Connection {
 
 	private InputStream input;

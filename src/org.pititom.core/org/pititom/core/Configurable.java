@@ -1,7 +1,9 @@
 package org.pititom.core;
 
-import org.pititom.core.ConfigurationException;
-
+/**
+ *
+ * @author Thomas Pérennou
+ */
 public interface Configurable {
 	public void configure(String configuration) throws ConfigurationException ;
 }
