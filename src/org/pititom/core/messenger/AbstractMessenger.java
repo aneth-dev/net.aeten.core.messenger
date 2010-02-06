@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.kohsuke.args4j.Option;
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
-import org.pititom.core.ContributionFactory;
+import org.pititom.core.Factory;
 import org.pititom.core.args4j.CommandLineParser;
 import org.pititom.core.event.EventHandler;
 import org.pititom.core.event.EventTransmitter;
@@ -22,7 +22,7 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>  i
 	@Option(name = "-n", aliases = "--name", required = false)
 	private String name;
 	@Option(name = "-h", aliases = "--hook", required = false)
-	private ContributionFactory<DefaultMessengerHooks<Message, Acknowledge>> hookFactory;
+	private Factory<DefaultMessengerHooks<Message, Acknowledge>> hookFactory;
 	
 	private EventTransmitter<MessengerHook, MessengerHookData<Message, Acknowledge>> hookEventTransmitter;
 	private final MessengerEventData<Message, Acknowledge> currentEventData;

@@ -6,20 +6,20 @@ import org.kohsuke.args4j.OptionDef;
 import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.Parameters;
 import org.kohsuke.args4j.spi.Setter;
-import org.pititom.core.ContributionFactory;
+import org.pititom.core.Factory;
 
 /**
  * {@link Class} {@link OptionHandler}.
  * 
  * @author Thomas Pérennou
  */
-public class ContributionOptionHandler extends OptionHandler<ContributionFactory<?>> {
+public class FactoryOptionHandler extends OptionHandler<Factory<?>> {
 
 	public static final String CONFIGURATION_OPTION_NAME = "-c";
 	public static final String[] CONFIGURATION_OPTION_ALIASES = {"--configuration"};
 
-	public ContributionOptionHandler(CmdLineParser parser, OptionDef option,
-			Setter<ContributionFactory<?>> setter) {
+	public FactoryOptionHandler(CmdLineParser parser, OptionDef option,
+			Setter<Factory<?>> setter) {
 		super(parser, option, setter);
 	}
 
@@ -38,7 +38,7 @@ public class ContributionOptionHandler extends OptionHandler<ContributionFactory
 		}
 
 		try {
-			ContributionFactory<Object> factory = new ContributionFactory<Object>(Class.forName(className), configuration);
+			Factory<Object> factory = new Factory<Object>(Class.forName(className), configuration);
 			setter.addValue(factory);
 		} catch (ClassNotFoundException exception) {
 			throw new CmdLineException(this.owner, exception);

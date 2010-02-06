@@ -4,13 +4,13 @@ package org.pititom.core;
  *
  * @author Thomas Pérennou
  */
-public class ContributionFactory<T> {
+public class Factory<T> {
 
 	private Class<? extends T> clazz;
 	private String configuration;
 	private T bean = null;
 
-	public ContributionFactory(Class<? extends T> clazz, String configuration) {
+	public Factory(Class<? extends T> clazz, String configuration) {
 		this.clazz = clazz;
 		this.configuration = configuration;
 	}
@@ -29,7 +29,7 @@ public class ContributionFactory<T> {
 		return this.bean;
 	}
 	
-	public static class Null<T> extends ContributionFactory<T> {
+	public static class Null<T> extends Factory<T> {
 
 		public Null() {
 			super(null, null);

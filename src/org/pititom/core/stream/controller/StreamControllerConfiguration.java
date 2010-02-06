@@ -5,7 +5,7 @@ import java.io.OutputStream;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.Option;
-import org.pititom.core.ContributionFactory;
+import org.pititom.core.Factory;
 import org.pititom.core.args4j.CommandLineParser;
 
 public class StreamControllerConfiguration {
@@ -15,9 +15,9 @@ public class StreamControllerConfiguration {
 	@Option(name = "-c", aliases = "--auto-connect", required = false)
 	private boolean isAutoConnect = true;
 	@Option(name = "-is", aliases = "--input-stream", required = false)
-	private ContributionFactory<? extends InputStream> inputStreamFactory = new ContributionFactory.Null<InputStream>();
+	private Factory<? extends InputStream> inputStreamFactory = new Factory.Null<InputStream>();
 	@Option(name = "-os", aliases = "--output-stream", required = false)
-	private ContributionFactory<? extends OutputStream> outputStreamFactory = new ContributionFactory.Null<OutputStream>();
+	private Factory<? extends OutputStream> outputStreamFactory = new Factory.Null<OutputStream>();
 	@Option(name = "-se", aliases = "--stream-editor", required = true)
 	private StreamEditorStack editorStack;
 
@@ -37,8 +37,8 @@ public class StreamControllerConfiguration {
 		super();
 		this.name = name;
 		this.isAutoConnect = isAutoConnect;
-		this.inputStreamFactory = new ContributionFactory<InputStream>(inputStreamClass, inputStreamConfiguration);
-		this.outputStreamFactory = new ContributionFactory<OutputStream>(outputStreamClass, outputStreamConfiguration);
+		this.inputStreamFactory = new Factory<InputStream>(inputStreamClass, inputStreamConfiguration);
+		this.outputStreamFactory = new Factory<OutputStream>(outputStreamClass, outputStreamConfiguration);
 		;
 		this.editorStack = editorStack;
 	}
@@ -60,11 +60,11 @@ public class StreamControllerConfiguration {
 		return editorStack;
 	}
 
-	public ContributionFactory<? extends InputStream> getInputStreamFactory() {
+	public Factory<? extends InputStream> getInputStreamFactory() {
 		return inputStreamFactory;
 	}
 
-	public ContributionFactory<? extends OutputStream> getOutputStreamFactory() {
+	public Factory<? extends OutputStream> getOutputStreamFactory() {
 		return outputStreamFactory;
 	}
 }

@@ -3,15 +3,15 @@ package org.pititom.core.stream.controller;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.pititom.core.ContributionFactory;
+import org.pititom.core.Factory;
 
 import org.pititom.core.stream.controller.StreamEditor;
 
 class StreamEditorStack {
 	
-	private final List<ContributionFactory<StreamEditor>> stack = new ArrayList<ContributionFactory<StreamEditor>>();
+	private final List<Factory<StreamEditor>> stack = new ArrayList<Factory<StreamEditor>>();
 	
-	public List<ContributionFactory<StreamEditor>> getStack() {
+	public List<Factory<StreamEditor>> getStack() {
 		return this.stack;
 	}	
 }
