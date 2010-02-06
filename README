@@ -1,9 +1,12 @@
-org.pititom.core is a usefull java tools provider
+org.pititom.core is an usefull java tools provider
+
+Note :
+	No totally free licence has currently been choiced. Maybe I would choice a BSD like one, so for commercial use, please wait so on.
 
 Provides :
-        - stream stack editor
-        - generic event transmitter and handler
-        - extensible messenger
+	- stream stack editor
+	- generic event transmitter and handler
+	- extensible messenger
 
 Details of modules :
 	- org.pititom.core
