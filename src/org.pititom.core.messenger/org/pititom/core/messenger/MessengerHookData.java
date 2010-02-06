@@ -7,12 +7,10 @@ import org.pititom.core.event.EventTransmitter;
  * @author Thomas Pérennou
  */
 public class MessengerHookData<Message, Acknowledge extends Enum<?>> {
-	private byte[] sentData = null;
 	private long sentDataDate = 0L;
 	private Message messageToSend = null;
 	private Message recievedMessage = null;
 	private long recievedDataDate = 0L;
-	private byte[] recievedData = null;
 	private Acknowledge acknowledge = null;
 	private MessengerEventData<Message, Acknowledge> currentEventData;
 	private final EventTransmitter<MessengerEvent, MessengerEventData<Message, Acknowledge>> eventTransmitter;
@@ -22,18 +20,6 @@ public class MessengerHookData<Message, Acknowledge extends Enum<?>> {
 		this.eventTransmitter = eventTransmitter;
 	}
 	
-	/**
-	 * @return the sentData
-	 */
-	public byte[] getSentData() {
-		return sentData;
-	}
-	/**
-	 * @param sentData the sentData to set
-	 */
-	public void setSentData(byte[] sentData) {
-		this.sentData = sentData;
-	}
 	/**
 	 * @return the sentDataDate
 	 */
@@ -81,18 +67,6 @@ public class MessengerHookData<Message, Acknowledge extends Enum<?>> {
 	 */
 	public void setRecievedDataDate(long recievedDataDate) {
 		this.recievedDataDate = recievedDataDate;
-	}
-	/**
-	 * @return the recievedData
-	 */
-	public byte[] getRecievedData() {
-		return recievedData;
-	}
-	/**
-	 * @param recievedData the recievedData to set
-	 */
-	public void setRecievedData(byte[] recievedData) {
-		this.recievedData = recievedData;
 	}
 	/**
 	 * @return the acknowledge

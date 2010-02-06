@@ -6,7 +6,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
-import org.pititom.core.stream.controller.StreamEditor;
+import org.pititom.core.stream.editor.StreamEditor;
 
 /**
  *

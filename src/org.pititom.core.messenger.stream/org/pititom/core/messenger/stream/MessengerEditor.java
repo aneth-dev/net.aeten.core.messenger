@@ -2,7 +2,7 @@ package org.pititom.core.messenger.stream;
 
 import java.nio.charset.Charset;
 
-import org.pititom.core.stream.controller.StreamEditor;
+import org.pititom.core.stream.editor.StreamEditor;
 
 /**
 *

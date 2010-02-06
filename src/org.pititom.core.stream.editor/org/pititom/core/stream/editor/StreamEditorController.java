@@ -1,4 +1,4 @@
-package org.pititom.core.stream.controller;
+package org.pititom.core.stream.editor;
 
 import java.io.DataInput;
 import java.io.DataInputStream;

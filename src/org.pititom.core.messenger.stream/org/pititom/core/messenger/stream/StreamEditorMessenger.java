@@ -16,8 +16,8 @@ import org.pititom.core.event.EventHandler;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.extension.Messenger;
-import org.pititom.core.stream.controller.StreamControllerConnection;
-import org.pititom.core.stream.controller.StreamControllerConfiguration;
+import org.pititom.core.stream.editor.StreamControllerConnection;
+import org.pititom.core.stream.editor.StreamControllerConfiguration;
 
 /**
 *

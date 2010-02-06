@@ -16,7 +16,7 @@ import java.util.Properties;
 
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
-import org.pititom.core.stream.controller.StreamEditor;
+import org.pititom.core.stream.editor.StreamEditor;
 
 /**
  *

@@ -37,7 +37,7 @@ public class MessengerTest {
 				 * org.pititom.core.messenger.AbstractMessenger exceptions can be caught by this way
 				 */
 				Date date = Calendar.getInstance().getTime();
-				System.out.println(date + " " + (date.getTime() % 1000) + " " + event + " source={" + data.getSource() + "} " + data.getMessage() + ((data.getException() == null) ? "" : " : " + data.getException()));
+				System.out.println(date + " " + (date.getTime() % 1000) + "ms " + event + " source={" + data.getSource() + "} " + data.getMessage() + ((data.getException() == null) ? "" : " : " + data.getException()));
 			}
 		}, LoggingEvent.values());
 
