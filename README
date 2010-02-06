@@ -8,4 +8,4 @@ Provides :ry
 Requires :
 	- org.kohsuke.args4j
 
-See test directory far samples
+See tests directory far samples
