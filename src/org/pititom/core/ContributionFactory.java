@@ -28,4 +28,18 @@ public class ContributionFactory<T> {
 		}
 		return this.bean;
 	}
+	
+	public static class Null<T> extends ContributionFactory<T> {
+
+		public Null() {
+			super(null, null);
+		}
+
+		@Override
+		public T getInstance() throws ConfigurationException {
+			return null;
+		}
+	}
+
+
 }

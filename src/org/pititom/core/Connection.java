@@ -1,4 +1,4 @@
-package org.pititom.core.stream.controller;
+package org.pititom.core;
 
 import java.io.IOException;
 

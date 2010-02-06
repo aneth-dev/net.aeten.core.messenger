@@ -5,7 +5,6 @@ import java.io.OutputStream;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.Option;
-import org.pititom.core.ConfigurationException;
 import org.pititom.core.ContributionFactory;
 import org.pititom.core.args4j.CommandLineParser;
 
@@ -16,23 +15,11 @@ public class StreamControllerConfiguration {
 	@Option(name = "-c", aliases = "--auto-connect", required = false)
 	private boolean isAutoConnect = true;
 	@Option(name = "-is", aliases = "--input-stream", required = false)
-	private ContributionFactory<? extends InputStream> inputStreamFactory = new NullContributionFactory<InputStream>();
+	private ContributionFactory<? extends InputStream> inputStreamFactory = new ContributionFactory.Null<InputStream>();
 	@Option(name = "-os", aliases = "--output-stream", required = false)
-	private ContributionFactory<? extends OutputStream> outputStreamFactory = new NullContributionFactory<OutputStream>();
+	private ContributionFactory<? extends OutputStream> outputStreamFactory = new ContributionFactory.Null<OutputStream>();
 	@Option(name = "-se", aliases = "--stream-editor", required = true)
 	private StreamEditorStack editorStack;
-
-	private static class NullContributionFactory<T> extends ContributionFactory<T> {
-
-		public NullContributionFactory() {
-			super(null, null);
-		}
-
-		@Override
-		public T getInstance() throws ConfigurationException {
-			return null;
-		}
-	}
 
 	public StreamControllerConfiguration(String... arguments)
 			throws CmdLineException {

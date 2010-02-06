@@ -1,9 +1,6 @@
 package org.pititom.core.messenger;
 
-import java.util.concurrent.BlockingQueue;
-
-import org.pititom.core.event.EventEntry;
-import org.pititom.core.messenger.extension.Messenger;
+import org.pititom.core.event.EventTransmitter;
 
 /**
  *
@@ -18,10 +15,11 @@ public class MessengerHookData<Message, Acknowledge extends Enum<?>> {
 	private byte[] recievedData = null;
 	private Acknowledge acknowledge = null;
 	private MessengerEventData<Message, Acknowledge> currentEventData;
-	private final BlockingQueue<EventEntry<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>> notificationQueue;
+	private final EventTransmitter<MessengerEvent, MessengerEventData<Message, Acknowledge>> eventTransmitter;
+
 	
-	public MessengerHookData(BlockingQueue<EventEntry<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>> notificationQueue) {
-		this.notificationQueue = notificationQueue;
+	public MessengerHookData(EventTransmitter<MessengerEvent, MessengerEventData<Message, Acknowledge>> eventTransmitter) {
+		this.eventTransmitter = eventTransmitter;
 	}
 	
 	/**
@@ -122,10 +120,10 @@ public class MessengerHookData<Message, Acknowledge extends Enum<?>> {
 	}
 	
 	/**
-	 * TODO
-	 **/
-	public void fireEvent(Messenger<Message, Acknowledge> source, MessengerEvent event) {
-		notificationQueue.add(new EventEntry<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>(source, event, this.getCurrentEventData().clone()));
+	 * @return the eventTransmitter
+	 */
+	public EventTransmitter<MessengerEvent, MessengerEventData<Message, Acknowledge>> getEventTransmitter() {
+		return eventTransmitter;
 	}
 	
 }

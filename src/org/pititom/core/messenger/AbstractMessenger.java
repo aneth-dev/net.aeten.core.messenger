@@ -1,61 +1,62 @@
 package org.pititom.core.messenger;
 
 import java.io.IOException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.kohsuke.args4j.Option;
-import org.pititom.core.ContributionFactory;
-import org.pititom.core.args4j.CommandLineParser;
-import org.pititom.core.event.EventEntry;
-import org.pititom.core.event.EventForwarder;
-import org.pititom.core.event.QueueEventForwarder;
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
+import org.pititom.core.ContributionFactory;
+import org.pititom.core.args4j.CommandLineParser;
 import org.pititom.core.event.EventHandler;
+import org.pititom.core.event.EventTransmitter;
+import org.pititom.core.event.EventTransmitterFactory;
+import org.pititom.core.event.RegisterableEventTransmitter;
 import org.pititom.core.messenger.extension.Messenger;
 
 /**
-*
-* @author Thomas Pérennou
-*/
-public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>   implements
-		Messenger<Message, Acknowledge>, Configurable {
+ *
+ * @author Thomas Pérennou
+ */
+public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>  implements Messenger<Message, Acknowledge>, Configurable {
 
+	@Option(name = "-n", aliases = "--name", required = false)
+	private String name;
 	@Option(name = "-h", aliases = "--hook", required = false)
 	private ContributionFactory<DefaultMessengerHooks<Message, Acknowledge>> hookFactory;
-
 	
-	private final String name;
-	private final EventForwarder<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventForwarder;
-	private final EventForwarder<Messenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>> hookForwarder;
-	private final BlockingQueue<EventEntry<Messenger<Message, Acknowledge>, Enum<?>, Message>> emissionQueue;
-	private final BlockingQueue<EventEntry<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>> notificationQueue;
-	private QueueEventForwarder<Messenger<Message, Acknowledge>, Enum<?>, Message> emissionController;
-	private QueueEventForwarder<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> notifierController;
-	private MessengerEventData<Message, Acknowledge> currentEventData;
+	private EventTransmitter<MessengerHook, MessengerHookData<Message, Acknowledge>> hookEventTransmitter;
+	private final MessengerEventData<Message, Acknowledge> currentEventData;
+	private final MessageTransmitter messageTransmitter;
+	private EventTransmitter<MessengerEvent, Message> internalEventTransmitter;
+	private RegisterableEventTransmitter<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventTransmitter;
 	private boolean connected;
 
+	public AbstractMessenger() {
+		this(null, null);
+	}
 	public AbstractMessenger(String name) {
+		this(name, null);
+	}
+	public AbstractMessenger(String name, DefaultMessengerHooks<Message, Acknowledge> hook) {
 		this.name = name == null ? super.toString() : name;
-
-		this.eventForwarder = new EventForwarder<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>();
-		this.hookForwarder = new EventForwarder<Messenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>>();
-
-		this.emissionQueue = new LinkedBlockingQueue<EventEntry<Messenger<Message, Acknowledge>, Enum<?>, Message>>();
-		this.notificationQueue = new LinkedBlockingQueue<EventEntry<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>>();
-
+		if (hook != null) {
+			this.hookEventTransmitter = EventTransmitterFactory.synchronous(this, hook, MessengerHook.START_RECEPTION, MessengerHook.START_SEND);
+		}
+		
 		this.currentEventData = new MessengerEventData<Message, Acknowledge>();
+		this.messageTransmitter = new MessageTransmitter();
 
-		this.notifierController = null;
-		this.emissionController = null;
+		this.eventTransmitter = null;
+		this.internalEventTransmitter = null;
 	}
 
-	public void emit(Message message) {
+	public void transmit(Message message) {
 		if (this.connected) {
-			this.emissionQueue.add(new EventEntry<Messenger<Message, Acknowledge>, Enum<?>, Message>(this, null, message));
+			this.internalEventTransmitter.transmit(MessengerEvent.SEND, message);
 		}
 	}
+
+	protected abstract void send(Message message);
 
 	@Override
 	public String toString() {
@@ -71,20 +72,20 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>   
 		this.disconnect();
 	}
 
-	private class Transmitter implements
-			EventHandler<Messenger<Message, Acknowledge>, Enum<?>, Message> {
+	private class MessageTransmitter implements
+			EventHandler<Messenger<Message, Acknowledge>, MessengerEvent, Message> {
 
 		@Override
-		public void handleEvent(Messenger<Message, Acknowledge> source, Enum<?> event, Message message) {
-			MessengerHookData<Message, Acknowledge> hookData = new MessengerHookData<Message, Acknowledge>(AbstractMessenger.this.notificationQueue);
+		public void handleEvent(Messenger<Message, Acknowledge> source, MessengerEvent event, Message message) {
+			MessengerHookData<Message, Acknowledge> hookData = new MessengerHookData<Message, Acknowledge>(AbstractMessenger.this.eventTransmitter);
 			hookData.setCurrentEventData(AbstractMessenger.this.currentEventData);
 			hookData.setMessageToSend(message);
 
-			AbstractMessenger.this.hookForwarder.forward(AbstractMessenger.this, MessengerHook.START_SEND, hookData);
-			AbstractMessenger.this.sendMessage(message);
-			AbstractMessenger.this.hookForwarder.forward(AbstractMessenger.this, MessengerHook.END_SEND, hookData);
+			AbstractMessenger.this.hookEventTransmitter.transmit(MessengerHook.START_SEND, hookData);
+			AbstractMessenger.this.send(message);
+			AbstractMessenger.this.hookEventTransmitter.transmit(MessengerHook.END_SEND, hookData);
 
-			AbstractMessenger.this.notificationQueue.add(new MessengerNotification<Message, Acknowledge>(AbstractMessenger.this, MessengerEvent.SENT, new MessengerEventData<Message, Acknowledge>(message, null, null)));
+			AbstractMessenger.this.eventTransmitter.transmit(MessengerEvent.SENT, new MessengerEventData<Message, Acknowledge>(message, null, null, null));
 
 		}
 	}
@@ -110,37 +111,27 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>   
 
 	@Override
 	public void addEventHandler(EventHandler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventHandler, MessengerEvent... eventList) {
-		this.eventForwarder.addEventHandler(eventHandler, eventList);
+		this.eventTransmitter.addEventHandler(eventHandler, eventList);
 	}
 
 	@Override
 	public void removeEventHandler(EventHandler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventHandler, MessengerEvent... eventList) {
-		this.eventForwarder.removeEventHandler(eventHandler, eventList);
-	}
-
-	public void addHook(EventHandler<Messenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>> hookHandler, MessengerHook... hookList) {
-		if (hookHandler != null) {
-			this.hookForwarder.addEventHandler(hookHandler, hookList);
-		}
-	}
-
-	public void removeHook(EventHandler<Messenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>> hookHandler, MessengerHook... hookList) {
-		this.hookForwarder.removeEventHandler(hookHandler, hookList);
+		this.eventTransmitter.removeEventHandler(eventHandler, eventList);
 	}
 
 	protected void doConnect() throws IOException {
-		this.notifierController = new QueueEventForwarder<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>(this.name + " notifier", this.notificationQueue, this.eventForwarder);
-		this.emissionController = new QueueEventForwarder<Messenger<Message, Acknowledge>, Enum<?>, Message>(this.name + " : emission controller", this.emissionQueue, new Transmitter());
-
-		this.notifierController.start();
-		this.emissionController.start();
-
+		this.internalEventTransmitter = EventTransmitterFactory.asynchronous(
+				"Messenger \"" + this.name + "\" internal event transmitter",
+				this, this.messageTransmitter, MessengerEvent.SEND);
+		this.eventTransmitter = EventTransmitterFactory.<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>asynchronous(
+				"Messenger \"" + this.name + "\" event transmitter",
+				this);
 		this.connected = true;
 	}
 
 	protected void doDisconnect() throws IOException {
-		this.notifierController.kill();
-		this.emissionController.kill();
+		this.eventTransmitter = null;
+		this.internalEventTransmitter = null;
 		this.connected = false;
 	}
 
@@ -148,32 +139,37 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>   
 		this.connected = connected;
 	}
 
-	protected abstract void sendMessage(Message message);
-
-	protected void doReception(Message message) {
+	protected void doRecieve(Message message) {
 		if (!this.connected) {
 			return;
 		}
 
-		MessengerHookData<Message, Acknowledge> hookData = new MessengerHookData<Message, Acknowledge>(AbstractMessenger.this.notificationQueue);
+		final MessengerHookData<Message, Acknowledge> hookData = new MessengerHookData<Message, Acknowledge>(AbstractMessenger.this.eventTransmitter);
 		hookData.setCurrentEventData(AbstractMessenger.this.currentEventData);
 		hookData.setRecievedMessage(message);
 
-		this.hookForwarder.forward(this, MessengerHook.START_RECEPTION, hookData);
-		this.notificationQueue.add(new MessengerNotification<Message, Acknowledge>(AbstractMessenger.this, MessengerEvent.RECIEVED, new MessengerEventData<Message, Acknowledge>(null, message, null)));
-		this.hookForwarder.forward(this, MessengerHook.END_RECEPTION, hookData);
-
+		this.hookEventTransmitter.transmit(MessengerHook.START_RECEPTION, hookData);
+		this.eventTransmitter.transmit(MessengerEvent.RECIEVED, new MessengerEventData<Message, Acknowledge>(null, message, null, null));
+		this.hookEventTransmitter.transmit(MessengerHook.END_RECEPTION, hookData);
 	}
+
+	public void error(Throwable exception) {
+		MessengerEventData<Message, Acknowledge> data = this.currentEventData.clone();
+		data.setException(exception);
+		this.eventTransmitter.transmit(MessengerEvent.ERROR, data);
+	}
+
+
 
 	@Override
 	public void configure(String configuration) throws ConfigurationException {
 		if (this.hookFactory != null) {
-			throw new ConfigurationException(configuration, this.name + " is allready configured");
+			throw new ConfigurationException(configuration, "Messenger \"" + this.name + "\" is allready configured");
 		}
 		CommandLineParser commandLineParser = new CommandLineParser(this);
 		try {
 			commandLineParser.parseArgument(CommandLineParser.splitArguments(configuration));
-			this.addHook(this.hookFactory.getInstance(), MessengerHook.START_RECEPTION, MessengerHook.START_SEND);
+			this.hookEventTransmitter = EventTransmitterFactory.synchronous(this, this.hookFactory.getInstance(), MessengerHook.START_RECEPTION, MessengerHook.START_SEND);
 		} catch (Exception exception) {
 			throw new ConfigurationException(configuration, exception);
 		}

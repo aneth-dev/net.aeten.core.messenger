@@ -2,45 +2,39 @@ package org.pititom.core.messenger;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.kohsuke.args4j.Option;
 import org.pititom.core.args4j.CommandLineParser;
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.event.EventHandler;
-import org.pititom.core.messenger.extension.Messenger;
 
 /**
-*
-* @author Thomas Pérennou
-*/
-public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>> implements
-		EventHandler<Messenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>>, Configurable {
-	
+ *
+ * @author Thomas Pérennou
+ */
+public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>>  implements
+		EventHandler<AbstractMessenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>>, Configurable {
+
 	private static final Map<String, Object> MUTEX_MAP = new HashMap<String, Object>(1);
-	
 	@Option(name = "-n", aliases = "--name", required = true)
 	private String name;
-
 	@Option(name = "-ap", aliases = "--acknowledge-protocol", required = false)
 	private Class<? extends DefaultMessengerAcknowledgeProtocol<Message, Acknowledge>> acknowledgeProtocolClass;
-
 	@Option(name = "-apc", aliases = "--acknowledge-protocol-configuration", required = false)
+	
 	private String acknowledgeProtocolConfiguration;
-
 	private DefaultMessengerAcknowledgeProtocol<Message, Acknowledge> acknowledgeProtocol = null;
 	private Object acknowledgeMutex = new Object();
 	private boolean waitingForAcknowledgeBlocking = true;
 	private long waitingForAcknowledgeDeadLine = 0L;
-	
+
 	public DefaultMessengerHooks() {
 		return;
 	}
 
 	@Override
-	public void handleEvent(Messenger<Message, Acknowledge> source, MessengerHook event, MessengerHookData<Message, Acknowledge> data) {
+	public void handleEvent(AbstractMessenger<Message, Acknowledge> source, MessengerHook event, MessengerHookData<Message, Acknowledge> data) {
 		switch (event) {
 			case START_SEND:
 				this.sendHook(source, data);
@@ -50,8 +44,8 @@ public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>> impleme
 				break;
 		}
 	}
-	
-	private void sendHook(Messenger<Message, Acknowledge> source, MessengerHookData<Message, Acknowledge> data) {
+
+	private void sendHook(AbstractMessenger<Message, Acknowledge> source, MessengerHookData<Message, Acknowledge> data) {
 		long now;
 		try {
 			now = System.currentTimeMillis();
@@ -77,7 +71,7 @@ public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>> impleme
 					notificationEvent = success ? MessengerEvent.ACKNOWLEDGED : MessengerEvent.UNACKNOWLEDGED;
 				}
 
-				data.fireEvent(source, notificationEvent);
+				data.getEventTransmitter().transmit(notificationEvent, data.getCurrentEventData().clone());
 			}
 
 			data.getCurrentEventData().setSentMessage(data.getMessageToSend());
@@ -94,12 +88,11 @@ public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>> impleme
 			}
 
 		} catch (Exception exception) {
-			Logger.getLogger(AbstractMessenger.class.getName()).log(Level.SEVERE, null, exception);
+			source.error(exception);
 		}
 	}
-	
-	
-	private void startReception(Messenger<Message, Acknowledge> source, MessengerHookData<Message, Acknowledge> data) {
+
+	private void startReception(AbstractMessenger<Message, Acknowledge> source, MessengerHookData<Message, Acknowledge> data) {
 		try {
 
 			if (this.waitingForAcknowledgeDeadLine < System.currentTimeMillis()) {
@@ -116,7 +109,7 @@ public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>> impleme
 			}
 
 		} catch (Exception exception) {
-			Logger.getLogger(AbstractMessenger.class.getName()).log(Level.SEVERE, null, exception);
+			source.error(exception);
 		}
 	}
 
@@ -130,14 +123,13 @@ public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>> impleme
 				this.acknowledgeMutex = new Object();
 				MUTEX_MAP.put(this.name, this.acknowledgeMutex);
 			}
-			
+
 			this.acknowledgeProtocol = acknowledgeProtocolClass.newInstance();
 			if ((this.acknowledgeProtocolConfiguration != null) && this.acknowledgeProtocol instanceof Configurable) {
-				((Configurable)this.acknowledgeProtocol).configure(this.acknowledgeProtocolConfiguration);
+				((Configurable) this.acknowledgeProtocol).configure(this.acknowledgeProtocolConfiguration);
 			}
 		} catch (Exception exception) {
 			throw new ConfigurationException(configuration, exception);
 		}
 	}
-
 }

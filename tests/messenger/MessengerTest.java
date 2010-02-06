@@ -1,3 +1,5 @@
+import java.util.Calendar;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -6,7 +8,7 @@ import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.MessengerEventHandler;
 import org.pititom.core.messenger.extension.Messenger;
-import org.pititom.core.messenger.stream.contribution.StreamEditorMessenger;
+import org.pititom.core.messenger.stream.StreamEditorMessenger;
 
 /**
  * 
@@ -34,7 +36,7 @@ public class MessengerTest {
 					return;
 				}
 				if (eventData.getRecievedMessage().getAcknowledge() == null) {
-					messenger.emit(new AcknowledgeMessage(Acknowledge.INVALID_MESSAGE));
+					messenger.transmit(new AcknowledgeMessage(Acknowledge.INVALID_MESSAGE));
 					return;
 				}
 				switch (eventData.getRecievedMessage().getAcknowledge()) {
@@ -43,9 +45,9 @@ public class MessengerTest {
 						if (eventData.getRecievedMessage() instanceof Message) {
 							Message recievedMessage = (Message) eventData.getRecievedMessage();
 							if ((recievedMessage.getValue() < Message.MIN_VALUE) || (recievedMessage.getValue() > Message.MAX_VALUE)) {
-								messenger.emit(new AcknowledgeMessage(Acknowledge.INVALID_DATA));
+								messenger.transmit(new AcknowledgeMessage(Acknowledge.INVALID_DATA));
 							} else {
-								messenger.emit(new AcknowledgeMessage(Acknowledge.OK));
+								messenger.transmit(new AcknowledgeMessage(Acknowledge.OK));
 							}
 						}
 						break;
@@ -62,9 +64,10 @@ public class MessengerTest {
 				if ((event == MessengerEvent.RECIEVED) && (!(eventData.getRecievedMessage() instanceof AcknowledgeMessage))) {
 					return;
 				}
-				Logger.getLogger(AbstractMessenger.class.getName()).log(Level.INFO, "messenger={" + messenger + "}; event={" + event + "}; eventData={" + eventData + "}");
+				Date date = Calendar.getInstance().getTime();
+				System.out.println(date + " " + (date.getTime() % 1000) + " messenger={" + messenger + "}; event={" + event + "}; eventData={" + eventData + "}");
 			}
-		}, MessengerEvent.SENT, MessengerEvent.RECIEVED, MessengerEvent.ACKNOWLEDGED, MessengerEvent.UNACKNOWLEDGED);
+		}, MessengerEvent.SENT, MessengerEvent.RECIEVED, MessengerEvent.ACKNOWLEDGED, MessengerEvent.UNACKNOWLEDGED, MessengerEvent.ERROR);
 
 		if (!autoConnect) {
 			server.connect();
@@ -74,15 +77,14 @@ public class MessengerTest {
 		Message valid = new Message();
 		valid.setAcknowledge(Acknowledge.UNSOLLICITED_NEED_ACKNOWLEDGE);
 		valid.setValue(4);
-		client.emit(valid);
+		client.transmit(valid);
 
 		Message invalidData = new Message();
 		invalidData.setAcknowledge(Acknowledge.UNSOLLICITED_NEED_ACKNOWLEDGE);
 		invalidData.setValue(10);
-		client.emit(invalidData);
+		client.transmit(invalidData);
 
 		Message invalidDataMessage = new Message();
-		client.emit(invalidDataMessage);
-		
+		client.transmit(invalidDataMessage);
 	}
 }

@@ -7,7 +7,7 @@ import org.pititom.core.ContributionFactory;
 
 import org.pititom.core.stream.controller.StreamEditor;
 
-public class StreamEditorStack {
+class StreamEditorStack {
 	
 	private final List<ContributionFactory<StreamEditor>> stack = new ArrayList<ContributionFactory<StreamEditor>>();
 	

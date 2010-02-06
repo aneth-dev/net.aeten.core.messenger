@@ -1,21 +1,19 @@
-package org.pititom.core.messenger.stream.contribution;
+package org.pititom.core.messenger.stream;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.messenger.AbstractMessenger;
 
 /**
-*
-* @author Thomas Pérennou
-*/
-public class StreamMessenger<Message, Acknowledge extends Enum<?>> extends AbstractMessenger<Message, Acknowledge> {
+ *
+ * @author Thomas Pérennou
+ */
+public class StreamMessenger<Message, Acknowledge extends Enum<?>>  extends AbstractMessenger<Message, Acknowledge> {
 
 	private final ObjectOutputStream outputStream;
 	private final ObjectInputStream[] inputStreamList;
@@ -29,10 +27,11 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>> extends Abstr
 		this.inputStreamList = inputStreamList;
 
 		this.recieverList = new ArrayList<Reciever>(inputStreamList.length);
-		
+
 		this.connect();
 	}
 
+	@Override
 	protected void doConnect() throws IOException {
 		super.doConnect();
 		Reciever reciever;
@@ -43,6 +42,7 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>> extends Abstr
 		}
 	}
 
+	@Override
 	protected void doDisconnect() throws IOException {
 		super.doDisconnect();
 		for (ObjectInputStream inputStream : this.inputStreamList) {
@@ -52,6 +52,7 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>> extends Abstr
 	}
 
 	private class Reciever implements Runnable {
+
 		private final AbstractMessenger<Message, ? extends Enum<?>> messenger;
 		private final ObjectInputStream in;
 
@@ -62,36 +63,29 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>> extends Abstr
 
 		@Override
 		public void run() {
-			try {
-				while (this.messenger.isConnected()) {
-					Object bean;
-					try {
-						bean = this.in.readObject();
-						@SuppressWarnings("unchecked")
-						Message message = (Message) bean;
+			while (this.messenger.isConnected()) {
+				Object bean;
+				try {
+					bean = this.in.readObject();
+					@SuppressWarnings("unchecked")
+					Message message = (Message) bean;
 
-						StreamMessenger.this.doReception(message);
+					StreamMessenger.this.doRecieve(message);
 
-					} catch (ClassNotFoundException exception) {
-						Logger.getLogger(StreamMessenger.class.getName()).log(Level.SEVERE, null, exception);
-					} catch (ClassCastException exception) {
-						Logger.getLogger(StreamMessenger.class.getName()).log(Level.SEVERE, null, exception);
-					}
+				} catch (Exception exception) {
+					this.messenger.error(exception);
 				}
-			} catch (IOException exception) {
-				Logger.getLogger(StreamMessenger.class.getName()).log(Level.SEVERE, null, exception);
 			}
 		}
 	}
 
 	@Override
-	protected void sendMessage(Message message) {
+	protected void send(Message message) {
 		try {
 			this.outputStream.writeObject(message);
 			this.outputStream.flush();
 		} catch (IOException exception) {
-			Logger.getLogger(StreamMessenger.class.getName()).log(Level.SEVERE, null, exception);
+			this.error(exception);
 		}
 	}
-
 }

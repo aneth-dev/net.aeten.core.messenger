@@ -1,4 +1,4 @@
-package org.pititom.core.messenger.stream.contribution;
+package org.pititom.core.messenger.stream;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -16,8 +16,6 @@ import org.pititom.core.event.EventHandler;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.extension.Messenger;
-import org.pititom.core.messenger.stream.MessengerObjectInputStream;
-import org.pititom.core.messenger.stream.MessengerObjectOutputStream;
 import org.pititom.core.stream.controller.StreamControllerConnection;
 import org.pititom.core.stream.controller.StreamControllerConfiguration;
 
@@ -70,9 +68,9 @@ public class StreamEditorMessenger<Message, Acknowledge extends Enum<?>> impleme
 	}
 
 	@Override
-	public void emit(Message message) {
+	public void transmit(Message message) {
 		if (this.isConnected()) {
-			this.messenger.emit(message);
+			this.messenger.transmit(message);
 		}
 	}
 
