@@ -89,7 +89,7 @@ public class UdpIpInputStream extends PipedInputStream implements Configurable {
 			        + " is allreaady configured");
 		try {
 			this.parameters = new UdpIpParameters(configuration);
-			this.receptionThread = new Thread(new ReceptionThread());
+			this.receptionThread = new Thread(new ReceptionThread(), this.toString());
 			this.receptionThread.start();
 		} catch (Exception exception) {
 			throw new ConfigurationException(configuration, exception);

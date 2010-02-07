@@ -9,7 +9,7 @@ import java.util.Collection;
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.logging.LoggingData;
 import org.pititom.core.logging.LoggingEvent;
-import org.pititom.core.logging.LoggingTransmitter;
+import org.pititom.core.logging.LoggingForwarder;
 import org.pititom.core.messenger.AbstractMessenger;
 
 /**
@@ -41,7 +41,7 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>>  extends Abst
 		for (int i = 0; i < this.inputStreamList.length; i++) {
 			reciever = new Reciever(this, this.inputStreamList[i]);
 			this.recieverList.add(reciever);
-			new Thread(reciever).start();
+			new Thread(reciever, "Messenger \"" + this.getName() + "\" reciever").start();
 		}
 	}
 
@@ -76,7 +76,7 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>>  extends Abst
 					StreamMessenger.this.doRecieve(message);
 
 				} catch (Exception exception) {
-					LoggingTransmitter.getInstance().transmit(LoggingEvent.ERROR, new LoggingData(this.messenger, exception));
+					LoggingForwarder.getInstance().forward(this.messenger, LoggingEvent.ERROR, new LoggingData(exception));
 				}
 			}
 		}
@@ -88,7 +88,7 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>>  extends Abst
 			this.outputStream.writeObject(message);
 			this.outputStream.flush();
 		} catch (IOException exception) {
-			LoggingTransmitter.getInstance().transmit(LoggingEvent.ERROR, new LoggingData(this, exception));
+			LoggingForwarder.getInstance().forward(this, LoggingEvent.ERROR, new LoggingData(exception));
 		}
 	}
 }

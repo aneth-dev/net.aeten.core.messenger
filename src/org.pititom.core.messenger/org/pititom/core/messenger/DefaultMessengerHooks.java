@@ -7,17 +7,17 @@ import org.kohsuke.args4j.Option;
 import org.pititom.core.args4j.CommandLineParser;
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
-import org.pititom.core.event.EventHandler;
+import org.pititom.core.event.Handler;
 import org.pititom.core.logging.LoggingData;
 import org.pititom.core.logging.LoggingEvent;
-import org.pititom.core.logging.LoggingTransmitter;
+import org.pititom.core.logging.LoggingForwarder;
 
 /**
  *
  * @author Thomas Pérennou
  */
 public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>>  implements
-		EventHandler<AbstractMessenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>>, Configurable {
+		Handler<AbstractMessenger<Message, Acknowledge>, MessengerHook, MessengerHookData<Message, Acknowledge>>, Configurable {
 
 	private static final Map<String, Object> MUTEX_MAP = new HashMap<String, Object>(1);
 	@Option(name = "-n", aliases = "--name", required = true)
@@ -91,7 +91,7 @@ public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>>  implem
 			}
 
 		} catch (Exception exception) {
-			LoggingTransmitter.getInstance().transmit(LoggingEvent.ERROR, new LoggingData(source, exception));
+			LoggingForwarder.getInstance().forward(source, LoggingEvent.ERROR, new LoggingData(exception));
 		}
 	}
 
@@ -112,7 +112,7 @@ public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>>  implem
 			}
 
 		} catch (Exception exception) {
-			LoggingTransmitter.getInstance().transmit(LoggingEvent.ERROR, new LoggingData(source, exception));
+			LoggingForwarder.getInstance().forward(source, LoggingEvent.ERROR, new LoggingData(exception));
 		}
 	}
 

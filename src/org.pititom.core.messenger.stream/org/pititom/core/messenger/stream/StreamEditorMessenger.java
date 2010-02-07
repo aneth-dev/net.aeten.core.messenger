@@ -12,7 +12,7 @@ import java.util.Set;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.pititom.core.ConfigurationException;
-import org.pititom.core.event.EventHandler;
+import org.pititom.core.event.Handler;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.extension.Messenger;
@@ -31,7 +31,7 @@ public class StreamEditorMessenger<Message, Acknowledge extends Enum<?>> impleme
 	private final StreamControllerConfiguration emissionConfiguration;
 	private final StreamControllerConfiguration[] receptionConfigurationList;
 	private final StreamControllerConnection receptionConnectionList[];
-	private final Map<EventHandler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>, Set<MessengerEvent>> eventHandlers;
+	private final Map<Handler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>, Set<MessengerEvent>> eventHandlers;
 
 	private StreamControllerConnection emissionConnection;
 
@@ -48,7 +48,7 @@ public class StreamEditorMessenger<Message, Acknowledge extends Enum<?>> impleme
 		this.name = name;
 		this.hookConfiguration = hookConfiguration;
 
-		this.eventHandlers = new HashMap<EventHandler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>, Set<MessengerEvent>>();
+		this.eventHandlers = new HashMap<Handler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>, Set<MessengerEvent>>();
 
 		try {
 			this.emissionConfiguration = new StreamControllerConfiguration(emissionConfiguration);
@@ -80,7 +80,7 @@ public class StreamEditorMessenger<Message, Acknowledge extends Enum<?>> impleme
 	}
 
 	@Override
-	public void addEventHandler(EventHandler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventHandler, MessengerEvent... eventList) {
+	public void addEventHandler(Handler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventHandler, MessengerEvent... eventList) {
 		synchronized (this.eventHandlers) {
 			Set<MessengerEvent> set = this.eventHandlers.get(eventHandler);
 			if (set == null) {
@@ -97,7 +97,7 @@ public class StreamEditorMessenger<Message, Acknowledge extends Enum<?>> impleme
 	}
 
 	@Override
-	public void removeEventHandler(EventHandler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventHandler, MessengerEvent... eventList) {
+	public void removeEventHandler(Handler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventHandler, MessengerEvent... eventList) {
 		synchronized (this.eventHandlers) {
 			Set<MessengerEvent> set = this.eventHandlers.get(eventHandler);
 			if (set != null) {
@@ -137,7 +137,7 @@ public class StreamEditorMessenger<Message, Acknowledge extends Enum<?>> impleme
 
 			this.messenger = new StreamMessenger<Message, Acknowledge>(this.name, this.hookConfiguration, emissionStream, inputStreamList);
 			synchronized (this.eventHandlers) {
-				for (Map.Entry<EventHandler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>, Set<MessengerEvent>> eventEntry : this.eventHandlers.entrySet()) {
+				for (Map.Entry<Handler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>, Set<MessengerEvent>> eventEntry : this.eventHandlers.entrySet()) {
 					for (MessengerEvent event : eventEntry.getValue()) {
 						this.messenger.addEventHandler(eventEntry.getKey(), event);
 					}

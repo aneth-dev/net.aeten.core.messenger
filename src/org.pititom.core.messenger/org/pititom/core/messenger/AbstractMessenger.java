@@ -7,10 +7,11 @@ import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.Factory;
 import org.pititom.core.args4j.CommandLineParser;
-import org.pititom.core.event.EventHandler;
-import org.pititom.core.event.EventTransmitter;
-import org.pititom.core.event.EventTransmitterFactory;
-import org.pititom.core.event.RegisterableEventTransmitter;
+import org.pititom.core.event.Handler;
+import org.pititom.core.event.Transmitter;
+import org.pititom.core.event.TransmitterFactory;
+import org.pititom.core.event.RegisterableForwarder;
+import org.pititom.core.event.RegisterableTransmitter;
 import org.pititom.core.messenger.extension.Messenger;
 
 /**
@@ -24,11 +25,11 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>  i
 	@Option(name = "-h", aliases = "--hook", required = false)
 	private Factory<DefaultMessengerHooks<Message, Acknowledge>> hookFactory;
 	
-	private EventTransmitter<MessengerHook, MessengerHookData<Message, Acknowledge>> hookEventTransmitter;
+	private Transmitter<MessengerHook, MessengerHookData<Message, Acknowledge>> hookEventTransmitter;
 	private final MessengerEventData<Message, Acknowledge> currentEventData;
 	private final MessageTransmitter messageTransmitter;
-	private EventTransmitter<MessengerEvent, Message> internalEventTransmitter;
-	private RegisterableEventTransmitter<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventTransmitter;
+	private Transmitter<MessengerEvent, Message> internalEventTransmitter;
+	private RegisterableTransmitter<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventTransmitter;
 	private boolean connected;
 
 	public AbstractMessenger() {
@@ -40,7 +41,7 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>  i
 	public AbstractMessenger(String name, DefaultMessengerHooks<Message, Acknowledge> hook) {
 		this.name = name == null ? super.toString() : name;
 		if (hook != null) {
-			this.hookEventTransmitter = EventTransmitterFactory.synchronous(this, hook, MessengerHook.START_RECEPTION, MessengerHook.START_SEND);
+			this.hookEventTransmitter = TransmitterFactory.synchronous(this, hook, MessengerHook.START_RECEPTION, MessengerHook.START_SEND);
 		}
 		
 		this.currentEventData = new MessengerEventData<Message, Acknowledge>();
@@ -73,7 +74,7 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>  i
 	}
 
 	private class MessageTransmitter implements
-			EventHandler<Messenger<Message, Acknowledge>, MessengerEvent, Message> {
+			Handler<Messenger<Message, Acknowledge>, MessengerEvent, Message> {
 
 		@Override
 		public void handleEvent(Messenger<Message, Acknowledge> source, MessengerEvent event, Message message) {
@@ -110,20 +111,20 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>  i
 	}
 
 	@Override
-	public void addEventHandler(EventHandler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventHandler, MessengerEvent... eventList) {
+	public void addEventHandler(Handler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventHandler, MessengerEvent... eventList) {
 		this.eventTransmitter.addEventHandler(eventHandler, eventList);
 	}
 
 	@Override
-	public void removeEventHandler(EventHandler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventHandler, MessengerEvent... eventList) {
+	public void removeEventHandler(Handler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventHandler, MessengerEvent... eventList) {
 		this.eventTransmitter.removeEventHandler(eventHandler, eventList);
 	}
 
 	protected void doConnect() throws IOException {
-		this.internalEventTransmitter = EventTransmitterFactory.asynchronous(
+		this.internalEventTransmitter = TransmitterFactory.asynchronous(
 				"Messenger \"" + this.name + "\" internal event transmitter",
 				this, this.messageTransmitter, MessengerEvent.SEND);
-		this.eventTransmitter = EventTransmitterFactory.<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>asynchronous(
+		this.eventTransmitter = TransmitterFactory.<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>asynchronous(
 				"Messenger \"" + this.name + "\" event transmitter",
 				this);
 		this.connected = true;
@@ -161,7 +162,7 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>  i
 		CommandLineParser commandLineParser = new CommandLineParser(this);
 		try {
 			commandLineParser.parseArgument(CommandLineParser.splitArguments(configuration));
-			this.hookEventTransmitter = EventTransmitterFactory.synchronous(this, this.hookFactory.getInstance(), MessengerHook.START_RECEPTION, MessengerHook.START_SEND);
+			this.hookEventTransmitter = TransmitterFactory.synchronous(this, this.hookFactory.getInstance(), MessengerHook.START_RECEPTION, MessengerHook.START_SEND);
 		} catch (Exception exception) {
 			throw new ConfigurationException(configuration, exception);
 		}

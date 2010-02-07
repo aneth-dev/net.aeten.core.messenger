@@ -2,10 +2,10 @@ package org.pititom.core.test.messenger;
 
 import java.util.Calendar;
 import java.util.Date;
-import org.pititom.core.event.EventHandler;
+import org.pititom.core.event.Handler;
 import org.pititom.core.logging.LoggingData;
 import org.pititom.core.logging.LoggingEvent;
-import org.pititom.core.logging.LoggingTransmitter;
+import org.pititom.core.logging.LoggingForwarder;
 
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
@@ -30,14 +30,14 @@ public class MessengerTest {
 		final String reception = "--name reception --auto-connect "+ receptionInput + "\" --stream-editor org.pititom.core.test.messenger.MessengerDecoder " + editor;
 		final boolean autoConnect = true;
 
-		LoggingTransmitter.getInstance().addEventHandler(new EventHandler<Object, LoggingEvent, LoggingData>() {
+		LoggingForwarder.getInstance().addEventHandler(new Handler<Object, LoggingEvent, LoggingData>() {
 			@Override
 			public void handleEvent(Object source, LoggingEvent event, LoggingData data) {
 				/* Basic logging. Can be plugged to anyone logging tool
 				 * org.pititom.core.messenger.AbstractMessenger exceptions can be caught by this way
 				 */
 				Date date = Calendar.getInstance().getTime();
-				System.out.println(date + " " + (date.getTime() % 1000) + "ms " + event + " source={" + data.getSource() + "} " + data.getMessage() + ((data.getException() == null) ? "" : " : " + data.getException()));
+				System.out.println(date + " " + (date.getTime() % 1000) + "ms " + event + " source={" + source + "} " + data.getMessage() + ((data.getException() == null) ? "" : " : " + data.getException()));
 			}
 		}, LoggingEvent.values());
 
@@ -78,7 +78,7 @@ public class MessengerTest {
 				if ((event == MessengerEvent.RECIEVED) && (!(eventData.getRecievedMessage() instanceof AcknowledgeMessage))) {
 					return;
 				}
-				LoggingTransmitter.getInstance().transmit(LoggingEvent.INFO, new LoggingData(messenger, "event={" + event + "}; eventData={" + eventData + "}"));
+				LoggingForwarder.getInstance().forward(messenger, LoggingEvent.INFO, new LoggingData("event={" + event + "}; eventData={" + eventData + "}"));
 			}
 		}, MessengerEvent.SENT, MessengerEvent.RECIEVED, MessengerEvent.ACKNOWLEDGED, MessengerEvent.UNACKNOWLEDGED);
 
