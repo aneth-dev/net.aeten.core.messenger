@@ -7,17 +7,17 @@ import java.util.concurrent.LinkedBlockingQueue;
  *
  * @author Thomas Pérennou
  */
-class AsynchronousForwarder<Source, Event extends Enum<?>, Data> implements Forwarder<Source, Event, Data>, Runnable {
+class AsynchronousForwarder<Source, Event, Data> implements Forwarder<Source, Event, Data>, Runnable {
 
 	private final Forwarder<Source, Event, Data> forwarder;
-	private final BlockingQueue<EventEntry<Event, Data>> queue;
+	private final BlockingQueue<EventEntry<Source, Event, Data>> queue;
 	private final Thread eventTread;
 	private boolean isKilled;
 
 	public AsynchronousForwarder(String threadName, Forwarder<Source, Event, Data> forwarder) {
 		this.forwarder = forwarder;
 		this.eventTread = new Thread(this, threadName);
-		this.queue = new LinkedBlockingQueue<EventEntry<Event, Data>>();
+		this.queue = new LinkedBlockingQueue<EventEntry<Source, Event, Data>>();
 		this.eventTread.start();
 	}
 	public AsynchronousForwarder(String threadName, Handler<Source, Event, Data> eventHandler, Event... events) {
@@ -29,7 +29,7 @@ class AsynchronousForwarder<Source, Event extends Enum<?>, Data> implements Forw
 		this.queue.clear();
 		AsynchronousForwarder.this.isKilled = false;
 		try {
-			EventEntry<Event, Data> eventEntry;
+			EventEntry<Source, Event, Data> eventEntry;
 			while (!AsynchronousForwarder.this.isKilled) {
 				eventEntry = AsynchronousForwarder.this.queue.take();
 				this.forwarder.forward(eventEntry.getSource(), eventEntry.getEvent(), eventEntry.getData());
@@ -49,10 +49,10 @@ class AsynchronousForwarder<Source, Event extends Enum<?>, Data> implements Forw
 
 	@Override
 	public void forward(Source source, Event event, Data data) {
-		this.queue.add(new EventEntry<Event, Data>(source, event, data));
+		this.queue.add(new EventEntry<Source, Event, Data>(source, event, data));
 	}
 
-	class EventEntry<Event extends Enum<?>, Data> {
+	static class EventEntry<Source, Event, Data> {
 
 		private final Source source;
 		private final Event event;

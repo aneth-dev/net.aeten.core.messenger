@@ -15,7 +15,7 @@ import org.pititom.core.ConfigurationException;
 import org.pititom.core.event.Handler;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
-import org.pititom.core.messenger.extension.Messenger;
+import org.pititom.core.messenger.service.Messenger;
 import org.pititom.core.stream.editor.StreamControllerConnection;
 import org.pititom.core.stream.editor.StreamControllerConfiguration;
 

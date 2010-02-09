@@ -10,7 +10,7 @@ import org.pititom.core.logging.LoggingForwarder;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.MessengerEventHandler;
-import org.pititom.core.messenger.extension.Messenger;
+import org.pititom.core.messenger.service.Messenger;
 import org.pititom.core.messenger.stream.StreamEditorMessenger;
 
 /**

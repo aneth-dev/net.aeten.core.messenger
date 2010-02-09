@@ -10,7 +10,7 @@ import java.util.Set;
  *
  * @author Thomas Pérennou
  */
-class SynchronousForwarderMultiHandlers<Source, Event extends Enum<?>, Data> implements RegisterableForwarder<Source, Event, Data> {
+class SynchronousForwarderMultiHandlers<Source, Event, Data> implements RegisterableForwarder<Source, Event, Data> {
 	
 	private final Map<Event, Set<Handler<Source, Event, Data>>> eventHandlerMap;
 

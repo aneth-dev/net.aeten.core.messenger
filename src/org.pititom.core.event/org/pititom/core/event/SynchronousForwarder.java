@@ -4,7 +4,7 @@ package org.pititom.core.event;
  *
  * @author Thomas Pérennou
  */
-class SynchronousForwarder<Source, Event extends Enum<?>, Data> implements Forwarder<Source, Event, Data> {
+class SynchronousForwarder<Source, Event, Data> implements Forwarder<Source, Event, Data> {
 
 	private final Handler<Source, Event, Data> eventHandler;
 	private final Event[] events;

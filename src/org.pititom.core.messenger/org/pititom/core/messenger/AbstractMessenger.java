@@ -8,11 +8,10 @@ import org.pititom.core.ConfigurationException;
 import org.pititom.core.Factory;
 import org.pititom.core.args4j.CommandLineParser;
 import org.pititom.core.event.Handler;
+import org.pititom.core.event.RegisterableTransmitter;
 import org.pititom.core.event.Transmitter;
 import org.pititom.core.event.TransmitterFactory;
-import org.pititom.core.event.RegisterableForwarder;
-import org.pititom.core.event.RegisterableTransmitter;
-import org.pititom.core.messenger.extension.Messenger;
+import org.pititom.core.messenger.service.Messenger;
 
 /**
  *

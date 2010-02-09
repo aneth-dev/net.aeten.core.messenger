@@ -1,7 +1,7 @@
 package org.pititom.core.messenger;
 
 import org.pititom.core.event.Handler;
-import org.pititom.core.messenger.extension.Messenger;
+import org.pititom.core.messenger.service.Messenger;
 
 /**
  *

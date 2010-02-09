@@ -4,7 +4,7 @@ package org.pititom.core.event;
  *
  * @author Thomas Pérennou
  */
-class SynchronousTransmitterMultiHandlers<Source, Event extends Enum<?>, Data> implements RegisterableTransmitter<Source, Event, Data> {
+class SynchronousTransmitterMultiHandlers<Source, Event, Data> implements RegisterableTransmitter<Source, Event, Data> {
 
 	private final Source source;
 	private final SynchronousForwarderMultiHandlers<Source, Event, Data> forwarder;

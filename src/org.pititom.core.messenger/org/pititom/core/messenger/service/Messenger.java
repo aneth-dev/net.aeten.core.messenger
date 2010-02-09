@@ -1,4 +1,4 @@
-package org.pititom.core.messenger.extension;
+package org.pititom.core.messenger.service;
 
 import org.pititom.core.Connection;
 import org.pititom.core.event.HandlerRegister;

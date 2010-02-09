@@ -4,7 +4,7 @@ package org.pititom.core.event;
  *
  * @author Thomas Pérennou
  */
-class AsynchronousTransmitter<Source, Event extends Enum<?>, Data> implements Transmitter<Event, Data> {
+class AsynchronousTransmitter<Source, Event, Data> implements Transmitter<Event, Data> {
 
 	private final Source source;
 	private final AsynchronousForwarder<Source, Event, Data> forwarder;

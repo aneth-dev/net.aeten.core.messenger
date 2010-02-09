@@ -4,7 +4,7 @@ package org.pititom.core.event;
  *
  * @author Thomas Pérennou
  */
-class AsynchronousForwarderMultiHandlers<Source, Event extends Enum<?>, Data> extends AsynchronousForwarder<Source, Event, Data> implements RegisterableForwarder<Source, Event, Data> {
+class AsynchronousForwarderMultiHandlers<Source, Event, Data> extends AsynchronousForwarder<Source, Event, Data> implements RegisterableForwarder<Source, Event, Data> {
 
 	private final RegisterableForwarder<Source, Event, Data> forwarder;
 
@@ -13,7 +13,7 @@ class AsynchronousForwarderMultiHandlers<Source, Event extends Enum<?>, Data> ex
 		this.forwarder = forwarder;
 	}
 	public AsynchronousForwarderMultiHandlers(String threadName) {
-		this(threadName, new SynchronousForwarderMultiHandlers());
+		this(threadName, new SynchronousForwarderMultiHandlers<Source, Event, Data>());
 	}
 
 	@Override
