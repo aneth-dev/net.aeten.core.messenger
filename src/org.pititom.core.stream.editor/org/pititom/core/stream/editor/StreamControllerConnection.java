@@ -11,7 +11,7 @@ import org.pititom.core.Connection;
 import org.pititom.core.Factory;
 
 /**
- *
+ * 
  * @author Thomas Pérennou
  */
 public class StreamControllerConnection implements Connection {
@@ -22,47 +22,39 @@ public class StreamControllerConnection implements Connection {
 	private StreamEditorController[] controllerStack;
 	private boolean isConnected;
 
-	public StreamControllerConnection(final InputStream input,
-			final OutputStream output, final StreamEditor... editorStack) {
+	public StreamControllerConnection(final InputStream input, final OutputStream output, final StreamEditor... editorStack) {
 		this.input = input;
 		this.output = output;
 		this.editorStack = editorStack;
 	}
 
-	public StreamControllerConnection(
-			final StreamControllerConfiguration configuration,
-			final InputStream input, final OutputStream output)
-			throws ConfigurationException {
+	public StreamControllerConnection(final StreamControllerConfiguration configuration, final InputStream input, final OutputStream output) throws ConfigurationException {
 		this(configuration);
 		this.input = input;
 		this.output = output;
 	}
 
-	public StreamControllerConnection(
-			final StreamControllerConfiguration configuration,
-			final InputStream input) throws ConfigurationException {
+	public StreamControllerConnection(final StreamControllerConfiguration configuration, final InputStream input) throws ConfigurationException {
 		this(configuration);
 		this.input = input;
 	}
 
-	public StreamControllerConnection(
-			final StreamControllerConfiguration configuration,
-			final OutputStream output) throws ConfigurationException {
+	public StreamControllerConnection(final StreamControllerConfiguration configuration, final OutputStream output) throws ConfigurationException {
 		this(configuration);
 		this.output = output;
 	}
 
-	public StreamControllerConnection(
-			final StreamControllerConfiguration configuration)
-			throws ConfigurationException {
+	public StreamControllerConnection(final StreamControllerConfiguration configuration) throws ConfigurationException {
 
-		this.input = configuration.getInputStreamFactory().getInstance();
-		this.output = configuration.getOutputStreamFactory().getInstance();
+		this.input = configuration.getInputStream();
+		this.output = configuration.getOutputStream();
 
-		this.editorStack = new StreamEditor[configuration.getEditorStack().getStack().size()];
-		int index = 0;
-		for (Factory<? extends StreamEditor> editorFactory : configuration.getEditorStack().getStack()) {
-			this.editorStack[index++] = editorFactory.getInstance();
+		this.editorStack = new StreamEditor[(configuration.getEditorStack() == null) ? 0 : configuration.getEditorStack().getStack().size()];
+		if (this.editorStack.length > 0) {
+			int index = 0;
+			for (Factory<? extends StreamEditor> editorFactory : configuration.getEditorStack().getStack()) {
+				this.editorStack[index++] = editorFactory.getInstance();
+			}
 		}
 	}
 
@@ -80,10 +72,7 @@ public class StreamControllerConnection implements Connection {
 			if (i < this.editorStack.length - 1) {
 				pipedOutputStream = new PipedOutputStream();
 			}
-			this.controllerStack[i] = new StreamEditorController(
-					(i == 0) ? this.input : pipedInputStream,
-					(i == this.editorStack.length - 1) ? this.output
-					: pipedOutputStream, this.editorStack[i]);
+			this.controllerStack[i] = new StreamEditorController((i == 0) ? this.input : pipedInputStream, (i == this.editorStack.length - 1) ? this.output : pipedOutputStream, this.editorStack[i]);
 			if (i < this.editorStack.length - 1) {
 				pipedInputStream = new PipedInputStream(pipedOutputStream);
 			}

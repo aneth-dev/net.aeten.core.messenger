@@ -20,9 +20,9 @@ import org.pititom.core.stream.editor.StreamControllerConnection;
 import org.pititom.core.stream.editor.StreamControllerConfiguration;
 
 /**
-*
-* @author Thomas Pérennou
-*/
+ * 
+ * @author Thomas Pérennou
+ */
 public class StreamEditorMessenger<Message, Acknowledge extends Enum<?>> implements
 		Messenger<Message, Acknowledge> {
 
@@ -121,20 +121,28 @@ public class StreamEditorMessenger<Message, Acknowledge extends Enum<?>> impleme
 		}
 		try {
 			final ObjectInputStream[] inputStreamList = new ObjectInputStream[this.receptionConfigurationList.length];
-			PipedOutputStream pipedOut;
 			for (int i = 0; i < this.receptionConfigurationList.length; i++) {
-				pipedOut = new PipedOutputStream();
-				this.receptionConnectionList[i] = new StreamControllerConnection(this.receptionConfigurationList[i], pipedOut);
-				inputStreamList[i] = new MessengerObjectInputStream(new PipedInputStream(pipedOut));
+				if ((this.receptionConfigurationList[i].getEditorStack() == null) && (this.receptionConfigurationList[i].getInputStream() instanceof ObjectInputStream)) {
+					inputStreamList[i] = (ObjectInputStream) this.receptionConfigurationList[i].getInputStream();
+				} else {
+					PipedOutputStream pipedOut = new PipedOutputStream();
+					this.receptionConnectionList[i] = new StreamControllerConnection(this.receptionConfigurationList[i], pipedOut);
+					inputStreamList[i] = new MessengerObjectInputStream(new PipedInputStream(pipedOut));
 
-				this.receptionConnectionList[i].connect();
+					this.receptionConnectionList[i].connect();
+				}
 			}
 
-			final PipedInputStream pipedIn = new PipedInputStream();
-			this.emissionConnection = new StreamControllerConnection(this.emissionConfiguration, pipedIn);
-			ObjectOutputStream emissionStream = new MessengerObjectOutputStream(new PipedOutputStream(pipedIn));
-			this.emissionConnection.connect();
+			ObjectOutputStream emissionStream;
+			if ((this.emissionConfiguration.getEditorStack() == null) && (this.emissionConfiguration.getOutputStream() instanceof ObjectOutputStream)) {
+				emissionStream = (ObjectOutputStream) this.emissionConfiguration.getOutputStream();
+			} else {
+				final PipedInputStream pipedIn = new PipedInputStream();
+				this.emissionConnection = new StreamControllerConnection(this.emissionConfiguration, pipedIn);
+				emissionStream = new MessengerObjectOutputStream(new PipedOutputStream(pipedIn));
+				this.emissionConnection.connect();
 
+			}
 			this.messenger = new StreamMessenger<Message, Acknowledge>(this.name, this.hookConfiguration, emissionStream, inputStreamList);
 			synchronized (this.eventHandlers) {
 				for (Map.Entry<Handler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>, Set<MessengerEvent>> eventEntry : this.eventHandlers.entrySet()) {

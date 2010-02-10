@@ -1,5 +1,7 @@
 package org.pititom.core.args4j;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.LinkedList;
@@ -21,6 +23,10 @@ public class CommandLineParser extends CmdLineParser {
 		        InetSocketAddressOptionHandler.class);
 		registerHandler(Factory.class,
 		        FactoryOptionHandler.class);
+		registerHandler(OutputStream.class,
+				OutputStreamOptionHandler.class);
+		registerHandler(InputStream.class,
+				InputStreamOptionHandler.class);
 	}
 
 	public CommandLineParser(Object bean) {

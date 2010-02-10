@@ -30,6 +30,7 @@ public class FactoryOptionHandler extends OptionHandler<Factory<?>> {
 		try {
 			if (CONFIGURATION_OPTION_NAME.equals(params.getParameter(1)) || contains(params.getParameter(1), CONFIGURATION_OPTION_ALIASES)) {
 				configuration = params.getParameter(2);
+				configuration = configuration.replaceAll("\\\\\"", "\"");
 			} else {
 				configuration = null;
 			}
@@ -48,7 +49,7 @@ public class FactoryOptionHandler extends OptionHandler<Factory<?>> {
 
 	@Override
 	public String getDefaultMetaVariable() {
-		return "CONTRIBUTION";
+		return "OUTPUT_STREAM";
 	}
 
 	private static boolean contains(String element, String[] list) {

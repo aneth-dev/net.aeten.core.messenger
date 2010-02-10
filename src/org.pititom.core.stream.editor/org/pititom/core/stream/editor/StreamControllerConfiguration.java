@@ -5,6 +5,7 @@ import java.io.OutputStream;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.Option;
+import org.pititom.core.ConfigurationException;
 import org.pititom.core.Factory;
 import org.pititom.core.args4j.CommandLineParser;
 
@@ -19,10 +20,10 @@ public class StreamControllerConfiguration {
 	@Option(name = "-c", aliases = "--auto-connect", required = false)
 	private boolean isAutoConnect = true;
 	@Option(name = "-is", aliases = "--input-stream", required = false)
-	private Factory<? extends InputStream> inputStreamFactory = new Factory.Null<InputStream>();
+	private InputStream inputStream = null;
 	@Option(name = "-os", aliases = "--output-stream", required = false)
-	private Factory<? extends OutputStream> outputStreamFactory = new Factory.Null<OutputStream>();
-	@Option(name = "-se", aliases = "--stream-editor", required = true)
+	private OutputStream outputStream = null;
+	@Option(name = "-se", aliases = "--stream-editor", required = false)
 	private StreamEditorStack editorStack;
 
 	public StreamControllerConfiguration(String... arguments)
@@ -37,12 +38,12 @@ public class StreamControllerConfiguration {
 			Class<? extends InputStream> inputStreamClass,
 			String inputStreamConfiguration,
 			Class<? extends OutputStream> outputStreamClass,
-			String outputStreamConfiguration, StreamEditorStack editorStack) {
+			String outputStreamConfiguration, StreamEditorStack editorStack) throws ConfigurationException {
 		super();
 		this.name = name;
 		this.isAutoConnect = isAutoConnect;
-		this.inputStreamFactory = new Factory<InputStream>(inputStreamClass, inputStreamConfiguration);
-		this.outputStreamFactory = new Factory<OutputStream>(outputStreamClass, outputStreamConfiguration);
+		this.inputStream = new Factory<InputStream>(inputStreamClass, inputStreamConfiguration).getInstance();
+		this.outputStream = new Factory<OutputStream>(outputStreamClass, outputStreamConfiguration).getInstance();
 		this.editorStack = editorStack;
 	}
 
@@ -63,11 +64,11 @@ public class StreamControllerConfiguration {
 		return editorStack;
 	}
 
-	public Factory<? extends InputStream> getInputStreamFactory() {
-		return inputStreamFactory;
+	public InputStream getInputStream() {
+		return inputStream;
 	}
 
-	public Factory<? extends OutputStream> getOutputStreamFactory() {
-		return outputStreamFactory;
+	public OutputStream getOutputStream() {
+		return outputStream;
 	}
 }

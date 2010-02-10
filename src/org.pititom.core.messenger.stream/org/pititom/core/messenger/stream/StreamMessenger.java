@@ -1,12 +1,17 @@
 package org.pititom.core.messenger.stream;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
+import org.kohsuke.args4j.Option;
 import org.pititom.core.ConfigurationException;
+import org.pititom.core.args4j.CommandLineParser;
 import org.pititom.core.logging.LoggingData;
 import org.pititom.core.logging.LoggingEvent;
 import org.pititom.core.logging.LoggingForwarder;
@@ -18,28 +23,35 @@ import org.pititom.core.messenger.AbstractMessenger;
  */
 public class StreamMessenger<Message, Acknowledge extends Enum<?>>  extends AbstractMessenger<Message, Acknowledge> {
 
-	private final ObjectOutputStream outputStream;
-	private final ObjectInputStream[] inputStreamList;
+	@Option(name = "-is", aliases = "--input-stream", required = false)
+	private List<InputStream> inputStreamList = null;
+	@Option(name = "-os", aliases = "--output-stream", required = false)
+	private OutputStream outputStream = null;
+	
+	private ObjectOutputStream objectOutputStream;
+	private ObjectInputStream[] objectInputStreamList;
 	private final Collection<Reciever> recieverList;
 
 	public StreamMessenger(String name, String hookConfiguration, ObjectOutputStream outputStream, ObjectInputStream... inputStreamList) throws ConfigurationException, IOException {
 		super(name);
-		this.configure(hookConfiguration);
+		super.configure(hookConfiguration);
 
-		this.outputStream = outputStream;
-		this.inputStreamList = inputStreamList;
+		this.objectOutputStream = outputStream;
+		this.objectInputStreamList = inputStreamList;
 
 		this.recieverList = new ArrayList<Reciever>(inputStreamList.length);
 
 		this.connect();
 	}
-
+	public StreamMessenger() {
+		this.recieverList = new ArrayList<Reciever>();
+	}
 	@Override
 	protected void doConnect() throws IOException {
 		super.doConnect();
 		Reciever reciever;
-		for (int i = 0; i < this.inputStreamList.length; i++) {
-			reciever = new Reciever(this, this.inputStreamList[i]);
+		for (int i = 0; i < this.objectInputStreamList.length; i++) {
+			reciever = new Reciever(this, this.objectInputStreamList[i]);
 			this.recieverList.add(reciever);
 			new Thread(reciever, "Messenger \"" + this.getName() + "\" reciever").start();
 		}
@@ -48,10 +60,10 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>>  extends Abst
 	@Override
 	protected void doDisconnect() throws IOException {
 		super.doDisconnect();
-		for (ObjectInputStream inputStream : this.inputStreamList) {
+		for (ObjectInputStream inputStream : this.objectInputStreamList) {
 			inputStream.close();
 		}
-		this.outputStream.close();
+		this.objectOutputStream.close();
 	}
 
 	private class Reciever implements Runnable {
@@ -85,10 +97,32 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>>  extends Abst
 	@Override
 	protected void send(Message message) {
 		try {
-			this.outputStream.writeObject(message);
-			this.outputStream.flush();
+			this.objectOutputStream.writeObject(message);
+			this.objectOutputStream.flush();
 		} catch (IOException exception) {
 			LoggingForwarder.getInstance().forward(this, LoggingEvent.ERROR, new LoggingData(exception));
 		}
 	}
+	
+	@Override
+	public void configure(String configuration) throws ConfigurationException {
+		if (this.getName() != null) {
+			throw new ConfigurationException(configuration, "Messenger \"" + this.getName() + "\" is allready configured");
+		}
+		CommandLineParser commandLineParser = new CommandLineParser(this);
+		try {
+			commandLineParser.parseArgument(CommandLineParser.splitArguments(configuration));
+			this.objectOutputStream = (ObjectOutputStream)outputStream;
+			if (this.inputStreamList != null) {
+				this.objectInputStreamList = new ObjectInputStream[this.inputStreamList.size()];
+				for (int i=0; i<this.inputStreamList.size(); i++) {
+					this.objectInputStreamList[i] = (ObjectInputStream)inputStreamList.get(i);
+				}
+			}
+			this.connect();
+		} catch (Exception exception) {
+			throw new ConfigurationException(configuration, exception);
+		}
+	}
+
 }

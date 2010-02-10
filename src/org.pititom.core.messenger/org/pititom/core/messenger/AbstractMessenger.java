@@ -32,7 +32,13 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>  i
 	private boolean connected;
 
 	public AbstractMessenger() {
-		this(null, null);
+		this.name = null;
+		
+		this.currentEventData = new MessengerEventData<Message, Acknowledge>();
+		this.messageTransmitter = new MessageTransmitter();
+
+		this.eventTransmitter = null;
+		this.internalEventTransmitter = null;
 	}
 	public AbstractMessenger(String name) {
 		this(name, null);
@@ -120,6 +126,11 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>  i
 	}
 
 	protected void doConnect() throws IOException {
+		try {
+			this.hookEventTransmitter = TransmitterFactory.synchronous(this, this.hookFactory.getInstance(), MessengerHook.START_RECEPTION, MessengerHook.START_SEND);
+		} catch (ConfigurationException exception) {
+			throw new IOException(exception);
+		}
 		this.internalEventTransmitter = TransmitterFactory.asynchronous(
 				"Messenger \"" + this.name + "\" internal event transmitter",
 				this, this.messageTransmitter, MessengerEvent.SEND);
@@ -161,7 +172,6 @@ public abstract class AbstractMessenger<Message, Acknowledge extends Enum<?>>  i
 		CommandLineParser commandLineParser = new CommandLineParser(this);
 		try {
 			commandLineParser.parseArgument(CommandLineParser.splitArguments(configuration));
-			this.hookEventTransmitter = TransmitterFactory.synchronous(this, this.hookFactory.getInstance(), MessengerHook.START_RECEPTION, MessengerHook.START_SEND);
 		} catch (Exception exception) {
 			throw new ConfigurationException(configuration, exception);
 		}

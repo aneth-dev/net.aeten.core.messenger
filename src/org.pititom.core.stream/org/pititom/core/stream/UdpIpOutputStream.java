@@ -48,6 +48,7 @@ public class UdpIpOutputStream extends OutputStream implements Configurable {
 			this.write(data[i]);
 	}
 
+	@Override
 	public void flush() throws IOException {
 		this.parameters.getSocket().send(
 		        new DatagramPacket(this.buffer.array(), this.buffer.position(),
@@ -55,6 +56,7 @@ public class UdpIpOutputStream extends OutputStream implements Configurable {
 		this.buffer.clear();
 	}
 
+	@Override
 	public void close() throws IOException {
 		this.parameters.getSocket().close();
 	}
