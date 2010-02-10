@@ -85,7 +85,7 @@ public class InputStreamOptionHandler extends OptionHandler<InputStream> {
 
 	@Override
 	public String getDefaultMetaVariable() {
-		return "EDITOR_STACK";
+		return "INPUT_STREAM";
 	}
 
 	private static boolean contains(String element, String[] list) {

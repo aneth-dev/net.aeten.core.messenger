@@ -49,7 +49,7 @@ public class FactoryOptionHandler extends OptionHandler<Factory<?>> {
 
 	@Override
 	public String getDefaultMetaVariable() {
-		return "OUTPUT_STREAM";
+		return "FACTORY";
 	}
 
 	private static boolean contains(String element, String[] list) {

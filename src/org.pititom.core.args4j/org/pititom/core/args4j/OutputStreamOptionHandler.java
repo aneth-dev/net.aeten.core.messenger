@@ -85,7 +85,7 @@ public class OutputStreamOptionHandler extends OptionHandler<OutputStream> {
 
 	@Override
 	public String getDefaultMetaVariable() {
-		return "EDITOR_STACK";
+		return "OUTPUT_STREAM";
 	}
 
 	private static boolean contains(String element, String[] list) {
