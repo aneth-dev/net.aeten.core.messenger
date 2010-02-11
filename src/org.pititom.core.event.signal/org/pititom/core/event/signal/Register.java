@@ -8,15 +8,13 @@ import java.util.Map;
 import org.pititom.core.Service;
 import org.pititom.core.event.signal.service.Slot;
 
-@SuppressWarnings("unchecked")
 class Register {
 	public static final Map<Object, Collection<Slot<Object, Event<?>, Object>>> SLOTS_MAP;
 
 	static {
 		SLOTS_MAP = new HashMap<Object, Collection<Slot<Object, Event<?>, Object>>>();
 
-		Collection<Slot> slots = Service.getProviders(Slot.class);
-		for (Slot<Object, Event<?>, Object> slot : slots) {
+		for (Slot<Object, Event<?>, Object> slot : Service.getProviders(Slot.class)) {
 			for (Event<?> event : slot.getEvents()) {
 				Register.addEvent(event);
 			}

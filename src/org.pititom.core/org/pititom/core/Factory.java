@@ -30,7 +30,7 @@ public class Factory<T> {
 		return this.bean;
 	}
 	
-	public static class Null<T> extends Factory<T> {
+	public static final class Null<T> extends Factory<T> {
 
 		public Null() {
 			super(null, null);
