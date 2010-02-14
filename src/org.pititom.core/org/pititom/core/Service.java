@@ -15,11 +15,20 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.jar.JarEntry;
 
+<<<<<<< HEAD:src/org.pititom.core/org/pititom/core/Service.java
+=======
+import org.pititom.core.event.Default;
+import org.pititom.core.event.Handler;
+import org.pititom.core.event.Transmitter;
+import org.pititom.core.event.TransmitterFactory;
+
+>>>>>>> 9b73eb501070e29128831137d20b5558c8631ae2:src/org.pititom.core/org/pititom/core/Service.java
 /**
  * <p>
  * This service manager is based on package naming convention :
  * <li>Services interfaces must be located in package named *.service</li>
  * <li>Providers classes must be located in package named *.provider</li>
+<<<<<<< HEAD:src/org.pititom.core/org/pititom/core/Service.java
  * </p>
  * <p>
  * It is also able to load providers throw java.util.ServiceLoader.
@@ -27,6 +36,15 @@ import java.util.jar.JarEntry;
  * 
  * Root search package must be registered like : <blockquote>
  * 
+=======
+ * </p>
+ * <p>
+ * It is also able to load providers throw java.util.ServiceLoader.
+ * </p>
+ * 
+ * Root search package must be registered like : <blockquote>
+ * 
+>>>>>>> 9b73eb501070e29128831137d20b5558c8631ae2:src/org.pititom.core/org/pititom/core/Service.java
  * <pre>
  * Service.registerRootPackage(&quot;org.pititom.core&quot;);
  * </pre>
@@ -119,6 +137,7 @@ public class Service {
 		return providers;
 	}
 
+<<<<<<< HEAD:src/org.pititom.core/org/pititom/core/Service.java
 	private static enum ResourceType {
 		SERVICE,
 		PROVIDER;
@@ -142,9 +161,42 @@ public class Service {
 					} catch (Exception exception) {
 						// TODO Auto-generated catch block
 						exception.printStackTrace();
+=======
+	private static void loadServicesFromJar(String rootPackage, URL resource) {
+		parseJarFileEntries(rootPackage, resource, "service", new Handler<Default, Default, String>() {
+			@Override
+			public void handleEvent(Default source, Default event, String entryName) {
+				try {
+					services.put(Class.forName(entryName.replace('/', '.').substring(0, entryName.length() - 6)), new ArrayList<Class<?>>());
+				} catch (ClassNotFoundException exception) {
+					// TODO Auto-generated catch block
+					exception.printStackTrace();
+				}
+			}
+		});
+	}
+
+	private static void loadProvidersFromJar(String rootPackage, URL resource) {
+
+		parseJarFileEntries(rootPackage, resource, "provider", new Handler<Default, Default, String>() {
+			@Override
+			public void handleEvent(Default source, Default event, String entryName) {
+				try {
+					Class<?> provider = Class.forName(entryName.replace('/', '.').substring(0, entryName.length() - 6));
+					for (Map.Entry<Class<?>, Collection<Class<?>>> service : services.entrySet()) {
+						if (service.getKey().isAssignableFrom(provider)) {
+							try {
+								service.getValue().add(provider);
+							} catch (Exception exception) {
+								// TODO Auto-generated catch block
+								exception.printStackTrace();
+							}
+						}
+>>>>>>> 9b73eb501070e29128831137d20b5558c8631ae2:src/org.pititom.core/org/pititom/core/Service.java
 					}
 				}
 			}
+<<<<<<< HEAD:src/org.pititom.core/org/pititom/core/Service.java
 		} catch (ClassNotFoundException exception) {
 			// TODO Auto-generated catch block
 			exception.printStackTrace();
@@ -161,12 +213,20 @@ public class Service {
 	}
 
 	private static void loadFromJarFileEntries(String rootPackage, URL resource, ResourceType resourceType) {
+=======
+		});
+	}
+
+	private static void parseJarFileEntries(String rootPackage, URL resource, String directory, Handler<Default, Default, String> handler) {
+		Transmitter<Default, String> transmitter = TransmitterFactory.synchronous(handler);
+>>>>>>> 9b73eb501070e29128831137d20b5558c8631ae2:src/org.pititom.core/org/pititom/core/Service.java
 		String rootDirectory = rootPackage.replace('.', '/');
 		try {
 			JarURLConnection jarConnection = (JarURLConnection) resource.openConnection();
 			Enumeration<JarEntry> entries = jarConnection.getJarFile().entries();
 			while (entries.hasMoreElements()) {
 				JarEntry entry = entries.nextElement();
+<<<<<<< HEAD:src/org.pititom.core/org/pititom/core/Service.java
 				if (!entry.isDirectory() && entry.getName().matches(rootDirectory + "((/.+/)|/)" + resourceType.getDirectory() + "/[^/^$]+\\.class$")) {
 					switch (resourceType) {
 						case PROVIDER:
@@ -176,6 +236,10 @@ public class Service {
 							loadServicesFromJarEntry(entry.getName());
 							break;
 					}
+=======
+				if (!entry.isDirectory() && entry.getName().matches(rootDirectory + "((/.+/)|/)" + directory + "/[^/^$]+\\.class$")) {
+					transmitter.transmit(Default.ANONYMOUS_SOURCE, entry.getName());
+>>>>>>> 9b73eb501070e29128831137d20b5558c8631ae2:src/org.pititom.core/org/pititom/core/Service.java
 				}
 			}
 		} catch (IOException exception) {
