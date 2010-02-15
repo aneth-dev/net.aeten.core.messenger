@@ -15,21 +15,23 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.jar.JarEntry;
 
-import org.pititom.core.event.Handler;
-import org.pititom.core.event.Transmitter;
-import org.pititom.core.event.TransmitterFactory;
-
 /**
- * <p>This service manager is based on package naming convension :
- *  <li>Services interfaces must be located in package named *.service</li>
- *  <li>Providers classes must be located in package named *.provider</li>
+ * <p>
+ * This service manager is based on package naming convention :
+ * <li>Services interfaces must be located in package named *.service</li>
+ * <li>Providers classes must be located in package named *.provider</li>
  * </p>
- * <p>It is also able to load providers throw java.util.ServiceLoader.</p>
+ * <p>
+ * It is also able to load providers throw java.util.ServiceLoader.
+ * </p>
  * 
- * Root search package must be registered like :
- * <blockquote><pre>
- * Service.registerRootPackage("org.pititom.core");
- * </pre></blockquote>
+ * Root search package must be registered like : <blockquote>
+ * 
+ * <pre>
+ * Service.registerRootPackage(&quot;org.pititom.core&quot;);
+ * </pre>
+ * 
+ * </blockquote> Witch is already done.
  * 
  * @author Thomas Pérennou
  */
@@ -41,11 +43,12 @@ public class Service {
 	static {
 		registerRootPackage("org.pititom.core");
 	}
-	
+
 	/**
 	 * Register root search package
+	 * 
 	 * @param rootPackageName
-	 * 		the root package name
+	 *            the root package name
 	 */
 	public static void registerRootPackage(String rootPackageName) {
 
@@ -54,7 +57,7 @@ public class Service {
 			while (urls.hasMoreElements()) {
 				URL resource = urls.nextElement();
 				if (resource.toString().startsWith("jar:")) {
-					loadServicesFromJar(rootPackageName, resource);
+					loadFromJarFileEntries(rootPackageName, resource, ResourceType.SERVICE);
 				} else {
 					loadServicesFromDirectory(rootPackageName, resource);
 				}
@@ -64,7 +67,7 @@ public class Service {
 			while (urls.hasMoreElements()) {
 				URL resource = urls.nextElement();
 				if (resource.toString().startsWith("jar:")) {
-					loadProvidersFromJar(rootPackageName, resource);
+					loadFromJarFileEntries(rootPackageName, resource, ResourceType.PROVIDER);
 				} else {
 					loadProvidersFromDirectory(rootPackageName, resource);
 				}
@@ -79,30 +82,35 @@ public class Service {
 	/**
 	 * @return The registered services
 	 */
-	public static Collection<Class<?>> getServices() {
+	public static Iterable<Class<?>> getServices() {
 		return services.keySet();
 	}
 
 	/**
 	 * @return The registered providers for a given service.
-	 * @param service the provided service
+	 * @param service
+	 *            the provided service
 	 */
 	@SuppressWarnings("unchecked")
-	public static <S> Collection<S> getProviders(Class<S> service) {
+	public static <S> Iterable<S> getProviders(Class<S> service) {
 		// Load conventional packaging providers
 		Collection<S> providers = (Collection<S>) instances.get(service);
 		if (providers == null) {
 			providers = new ArrayList<S>();
-			for (Class<?> clazz : services.get(service)) {
-				try {
-					providers.add((S) clazz.newInstance());
-				} catch (Exception exception) {
-					// TODO Auto-generated catch block
-					exception.printStackTrace();
+
+			Collection<?> classes = services.get(service);
+			if (classes != null) {
+				for (Class<?> clazz : services.get(service)) {
+					try {
+						providers.add((S) clazz.newInstance());
+					} catch (Exception exception) {
+						// TODO Auto-generated catch block
+						exception.printStackTrace();
+					}
 				}
 			}
 		}
-		
+
 		// Load standard java.util.ServiceLoader providers
 		for (Iterator<S> serviceIterator = ServiceLoader.load(service).iterator(); serviceIterator.hasNext();) {
 			providers.add(serviceIterator.next());
@@ -111,54 +119,63 @@ public class Service {
 		return providers;
 	}
 
-	private static void loadServicesFromJar(String rootPackage, URL resource) {
-		parseJarFileEntries(rootPackage, resource, "service", TransmitterFactory.synchronous(resource, new Handler<URL, String, String>() {
-			@Override
-			public void handleEvent(URL source, String event, String entryName) {
-				try {
-					services.put(Class.forName(entryName.replace('/', '.').substring(0, entryName.length() - 6)), new ArrayList<Class<?>>());
-				} catch (ClassNotFoundException exception) {
-					// TODO Auto-generated catch block
-					exception.printStackTrace();
-				}
-			}
-		}, rootPackage));
+	private static enum ResourceType {
+		SERVICE,
+		PROVIDER;
+		
+		private final String directory;
+		private ResourceType() {
+			this.directory = this.name().toLowerCase();
+		}
+		public String getDirectory() {
+			return directory;
+		}
 	}
-
-	private static void loadProvidersFromJar(String rootPackage, URL resource) {
-
-		parseJarFileEntries(rootPackage, resource, "provider", TransmitterFactory.synchronous(resource, new Handler<URL, String, String>() {
-			@Override
-			public void handleEvent(URL source, String event, String entryName) {
-				try {
-					Class<?> provider = Class.forName(entryName.replace('/', '.').substring(0, entryName.length() - 6));
-					for (Map.Entry<Class<?>, Collection<Class<?>>> service : services.entrySet()) {
-						if (service.getKey().isAssignableFrom(provider)) {
-							try {
-								service.getValue().add(provider);
-							} catch (Exception exception) {
-								// TODO Auto-generated catch block
-								exception.printStackTrace();
-							}
-						}
+	
+	private static void loadProvidersFromJarEntry(String entryName) {
+		try {
+			Class<?> provider = Class.forName(entryName.replace('/', '.').substring(0, entryName.length() - 6));
+			for (Map.Entry<Class<?>, Collection<Class<?>>> service : services.entrySet()) {
+				if (service.getKey().isAssignableFrom(provider)) {
+					try {
+						service.getValue().add(provider);
+					} catch (Exception exception) {
+						// TODO Auto-generated catch block
+						exception.printStackTrace();
 					}
-				} catch (ClassNotFoundException exception) {
-					// TODO Auto-generated catch block
-					exception.printStackTrace();
 				}
 			}
-		}, rootPackage));
+		} catch (ClassNotFoundException exception) {
+			// TODO Auto-generated catch block
+			exception.printStackTrace();
+		}
+	}
+	
+	private static void loadServicesFromJarEntry(String entryName) {
+		try {
+			services.put(Class.forName(entryName.replace('/', '.').substring(0, entryName.length() - 6)), new ArrayList<Class<?>>());
+		} catch (ClassNotFoundException exception) {
+			// TODO Auto-generated catch block
+			exception.printStackTrace();
+		}
 	}
 
-	private static void parseJarFileEntries(String rootPackage, URL resource, String directory, Transmitter<String, String> transmitter) {
+	private static void loadFromJarFileEntries(String rootPackage, URL resource, ResourceType resourceType) {
 		String rootDirectory = rootPackage.replace('.', '/');
 		try {
 			JarURLConnection jarConnection = (JarURLConnection) resource.openConnection();
 			Enumeration<JarEntry> entries = jarConnection.getJarFile().entries();
 			while (entries.hasMoreElements()) {
 				JarEntry entry = entries.nextElement();
-				if (!entry.isDirectory() && entry.getName().matches(rootDirectory + "((/.+/)|/)" + directory + "/[^/^$]+\\.class$")) {
-					transmitter.transmit(rootPackage, entry.getName());
+				if (!entry.isDirectory() && entry.getName().matches(rootDirectory + "((/.+/)|/)" + resourceType.getDirectory() + "/[^/^$]+\\.class$")) {
+					switch (resourceType) {
+						case PROVIDER:
+							loadProvidersFromJarEntry(entry.getName());
+							break;
+						case SERVICE:
+							loadServicesFromJarEntry(entry.getName());
+							break;
+					}
 				}
 			}
 		} catch (IOException exception) {
@@ -232,9 +249,11 @@ public class Service {
 	}
 
 	/**
-	 * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+	 * Scans all classes accessible from the context class loader which belong
+	 * to the given package and subpackages.
 	 * 
-	 * @param packageName the base package
+	 * @param packageName
+	 *            the base package
 	 * @return The classes
 	 * @throws ClassNotFoundException
 	 * @throws IOException
@@ -260,10 +279,13 @@ public class Service {
 	}
 
 	/**
-	 * Recursive method used to find all classes in a given directory and ubdirs.
+	 * Recursive method used to find all classes in a given directory and
+	 * ubdirs.
 	 * 
-	 * @param directory the base directory
-	 * @param packageName the package name for classes found inside the base directory
+	 * @param directory
+	 *            the base directory
+	 * @param packageName
+	 *            the package name for classes found inside the base directory
 	 * @return The classes
 	 * @throws ClassNotFoundException
 	 */

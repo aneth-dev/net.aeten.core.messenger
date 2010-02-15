@@ -4,29 +4,25 @@ package org.pititom.core.event;
  *
  * @author Thomas Pérennou
  */
-class AsynchronousTransmitterMultiHandlers<Source, Event, Data> implements RegisterableTransmitter<Source, Event, Data> {
+class AsynchronousTransmitterMultiHandlers<Source, Event, Data> extends AsynchronousTransmitter<Source, Event, Data> implements RegisterableTransmitter<Source, Event, Data> {
 
-	private final Source source;
-	private final AsynchronousForwarderMultiHandlers<Source, Event, Data> forwarder;
+	private final RegisterableTransmitter<Source, Event, Data> transmitter;
 
-	public AsynchronousTransmitterMultiHandlers(String threadName, Source source) {
-		this.source = source;
-		this.forwarder = new AsynchronousForwarderMultiHandlers<Source, Event, Data>(threadName, new SynchronousForwarderMultiHandlers<Source, Event, Data>());
+	public AsynchronousTransmitterMultiHandlers(String threadName, SynchronousTransmitterMultiHandlers<Source, Event, Data> transmitter) {
+		super(threadName, transmitter);
+		this.transmitter = transmitter;
 	}
-
-	@Override
-	public void transmit(Event event, Data data) {
-		this.forwarder.forward(this.source, event, data);
+	public AsynchronousTransmitterMultiHandlers(String threadName) {
+		this(threadName, new SynchronousTransmitterMultiHandlers<Source, Event, Data>());
 	}
 
 	@Override
 	public void addEventHandler(Handler<Source, Event, Data> eventHandler, Event... eventList) {
-		this.forwarder.addEventHandler(eventHandler, eventList);
+		this.transmitter.addEventHandler(eventHandler, eventList);
 	}
 
 	@Override
 	public void removeEventHandler(Handler<Source, Event, Data> eventHandler, Event... eventList) {
-		this.forwarder.removeEventHandler(eventHandler, eventList);
+		this.transmitter.removeEventHandler(eventHandler, eventList);
 	}
-
 }

@@ -6,7 +6,7 @@ import java.util.Date;
 import org.pititom.core.event.Handler;
 import org.pititom.core.logging.LoggingData;
 import org.pititom.core.logging.LoggingEvent;
-import org.pititom.core.logging.LoggingForwarder;
+import org.pititom.core.logging.LoggingTransmitter;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.MessengerEventHandler;
@@ -22,23 +22,20 @@ public class MessengerTest {
 	public static void main(String[] arguments) throws Exception {
 		final String hook = "--hook org.pititom.core.messenger.DefaultMessengerHooks --configuration \"--name \\\"Acknowledge hook test\\\" --acknowledge-protocol org.pititom.core.test.messenger.AcknowledgeProtocol\"";
 		final String udpIpConf = "--destination-inet-socket-adress 230.2.15.2:5200 --max-packet-size 64 --reuse";
-		final String emissionOutput = "--output-stream org.pititom.core.stream.UdpIpOutputStream --configuration \"" + udpIpConf + "\" --output-stream org.pititom.core.messenger.stream.MessengerObjectOutputStream";
+		final String emissionOutput = "--output-stream org.pititom.core.stream.UdpIpOutputStream --configuration \"" + udpIpConf + "\" --over org.pititom.core.messenger.stream.MessengerObjectOutputStream";
 		final String receptionInput = "--input-stream org.pititom.core.stream.UdpIpInputStream --configuration \"" + udpIpConf + "\" --over org.pititom.core.messenger.stream.MessengerObjectInputStream";
 
-		LoggingForwarder.getInstance().addEventHandler(new Handler<Object, LoggingEvent, LoggingData>() {
+		LoggingTransmitter.getInstance().addEventHandler(new Handler<Object, LoggingEvent, LoggingData>() {
 			@Override
 			public void handleEvent(Object source, LoggingEvent event, LoggingData data) {
-				/* Basic logging. Can be plugged to anyone logging tool
+				/* Basic logging. Can be plugged to anyone logging tool.
 				 * org.pititom.core.messenger.AbstractMessenger exceptions can be caught by this way
 				 */
 				Date date = Calendar.getInstance().getTime();
 				System.out.println(date + " " + (date.getTime() % 1000) + "ms " + event + " source={" + source + "} " + data.getMessage() + ((data.getException() == null) ? "" : " : "));
 				if (data.getException() != null) {
-					for (StackTraceElement trace: data.getException().getStackTrace()) {
-						System.out.println(trace.toString());
-					}
+					data.getException().printStackTrace(System.out);
 				}
-				
 			}
 		}, LoggingEvent.values());
 
@@ -68,7 +65,6 @@ public class MessengerTest {
 						}
 						break;
 				}
-
 			}
 
 		}, MessengerEvent.RECIEVED);
@@ -81,7 +77,7 @@ public class MessengerTest {
 				if ((event == MessengerEvent.RECIEVED) && (!(eventData.getRecievedMessage() instanceof AcknowledgeMessage))) {
 					return;
 				}
-				LoggingForwarder.getInstance().forward(messenger, LoggingEvent.INFO, new LoggingData("event={" + event + "}; eventData={" + eventData + "}"));
+				LoggingTransmitter.getInstance().transmit(messenger, LoggingEvent.INFO, new LoggingData("event={" + event + "}; eventData={" + eventData + "}"));
 			}
 		}, MessengerEvent.SENT, MessengerEvent.RECIEVED, MessengerEvent.ACKNOWLEDGED, MessengerEvent.UNACKNOWLEDGED);
 
@@ -96,7 +92,7 @@ public class MessengerTest {
 		invalidData.setValue(10);
 		client.transmit(invalidData);
 
-		Message invalidDataMessage = new Message();
-		client.transmit(invalidDataMessage);
+		Message invalidMessage = new Message();
+		client.transmit(invalidMessage);
 	}
 }

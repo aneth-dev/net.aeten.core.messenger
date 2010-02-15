@@ -14,7 +14,7 @@ import org.pititom.core.ConfigurationException;
 import org.pititom.core.args4j.CommandLineParser;
 import org.pititom.core.logging.LoggingData;
 import org.pititom.core.logging.LoggingEvent;
-import org.pititom.core.logging.LoggingForwarder;
+import org.pititom.core.logging.LoggingTransmitter;
 import org.pititom.core.messenger.AbstractMessenger;
 
 /**
@@ -46,6 +46,7 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>>  extends Abst
 	public StreamMessenger() {
 		this.recieverList = new ArrayList<Reciever>();
 	}
+	
 	@Override
 	protected void doConnect() throws IOException {
 		super.doConnect();
@@ -76,19 +77,14 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>>  extends Abst
 			this.in = in;
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public void run() {
 			while (this.messenger.isConnected()) {
-				Object bean;
 				try {
-					bean = this.in.readObject();
-					@SuppressWarnings("unchecked")
-					Message message = (Message) bean;
-
-					StreamMessenger.this.doRecieve(message);
-
+					StreamMessenger.this.recieved((Message) this.in.readObject());
 				} catch (Exception exception) {
-					LoggingForwarder.getInstance().forward(this.messenger, LoggingEvent.ERROR, new LoggingData(exception));
+					LoggingTransmitter.getInstance().transmit(this.messenger, LoggingEvent.ERROR, new LoggingData(exception));
 				}
 			}
 		}
@@ -100,15 +96,12 @@ public class StreamMessenger<Message, Acknowledge extends Enum<?>>  extends Abst
 			this.objectOutputStream.writeObject(message);
 			this.objectOutputStream.flush();
 		} catch (IOException exception) {
-			LoggingForwarder.getInstance().forward(this, LoggingEvent.ERROR, new LoggingData(exception));
+			LoggingTransmitter.getInstance().transmit(this, LoggingEvent.ERROR, new LoggingData(exception));
 		}
 	}
 	
 	@Override
 	public void configure(String configuration) throws ConfigurationException {
-		if (this.getName() != null) {
-			throw new ConfigurationException(configuration, "Messenger \"" + this.getName() + "\" is allready configured");
-		}
 		CommandLineParser commandLineParser = new CommandLineParser(this);
 		try {
 			commandLineParser.parseArgument(CommandLineParser.splitArguments(configuration));

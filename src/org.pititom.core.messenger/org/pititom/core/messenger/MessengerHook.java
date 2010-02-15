@@ -6,8 +6,8 @@ package org.pititom.core.messenger;
  */
 public enum MessengerHook {
 
-	START_RECEPTION,
+	START_RECIEVED,
 	START_SEND,
-	END_RECEPTION,
+	END_RECIEVED,
 	END_SEND
 }

@@ -1,6 +1,7 @@
 package org.pititom.core.messenger;
 
 import org.pititom.core.event.Transmitter;
+import org.pititom.core.messenger.service.Messenger;
 
 /**
  *
@@ -13,10 +14,10 @@ public class MessengerHookData<Message, Acknowledge extends Enum<?>> {
 	private long recievedDataDate = 0L;
 	private Acknowledge acknowledge = null;
 	private MessengerEventData<Message, Acknowledge> currentEventData;
-	private final Transmitter<MessengerEvent, MessengerEventData<Message, Acknowledge>> eventTransmitter;
+	private final Transmitter<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventTransmitter;
 
 	
-	public MessengerHookData(Transmitter<MessengerEvent, MessengerEventData<Message, Acknowledge>> eventTransmitter) {
+	public MessengerHookData(Transmitter<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> eventTransmitter) {
 		this.eventTransmitter = eventTransmitter;
 	}
 	
@@ -96,7 +97,7 @@ public class MessengerHookData<Message, Acknowledge extends Enum<?>> {
 	/**
 	 * @return the eventTransmitter
 	 */
-	public Transmitter<MessengerEvent, MessengerEventData<Message, Acknowledge>> getEventTransmitter() {
+	public Transmitter<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>> getEventTransmitter() {
 		return eventTransmitter;
 	}
 	

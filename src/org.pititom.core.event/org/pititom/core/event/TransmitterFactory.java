@@ -4,18 +4,24 @@ package org.pititom.core.event;
  *
  * @author Thomas Pérennou
  */
-public class TransmitterFactory {
+public final class TransmitterFactory {
 
-	public static <Source, Event, Data> Transmitter<Event, Data> synchronous(Source source, Handler<Source, Event, Data> eventHandler, Event... events) {
-		return new SynchronousTransmitter<Source, Event, Data>(source, eventHandler, events);
+	public static final <Source, Event, Data> Transmitter<Source, Event, Data> synchronous(Handler<Source, Event, Data> eventHandler, Event... events) {
+		return new SynchronousTransmitter<Source, Event, Data>(eventHandler, events);
 	}
-	public static <Source, Event, Data> RegisterableTransmitter<Source, Event, Data> synchronous(Source source) {
-		return new SynchronousTransmitterMultiHandlers<Source, Event, Data>(source);
+	public static final <Source, Data> Transmitter<Source, Default, Data> synchronous(Handler<Source, Default, Data> eventHandler) {
+		return new SynchronousTransmitter<Source, Default, Data>(eventHandler, Default.SINGLE_EVENT);
 	}
-	public static <Source, Event, Data> Transmitter<Event, Data> asynchronous(String threadName, Source source, Handler<Source, Event, Data> eventHandler, Event... events) {
-		return new AsynchronousTransmitter<Source, Event, Data>(threadName, source, eventHandler, events);
+	public static final <Source, Event, Data> RegisterableTransmitter<Source, Event, Data> synchronous() {
+		return new SynchronousTransmitterMultiHandlers<Source, Event, Data>();
 	}
-	public static <Source, Event, Data> RegisterableTransmitter<Source, Event, Data> asynchronous(String threadName, Source source) {
-		return new AsynchronousTransmitterMultiHandlers<Source, Event, Data>(threadName, source);
+	public static final <Source, Event, Data> Transmitter<Source, Event, Data> asynchronous(String threadName, Handler<Source, Event, Data> eventHandler, Event... events) {
+		return new AsynchronousTransmitter<Source, Event, Data>(threadName, eventHandler, events);
+	}
+	public static final <Source, Data> Transmitter<Source, Default, Data> asynchronous(String threadName, Handler<Source, Default, Data> eventHandler) {
+		return new AsynchronousTransmitter<Source, Default, Data>(threadName, eventHandler, Default.SINGLE_EVENT);
+	}
+	public static final <Source, Event, Data> RegisterableTransmitter<Source, Event, Data> asynchronous(String threadName) {
+		return new AsynchronousTransmitterMultiHandlers<Source, Event, Data>(threadName);
 	}
 }

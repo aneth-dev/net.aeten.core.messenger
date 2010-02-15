@@ -10,7 +10,7 @@ import org.pititom.core.ConfigurationException;
 import org.pititom.core.event.Handler;
 import org.pititom.core.logging.LoggingData;
 import org.pititom.core.logging.LoggingEvent;
-import org.pititom.core.logging.LoggingForwarder;
+import org.pititom.core.logging.LoggingTransmitter;
 
 /**
  *
@@ -42,7 +42,7 @@ public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>>  implem
 			case START_SEND:
 				this.sendHook(source, data);
 				break;
-			case START_RECEPTION:
+			case START_RECIEVED:
 				this.startReception(source, data);
 				break;
 		}
@@ -74,7 +74,7 @@ public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>>  implem
 					notificationEvent = success ? MessengerEvent.ACKNOWLEDGED : MessengerEvent.UNACKNOWLEDGED;
 				}
 
-				data.getEventTransmitter().transmit(notificationEvent, data.getCurrentEventData().clone());
+				data.getEventTransmitter().transmit(source, notificationEvent, data.getCurrentEventData().clone());
 			}
 
 			data.getCurrentEventData().setSentMessage(data.getMessageToSend());
@@ -91,7 +91,7 @@ public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>>  implem
 			}
 
 		} catch (Exception exception) {
-			LoggingForwarder.getInstance().forward(source, LoggingEvent.ERROR, new LoggingData(exception));
+			LoggingTransmitter.getInstance().transmit(source, LoggingEvent.ERROR, new LoggingData(exception));
 		}
 	}
 
@@ -112,7 +112,7 @@ public class DefaultMessengerHooks<Message, Acknowledge extends Enum<?>>  implem
 			}
 
 		} catch (Exception exception) {
-			LoggingForwarder.getInstance().forward(source, LoggingEvent.ERROR, new LoggingData(exception));
+			LoggingTransmitter.getInstance().transmit(source, LoggingEvent.ERROR, new LoggingData(exception));
 		}
 	}
 
