@@ -1,4 +1,4 @@
-package org.pititom.core.messenger.stream;
+package org.pititom.core.messenger.stream.provider;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -11,11 +11,14 @@ import java.util.Map;
 import java.util.Set;
 
 import org.kohsuke.args4j.CmdLineException;
+import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.event.Handler;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.service.Messenger;
+import org.pititom.core.messenger.stream.MessengerObjectInputStream;
+import org.pititom.core.messenger.stream.MessengerObjectOutputStream;
 import org.pititom.core.stream.editor.StreamControllerConnection;
 import org.pititom.core.stream.editor.StreamControllerConfiguration;
 
@@ -24,14 +27,15 @@ import org.pititom.core.stream.editor.StreamControllerConfiguration;
  * @author Thomas Pérennou
  */
 public class StreamEditorMessenger<Message, Acknowledge extends Enum<?>> implements
-		Messenger<Message, Acknowledge> {
+		Messenger<Message, Acknowledge>, Configurable {
 
-	private final String name;
-	private final String hookConfiguration;
-	private final StreamControllerConfiguration emissionConfiguration;
-	private final StreamControllerConfiguration[] receptionConfigurationList;
-	private final StreamControllerConnection receptionConnectionList[];
-	private final Map<Handler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>, Set<MessengerEvent>> eventHandlers;
+	// TODO : make it configurable
+	private String name;
+	private String hookConfiguration;
+	private StreamControllerConfiguration emissionConfiguration;
+	private StreamControllerConfiguration[] receptionConfigurationList;
+	private StreamControllerConnection receptionConnectionList[];
+	private Map<Handler<Messenger<Message, Acknowledge>, MessengerEvent, MessengerEventData<Message, Acknowledge>>, Set<MessengerEvent>> eventHandlers;
 
 	private StreamControllerConnection emissionConnection;
 
@@ -42,6 +46,9 @@ public class StreamEditorMessenger<Message, Acknowledge extends Enum<?>> impleme
 		if (autoConnect) {
 			this.connect();
 		}
+	}
+	public StreamEditorMessenger() {
+		
 	}
 
 	public StreamEditorMessenger(String name, String hookConfiguration, String emissionConfiguration, String... receptionConfigurationList) throws ConfigurationException {
@@ -174,6 +181,11 @@ public class StreamEditorMessenger<Message, Acknowledge extends Enum<?>> impleme
 	@Override
 	public boolean isConnected() {
 		return (this.messenger != null) && this.messenger.isConnected();
+	}
+
+	public void configure(String configuration) throws ConfigurationException {
+		throw new UnsupportedOperationException("Not supported yet.");
+		// TODO
 	}
 
 }

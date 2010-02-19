@@ -1,12 +1,21 @@
 package org.pititom.core;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -14,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.jar.JarEntry;
+import org.pititom.core.args4j.Yaml2Args;
 
 /**
  * <p>
@@ -102,7 +112,36 @@ public class Service {
 			if (classes != null) {
 				for (Class<?> clazz : services.get(service)) {
 					try {
-						providers.add((S) clazz.newInstance());
+						if (Configurable.class.isAssignableFrom(clazz)) {
+							Enumeration<URL> directories = Thread.currentThread().getContextClassLoader().getResources("META-INF/provider/" + clazz.getName());
+							while (directories.hasMoreElements()) {
+								URL resource = directories.nextElement();
+								
+								
+								Collection<URL> files = null;
+								if (resource.toString().startsWith("jar:")) {
+									files = getFilesFromJar(resource);
+								} else {
+									File directory = new File(resource.getPath());
+									if (directory.isDirectory()) {
+										File[] fileList = directory.listFiles();
+										files = new ArrayList<URL>(fileList.length);
+										for (File file : fileList) {
+											files.add(file.toURI().toURL());
+										}
+									}
+								}
+								for (URL fileUrl : files) {
+									Configurable provider = (Configurable) clazz.newInstance();
+									provider.configure(Yaml2Args.convert(new InputStreamReader(fileUrl.openStream(), "UTF-8")));
+									providers.add((S) provider);
+								}
+								
+							}
+							
+						} else {
+							providers.add((S) clazz.newInstance());
+						}
 					} catch (Exception exception) {
 						// TODO Auto-generated catch block
 						exception.printStackTrace();
@@ -118,20 +157,39 @@ public class Service {
 
 		return providers;
 	}
+	
+	private static Collection<URL> getFilesFromJar(URL resource) {
+		ArrayList<URL> files = new ArrayList<URL>();
+		try {
+			JarURLConnection jarConnection = (JarURLConnection) resource.openConnection();
+			Enumeration<JarEntry> entries = jarConnection.getJarFile().entries();
+			while (entries.hasMoreElements()) {
+				JarEntry entry = entries.nextElement();
+				if (!entry.isDirectory()) {
+					files.add(Thread.currentThread().getContextClassLoader().getResource(entry.getName()));
+				}
+			}
+		} catch (IOException exception) {
+			// TODO Auto-generated catch block
+			exception.printStackTrace();
+		}
+		return files;
+	}
 
 	private static enum ResourceType {
-		SERVICE,
-		PROVIDER;
-		
+		SERVICE, PROVIDER;
+
 		private final String directory;
+
 		private ResourceType() {
 			this.directory = this.name().toLowerCase();
 		}
+
 		public String getDirectory() {
 			return directory;
 		}
 	}
-	
+
 	private static void loadProvidersFromJarEntry(String entryName) {
 		try {
 			Class<?> provider = Class.forName(entryName.replace('/', '.').substring(0, entryName.length() - 6));
@@ -150,7 +208,7 @@ public class Service {
 			exception.printStackTrace();
 		}
 	}
-	
+
 	private static void loadServicesFromJarEntry(String entryName) {
 		try {
 			services.put(Class.forName(entryName.replace('/', '.').substring(0, entryName.length() - 6)), new ArrayList<Class<?>>());
@@ -232,8 +290,6 @@ public class Service {
 	}
 
 	private static List<String> findPackages(String rootPath, String currentPackage, File currentDirectory, List<String> packageNames) {
-		if (currentDirectory.toString().startsWith("jar:")) {
-		}
 		File[] files = currentDirectory.listFiles();
 		if (files == null) {
 			return packageNames;
@@ -280,7 +336,7 @@ public class Service {
 
 	/**
 	 * Recursive method used to find all classes in a given directory and
-	 * ubdirs.
+	 * sub-directories.
 	 * 
 	 * @param directory
 	 *            the base directory

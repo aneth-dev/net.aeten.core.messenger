@@ -17,11 +17,10 @@ import org.pititom.core.Configurable;
  */
 public class OutputStreamOptionHandler extends OptionHandler<OutputStream> {
 
-	public static final String OUTPUT_STREAM_OPTION_NAME = "-os";
-	public static final String[] OUTPUT_STREAM_OPTION_ALIASES = { "--output-stream", "--over" };
+	public static final String OUTPUT_STREAM_OPTION_NAME = "-o";
+	public static final String[] OUTPUT_STREAM_OPTION_ALIASES = { "--over" };
 	public static final String CONFIGURATION_OPTION_NAME = "-c";
 	public static final String[] CONFIGURATION_OPTION_ALIASES = { "--configuration" };
-	public static final String END_OF_OPTIONS = "--end";
 
 	public OutputStreamOptionHandler(CmdLineParser parser, OptionDef option, Setter<OutputStream> setter) {
 		super(parser, option, setter);
@@ -32,28 +31,38 @@ public class OutputStreamOptionHandler extends OptionHandler<OutputStream> {
 	public int parseArguments(Parameters params) throws CmdLineException {
 		int i = 0;
 		try {
-			Class<OutputStream> outputStreamClass = null;
-			OutputStream outputStream = null;
-			for (;; i++) {
-				try {
-					if (END_OF_OPTIONS.equals(params.getParameter(i))) {
-						++i;
-						break;
-					}
-				} catch (CmdLineException exception) {
+			Class<OutputStream> outputStreamClass = (Class<OutputStream>) Class.forName(params.getParameter(i));
+			String configuration;
+			try {
+				if (CONFIGURATION_OPTION_NAME.equals(params.getParameter(i + 1)) || contains(params.getParameter(i + 1), CONFIGURATION_OPTION_ALIASES)) {
+					i += 2;
+					configuration = params.getParameter(i);
+				} else {
+					configuration = null;
 				}
+				i++;
+			} catch (CmdLineException exception) {
+				configuration = null;
+			}
+
+			OutputStream outputStream = outputStreamClass.newInstance();
+			if (outputStream instanceof Configurable) {
+				((Configurable) outputStream).configure(configuration);
+			}
+
+			for (;; i++) {
 				try {
 					if (OUTPUT_STREAM_OPTION_NAME.equals(params.getParameter(i)) || contains(params.getParameter(i), OUTPUT_STREAM_OPTION_ALIASES)) {
 						++i;
+					} else if (params.getParameter(i).startsWith("-")) {
+						break;
 					}
-					outputStreamClass = (Class<OutputStream>)Class.forName(params.getParameter(i));
+					outputStreamClass = (Class<OutputStream>) Class.forName(params.getParameter(i));
 				} catch (ClassCastException exception) {
 					throw new CmdLineException(this.owner, exception);
 				} catch (CmdLineException exception) {
 					break;
 				}
-
-				String configuration;
 
 				try {
 					if (CONFIGURATION_OPTION_NAME.equals(params.getParameter(i + 1)) || contains(params.getParameter(i + 1), CONFIGURATION_OPTION_ALIASES)) {
@@ -66,15 +75,11 @@ public class OutputStreamOptionHandler extends OptionHandler<OutputStream> {
 					configuration = null;
 				}
 
-				if (outputStream == null) {
-					outputStream = outputStreamClass.newInstance();
-				} else {
-					outputStream = outputStreamClass.getConstructor(OutputStream.class).newInstance(outputStream);
-				}
+				outputStream = outputStreamClass.getConstructor(OutputStream.class).newInstance(outputStream);
 				if (outputStream instanceof Configurable) {
-					((Configurable)outputStream).configure(configuration);
+					((Configurable) outputStream).configure(configuration);
 				}
-				
+
 			}
 			setter.addValue(outputStream);
 		} catch (Exception exception) {

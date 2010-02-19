@@ -1,5 +1,6 @@
 package org.pititom.core.event.signal;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import org.pititom.core.event.Default;
@@ -10,6 +11,8 @@ import org.pititom.core.event.RegisterableTransmitter;
 import org.pititom.core.event.signal.service.Slot;
 
 public final class Signal<Data> {
+	private static final Collection<Signal<?>> SIGNALS = new ArrayList<Signal<?>>();
+
 	private static final RegisterableTransmitter<Object, Object, Object> ASYNC_TRANSMITTER = TransmitterFactory.asynchronous("Event loop");
 	private static final RegisterableTransmitter<Object, Object, Object> SYNC_TRANSMITTER = TransmitterFactory.synchronous();
 
@@ -21,7 +24,7 @@ public final class Signal<Data> {
 		this.source = source;
 		this.event = event;
 		this.asyncTransmitter = ASYNC_TRANSMITTER;
-		
+
 		synchronized (SlotRegister.class) {
 			Collection<Slot<Object, Object, Object>> registredSlots = SlotRegister.SLOTS_MAP.get(this.event);
 			if (registredSlots != null) {
@@ -31,18 +34,23 @@ public final class Signal<Data> {
 				}
 			}
 		}
+
+		synchronized (SIGNALS) {
+			SIGNALS.add(this);
+		}
+
 	}
-	
+
 	public Signal(Object event) {
 		this(Default.ANONYMOUS_SOURCE, event);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public Signal(Object source, Object event, Handler<?, ?, Data> handler, boolean ownThread) {
 		this.source = source;
 		this.event = event;
 		if (ownThread) {
-			this.asyncTransmitter = TransmitterFactory.asynchronous("Event" + event + " loop", (Handler<Object, Object, Object>)handler, this.event);
+			this.asyncTransmitter = TransmitterFactory.asynchronous("Event" + event + " loop", (Handler<Object, Object, Object>) handler, this.event);
 		} else {
 			this.asyncTransmitter = ASYNC_TRANSMITTER;
 			ASYNC_TRANSMITTER.addEventHandler((Handler<Object, Object, Object>) handler, this.event);
@@ -57,7 +65,7 @@ public final class Signal<Data> {
 	public Signal(Object source, Handler<?, Default, Data> handler, boolean ownThread) {
 		this(source, Default.SINGLE_EVENT, handler, ownThread);
 	}
-	
+
 	public Signal(Handler<Default, Default, Data> handler, boolean ownThread) {
 		this(Default.ANONYMOUS_SOURCE, Default.SINGLE_EVENT, handler, ownThread);
 	}
@@ -65,16 +73,40 @@ public final class Signal<Data> {
 	public Signal(Object source, Handler<?, Default, Data> handler) {
 		this(source, Default.SINGLE_EVENT, handler, false);
 	}
-	
+
 	public Signal(Handler<Default, Default, Data> handler) {
 		this(Default.ANONYMOUS_SOURCE, Default.SINGLE_EVENT, handler, false);
 	}
 
 	@Override
 	public void finalize() throws Throwable {
-		// TODO : unregister connection when it is the last one…
+		boolean isTheLastOne = true;
+		synchronized (SIGNALS) {
+			for (Signal<?> signal : SIGNALS) {
+				if ((signal.getAsyncTransmitter() == this.asyncTransmitter) && (signal.getEvent() == this.event)) {
+					isTheLastOne = false;
+					break;
+				}
+			}
+			SIGNALS.remove(this);
+		}
+		if (isTheLastOne) {
+			synchronized (SlotRegister.class) {
+				Collection<Slot<Object, Object, Object>> registredSlots = SlotRegister.SLOTS_MAP.get(this.event);
+				if (registredSlots != null) {
+					for (Slot<Object, Object, Object> slot : registredSlots) {
+						if (ASYNC_TRANSMITTER == this.asyncTransmitter) {
+							ASYNC_TRANSMITTER.removeEventHandler(slot, this.event);
+						}
+						SYNC_TRANSMITTER.removeEventHandler(slot, this.event);
+					}
+				}
+			}
+
+		}
 		super.finalize();
 	}
+
 	/**
 	 * @return the source
 	 */
@@ -90,7 +122,7 @@ public final class Signal<Data> {
 	}
 
 	/**
-	 * Emit signal asynchronously in event loop with null data 
+	 * Emit signal asynchronously in event loop with null data
 	 */
 	public void emit() {
 		this.emit(null);
@@ -104,7 +136,7 @@ public final class Signal<Data> {
 	public void emit(Data data) {
 		asyncTransmitter.transmit(this.source, this.event, data);
 	}
-	
+
 	/**
 	 * Emit signal synchronously with null data
 	 * 
@@ -121,6 +153,13 @@ public final class Signal<Data> {
 	 */
 	public void emitSync(Data data) {
 		SYNC_TRANSMITTER.transmit(this.source, this.event, data);
+	}
+
+	/**
+	 * @return the asyncTransmitter
+	 */
+	protected Transmitter<Object, Object, Object> getAsyncTransmitter() {
+		return asyncTransmitter;
 	}
 
 }

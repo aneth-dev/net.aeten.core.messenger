@@ -2,6 +2,7 @@ package org.pititom.core.test.messenger;
 
 import java.util.Calendar;
 import java.util.Date;
+import org.pititom.core.Service;
 
 import org.pititom.core.event.Handler;
 import org.pititom.core.logging.LoggingData;
@@ -11,7 +12,7 @@ import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.MessengerEventHandler;
 import org.pititom.core.messenger.service.Messenger;
-import org.pititom.core.messenger.stream.StreamMessenger;
+import org.pititom.core.messenger.stream.provider.StreamMessenger;
 
 /**
  * 
@@ -20,11 +21,15 @@ import org.pititom.core.messenger.stream.StreamMessenger;
 public class MessengerTest {
 
 	public static void main(String[] arguments) throws Exception {
-		final String hook = "--hook org.pititom.core.messenger.DefaultMessengerHooks --configuration \"--name \\\"Acknowledge hook test\\\" --acknowledge-protocol org.pititom.core.test.messenger.AcknowledgeProtocol\"";
-		final String udpIpConf = "--destination-inet-socket-adress 230.2.15.2:5200 --max-packet-size 64 --reuse";
-		final String emissionOutput = "--output-stream org.pititom.core.stream.UdpIpOutputStream --configuration \"" + udpIpConf + "\" --over org.pititom.core.messenger.stream.MessengerObjectOutputStream";
-		final String receptionInput = "--input-stream org.pititom.core.stream.UdpIpInputStream --configuration \"" + udpIpConf + "\" --over org.pititom.core.messenger.stream.MessengerObjectInputStream";
-
+		StreamMessenger<AbstractMessage, Acknowledge> client = null, server = null;
+		for (Messenger messenger : Service.getProviders(Messenger.class)) {
+			if (messenger.getName().equals("client")) {
+				client = (StreamMessenger<AbstractMessage, Acknowledge>) messenger;
+			} else if (messenger.getName().equals("server")) {
+				server = (StreamMessenger<AbstractMessage, Acknowledge>) messenger;
+			}
+		}
+		
 		LoggingTransmitter.getInstance().addEventHandler(new Handler<Object, LoggingEvent, LoggingData>() {
 			@Override
 			public void handleEvent(Object source, LoggingEvent event, LoggingData data) {
@@ -39,8 +44,6 @@ public class MessengerTest {
 			}
 		}, LoggingEvent.values());
 
-		StreamMessenger<AbstractMessage, Acknowledge> server = new StreamMessenger<AbstractMessage, Acknowledge>();
-		server.configure("--name server " + hook + " " + emissionOutput + " --end " + receptionInput);
 		server.addEventHandler(new MessengerEventHandler<AbstractMessage, Acknowledge>() {
 
 			@Override
@@ -69,8 +72,6 @@ public class MessengerTest {
 
 		}, MessengerEvent.RECIEVED);
 
-		StreamMessenger<AbstractMessage, Acknowledge> client = new StreamMessenger<AbstractMessage, Acknowledge>();
-		client.configure("--name client " + hook + " " + emissionOutput + " --end " + receptionInput);
 		client.addEventHandler(new MessengerEventHandler<AbstractMessage, Acknowledge>() {
 
 			public void handleEvent(Messenger<AbstractMessage, Acknowledge> messenger, MessengerEvent event, MessengerEventData<AbstractMessage, Acknowledge> eventData) {

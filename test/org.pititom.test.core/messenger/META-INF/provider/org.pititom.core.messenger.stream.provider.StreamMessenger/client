@@ -1,0 +1,17 @@
+name : client
+hook : org.pititom.core.messenger.DefaultMessengerHooks
+configuration :
+  name : Acknowledge hook test
+  acknowledge protocol : org.pititom.core.test.messenger.AcknowledgeProtocol
+output stream : org.pititom.core.stream.UdpIpOutputStream
+configuration : 
+  destination inet socket adress : 230.2.15.2:5200
+  max packet size : 64
+  reuse : true
+over : org.pititom.core.messenger.stream.MessengerObjectOutputStream
+input stream : org.pititom.core.stream.UdpIpInputStream
+configuration :
+  destination inet socket adress : 230.2.15.2:5200
+  max packet size : 64
+  reuse : true
+over : org.pititom.core.messenger.stream.MessengerObjectInputStream

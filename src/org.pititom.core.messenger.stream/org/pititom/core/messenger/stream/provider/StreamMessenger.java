@@ -1,4 +1,4 @@
-package org.pititom.core.messenger.stream;
+package org.pititom.core.messenger.stream.provider;
 
 import java.io.IOException;
 import java.io.InputStream;

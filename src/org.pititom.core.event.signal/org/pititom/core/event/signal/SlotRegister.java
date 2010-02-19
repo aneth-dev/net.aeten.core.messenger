@@ -14,15 +14,15 @@ final class SlotRegister {
 
 	static {
 		synchronized (SlotRegister.class) {
-		SLOTS_MAP = new HashMap<Object, Collection<Slot<Object, Object, Object>>>();
+			SLOTS_MAP = new HashMap<Object, Collection<Slot<Object, Object, Object>>>();
 
-		Iterable<Slot> slots = Service.getProviders(Slot.class);
-		for (Slot<Object, Object, Object> slot : slots) {
-			addEvent(slot.getEvents());
-		}
-		for (Slot<Object, Object, Object> slot : slots) {
-			addSlot(slot);
-		}
+			Iterable<Slot> slots = Service.getProviders(Slot.class);
+			for (Slot<Object, Object, Object> slot : slots) {
+				addEvent(slot.getEvents());
+			}
+			for (Slot<Object, Object, Object> slot : slots) {
+				addSlot(slot);
+			}
 		}
 	}
 

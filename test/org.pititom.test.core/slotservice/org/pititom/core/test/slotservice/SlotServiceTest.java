@@ -14,7 +14,7 @@ public class SlotServiceTest {
 		Signal<LoggingData> info = new Signal<LoggingData>(LoggingEvent.INFO);
 		Signal<LoggingData> warning = new Signal<LoggingData>(LoggingEvent.WARNING);
 		Signal<LoggingData> error = new Signal<LoggingData>(LoggingEvent.ERROR);
-		Signal<String> iner = new Signal<String>(new Handler<Default, Default, String>() {
+		Signal<String> inline = new Signal<String>(new Handler<Default, Default, String>() {
 			@Override
 			public void handleEvent(Default source, Default event, String data) {
 				System.out.println(data);
@@ -25,11 +25,11 @@ public class SlotServiceTest {
 		info.emitSync(new LoggingData("An info message"));
 		warning.emit(new LoggingData("A warning message"));
 		error.emitSync(new LoggingData("An error message"));
-		iner.emit("Iner");
+		inline.emit("Inline");
 		
 		
 		SignalGroup<LoggingEvent, LoggingData> log = new SignalGroup<LoggingEvent, LoggingData>(Default.ANONYMOUS_SOURCE, LoggingEvent.class);
-		log.emit(LoggingEvent.ERROR, new LoggingData("An other debug message"));
+		log.emit(LoggingEvent.ERROR, new LoggingData("An other error message"));
 	}
 
 }
