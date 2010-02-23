@@ -10,7 +10,7 @@ import java.io.Serializable;
  * @author Thomas Pérennou
  */
 public abstract class AbstractMessage implements Serializable {
-	private static final long serialVersionUID = -1149769829841085667L;
+	private static final long serialVersionUID = -6143937359211512446L;
 	
 	private Acknowledge acknowledge;
 
@@ -23,13 +23,20 @@ public abstract class AbstractMessage implements Serializable {
 	}
 
 	protected void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+		final int size = in.readInt();
+		if (size != (this.getSize() + 4)) {
+			throw new IOException("Invalid size. Recieved=" + size + " expected=" + this.getSize() + 4);
+		}
 		final int ordinal = in.readInt();
 		this.acknowledge = ((ordinal >= 0) && (ordinal < Acknowledge.values().length)) ? Acknowledge.values()[ordinal] : null;
 	}
 
 	protected void writeObject(ObjectOutputStream out) throws IOException {
+		out.writeInt(4 + this.getSize());
 		out.writeInt((this.acknowledge == null) ? -1 : this.acknowledge.ordinal());
 	}
+	
+	protected abstract int getSize();
 
 	@Override
 	public String toString() {

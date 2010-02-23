@@ -2,8 +2,8 @@ package org.pititom.core.test.messenger;
 
 import java.util.Calendar;
 import java.util.Date;
-import org.pititom.core.Service;
 
+import org.pititom.core.Service;
 import org.pititom.core.event.Handler;
 import org.pititom.core.logging.LoggingData;
 import org.pititom.core.logging.LoggingEvent;
@@ -12,7 +12,6 @@ import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.MessengerEventHandler;
 import org.pititom.core.messenger.service.Messenger;
-import org.pititom.core.messenger.stream.provider.StreamMessenger;
 
 /**
  * 
@@ -20,13 +19,15 @@ import org.pititom.core.messenger.stream.provider.StreamMessenger;
  */
 public class MessengerTest {
 
+	@SuppressWarnings("unchecked")
 	public static void main(String[] arguments) throws Exception {
-		StreamMessenger<AbstractMessage, Acknowledge> client = null, server = null;
-		for (Messenger messenger : Service.getProviders(Messenger.class)) {
-			if (messenger.getName().equals("client")) {
-				client = (StreamMessenger<AbstractMessage, Acknowledge>) messenger;
-			} else if (messenger.getName().equals("server")) {
-				server = (StreamMessenger<AbstractMessage, Acknowledge>) messenger;
+		// Client & server are both loaded from configuration files located in META-INF/provider/org.pititom.core.messenger.stream.provider.StreamMessenger/
+		Messenger<AbstractMessage, Acknowledge> client = null, server = null;
+		for (Messenger<?, ?> messenger : Service.getProviders(Messenger.class)) {
+			if ("client".equals(messenger.getName())) {
+				client = (Messenger<AbstractMessage, Acknowledge>) messenger;
+			} else if ("server".equals(messenger.getName())) {
+				server = (Messenger<AbstractMessage, Acknowledge>) messenger;
 			}
 		}
 		

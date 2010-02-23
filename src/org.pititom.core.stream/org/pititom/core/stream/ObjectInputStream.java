@@ -35,8 +35,7 @@ public abstract class ObjectInputStream extends java.io.ObjectInputStream {
 				throw new ClassNotFoundException();
 			}
 			final Object objSerialized = clazz.newInstance();
-			Method readMethod = clazz.getDeclaredMethod(READ_OBJECT_METHOD_NAME,
-					java.io.ObjectInputStream.class);
+			Method readMethod = getReadMethod(objSerialized.getClass());
 			Method.setAccessible(new Method[]{readMethod}, true);
 			readMethod.invoke(objSerialized, this);
 
@@ -45,6 +44,19 @@ public abstract class ObjectInputStream extends java.io.ObjectInputStream {
 			throw new ClassNotFoundException(exception.getMessage(), exception);
 		}
 	}
+	
+	private static Method getReadMethod(Class<?> clazz) throws NoSuchMethodException {
+		if (clazz == null)
+			throw new NoSuchMethodException();
+		try {
+			return clazz.getDeclaredMethod(READ_OBJECT_METHOD_NAME,
+					java.io.ObjectInputStream.class);
+		} catch (NoSuchMethodException exception) {
+			return getReadMethod(clazz.getSuperclass());
+		}
+	}
+
+
 
 	protected abstract Class<?> readClass() throws IOException;
 

@@ -9,7 +9,7 @@ import java.io.ObjectOutputStream;
  * @author Thomas Pérennou
  */
 public class Message extends AbstractMessage {
-	private static final long serialVersionUID = -1252541775206801257L;
+	private static final long serialVersionUID = 5697397659744712657L;
 	public static final int MIN_VALUE = 2;
 	public static final int MAX_VALUE = 5;
 	private int value;
@@ -24,17 +24,12 @@ public class Message extends AbstractMessage {
 
 	@Override
 	protected void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		final int size = in.readInt();
-		if (size != 8) { // size
-			throw new IOException("Invalid size. Recieved=" + size + " expected=" + 8);
-		}
 		super.readObject(in);
 		this.value = in.readInt();
 	}
 
 	@Override
 	protected void writeObject(ObjectOutputStream out) throws IOException {
-		out.writeInt(8); // size
 		super.writeObject(out);
 		out.writeInt(this.value);
 	}
@@ -42,5 +37,10 @@ public class Message extends AbstractMessage {
 	@Override
 	public String toString() {
 		return super.toString() + "; value=" + this.value;
+	}
+
+	@Override
+	protected int getSize() {
+		return 4;
 	}
 }
