@@ -4,20 +4,20 @@ package org.pititom.core.event;
  *
  * @author Thomas Pérennou
  */
-class SynchronousTransmitter<Source, Event, Data> implements Transmitter<Source, Event, Data> {
+class SynchronousTransmitter<Event, Data extends EventData<?, Event>> implements Transmitter<Data> {
 
-	private final Handler<Source, Event, Data> eventHandler;
+	private final Handler<Data> eventHandler;
 	private final Event[] events;
 
-	public SynchronousTransmitter(Handler<Source, Event, Data> eventHandler, Event... events) {
+	public SynchronousTransmitter(Handler<Data> eventHandler, Event... events) {
 		this.eventHandler = eventHandler;
 		this.events = events;
 	}
 
-	public void transmit(Source source, Event event, Data data) {
+	public void transmit(Data data) {
 		for (Event registredEvent : this.events) {
-			if (registredEvent == event) {
-				eventHandler.handleEvent(source, event, data);
+			if (registredEvent == data.getEvent()) {
+				eventHandler.handleEvent(data);
 			}
 		}
 	}

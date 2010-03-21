@@ -3,6 +3,7 @@ package org.pititom.core.stream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 
 /**
@@ -27,7 +28,7 @@ public abstract class ObjectOutputStream extends java.io.ObjectOutputStream {
 		try {
 			this.writeClass(object.getClass());
 			Method writeMethod = getWtriteMethod(object.getClass());
-			Method.setAccessible(new Method[] { writeMethod }, true);
+			AccessibleObject.setAccessible(new Method[] { writeMethod }, true);
 			writeMethod.invoke(object, this);
 		} catch (Exception exception) {
 			throw new IOException(exception);

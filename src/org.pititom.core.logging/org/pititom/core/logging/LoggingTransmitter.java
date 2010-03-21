@@ -10,7 +10,7 @@ import org.pititom.core.event.RegisterableTransmitter;
  */
 public final class LoggingTransmitter implements RegisterableTransmitter<Object, LoggingEvent, LoggingData> {
 
-	private final RegisterableTransmitter<Object, LoggingEvent, LoggingData> transmitter;
+	private final RegisterableTransmitter<?, LoggingEvent, LoggingData> transmitter;
 	private final static LoggingTransmitter INSTANCE;
 
 	static {
@@ -26,17 +26,17 @@ public final class LoggingTransmitter implements RegisterableTransmitter<Object,
 	}
 
 	@Override
-	public void transmit(Object source, LoggingEvent event, LoggingData data) {
-		this.transmitter.transmit(source, event, data);
+	public void transmit(LoggingData data) {
+		this.transmitter.transmit(data);
 	}
 
 	@Override
-	public void addEventHandler(Handler<Object, LoggingEvent, LoggingData> eventHandler, LoggingEvent... eventList) {
+	public void addEventHandler(Handler<LoggingData> eventHandler, LoggingEvent... eventList) {
 		this.transmitter.addEventHandler(eventHandler, eventList);
 	}
 
 	@Override
-	public void removeEventHandler(Handler<Object, LoggingEvent, LoggingData> eventHandler, LoggingEvent... eventList) {
+	public void removeEventHandler(Handler<LoggingData> eventHandler, LoggingEvent... eventList) {
 		this.transmitter.removeEventHandler(eventHandler, eventList);
 	}
 }

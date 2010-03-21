@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 
 /**
@@ -36,7 +37,7 @@ public abstract class ObjectInputStream extends java.io.ObjectInputStream {
 			}
 			final Object objSerialized = clazz.newInstance();
 			Method readMethod = getReadMethod(objSerialized.getClass());
-			Method.setAccessible(new Method[]{readMethod}, true);
+			AccessibleObject.setAccessible(new Method[]{readMethod}, true);
 			readMethod.invoke(objSerialized, this);
 
 			return objSerialized;

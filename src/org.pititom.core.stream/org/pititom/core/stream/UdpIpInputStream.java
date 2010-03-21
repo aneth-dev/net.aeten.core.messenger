@@ -30,14 +30,18 @@ public class UdpIpInputStream extends PipedInputStream implements Configurable {
 	}
 
 	public UdpIpInputStream(InetSocketAddress destinationInetSocketAddress,
-	        InetAddress sourceInetAddress, boolean reuse, int maxPacketSize)
+	        InetAddress sourceInetAddress, boolean autoBind, boolean reuse, int maxPacketSize)
 	        throws IOException {
-		this.parameters = new UdpIpParameters(destinationInetSocketAddress,
-		        sourceInetAddress, reuse, maxPacketSize);
-		this.pipedOutputStream = new PipedOutputStream();
-		this.connect(this.pipedOutputStream);
-		this.receptionThread = new Thread(new ReceptionThread(), this.toString());
-		this.receptionThread.start();
+	   this(new UdpIpParameters(destinationInetSocketAddress,
+	                            sourceInetAddress, autoBind, reuse, maxPacketSize));
+	}
+	
+	public UdpIpInputStream(UdpIpParameters parameters) throws IOException {
+	   this.parameters = parameters;
+	    this.pipedOutputStream = new PipedOutputStream();
+	    this.connect(this.pipedOutputStream);
+	    this.receptionThread = new Thread(new ReceptionThread(), this.toString());
+	    this.receptionThread.start();
 	}
 
 	private class ReceptionThread implements Runnable {
@@ -86,7 +90,7 @@ public class UdpIpInputStream extends PipedInputStream implements Configurable {
 		if (this.parameters != null)
 			throw new ConfigurationException(configuration, UdpIpInputStream.class
 			        .getCanonicalName()
-			        + " is allreaady configured");
+			        + " is already configured");
 		try {
 			this.parameters = new UdpIpParameters(configuration);
 			this.receptionThread = new Thread(new ReceptionThread(), this.toString());

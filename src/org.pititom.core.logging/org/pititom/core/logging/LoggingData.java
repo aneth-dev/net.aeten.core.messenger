@@ -1,24 +1,27 @@
 package org.pititom.core.logging;
 
+import org.pititom.core.event.EventData;
+
 /**
  *
  * @author Thomas Pérennou
  */
-public class LoggingData {
+public class LoggingData extends EventData<Object, LoggingEvent> {
 	private final String message;
 	private final Exception exception;
 
-	public LoggingData(String message, Exception exception) {
+	public LoggingData(Object source, LoggingEvent level, String message, Exception exception) {
+		super(source, level);
 		this.message = message;
 		this.exception = exception;
 	}
 
-	public LoggingData(Exception exception) {
-		this(exception.toString(), exception);
+	public LoggingData(Object source, LoggingEvent level, Exception exception) {
+		this(source, level, exception.toString(), exception);
 	}
 
-	public LoggingData(String message) {
-		this(message, null);
+	public LoggingData(Object source, LoggingEvent level, String message) {
+		this(source, level, message, null);
 	}
 
 	public Exception getException() {

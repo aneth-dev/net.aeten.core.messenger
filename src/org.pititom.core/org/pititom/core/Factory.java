@@ -16,6 +16,7 @@ public class Factory<T> {
 		this.configuration = configuration;
 	}
 
+	@SuppressWarnings("cast")
 	public T getInstance() throws ConfigurationException {
 		if (this.bean == null) {
 			try {

@@ -8,17 +8,20 @@ import java.net.MulticastSocket;
 import java.net.SocketAddress;
 
 import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
-import org.pititom.core.args4j.CommandLineParser;
+import org.pititom.core.args4j.CommandLineParserHelper;
+import org.pititom.core.logging.LoggingData;
+import org.pititom.core.logging.LoggingEvent;
+import org.pititom.core.logging.LoggingTransmitter;
 
 /**
- *
+ * 
  * @author Thomas Pérennou
  */
 public class UdpIpParameters {
 
-	@Option(name = "-d", aliases = { "--destination",
-	        "--destination-inet-socket-adress" }, required = true)
+	@Option(name = "-d", aliases = { "--destination", "--destination-inet-socket-adress" }, required = true)
 	private InetSocketAddress destinationInetSocketAddress;
 
 	@Option(name = "-p", aliases = "--max-packet-size", required = true)
@@ -27,29 +30,29 @@ public class UdpIpParameters {
 	@Option(name = "-r", aliases = "--reuse", required = false)
 	private boolean reuse = false;
 
+	@Option(name = "-b", aliases = "--bind", required = false)
+	private boolean bind = false;
+
 	@Option(name = "-s", aliases = { "--source", "--source-inet-adress" }, required = false)
 	private InetAddress sourceInetAddress = null;
 
 	private DatagramSocket socket;
 
-	public UdpIpParameters(String configuration) throws CmdLineException,
-	        IOException {
-		this(CommandLineParser.splitArguments(configuration));
+	public UdpIpParameters(String configuration) throws CmdLineException, IOException {
+		this(CommandLineParserHelper.splitArguments(configuration));
 	}
 
-	public UdpIpParameters(String... arguments) throws CmdLineException,
-	        IOException {
-		CommandLineParser parser = new CommandLineParser(this);
+	public UdpIpParameters(String... arguments) throws CmdLineException, IOException {
+		CmdLineParser parser = new CmdLineParser(this);
 		parser.parseArgument(arguments);
 
 		this.createSocket();
 	}
 
-	public UdpIpParameters(InetSocketAddress destinationInetSocketAddress,
-	        InetAddress sourceInetAddress, boolean reuse, int maxPacketSize)
-	        throws IOException {
+	public UdpIpParameters(InetSocketAddress destinationInetSocketAddress, InetAddress sourceInetAddress, boolean bind, boolean reuse, int maxPacketSize) throws IOException {
 		this.destinationInetSocketAddress = destinationInetSocketAddress;
 		this.sourceInetAddress = sourceInetAddress;
+		this.bind = bind;
 		this.reuse = reuse;
 		this.maxPacketSize = maxPacketSize;
 
@@ -58,17 +61,28 @@ public class UdpIpParameters {
 
 	private void createSocket() throws IOException {
 		if (this.destinationInetSocketAddress.getAddress().isMulticastAddress()) {
-			MulticastSocket multicastSocket = new MulticastSocket(
-			        (SocketAddress) null);
+			MulticastSocket multicastSocket = new MulticastSocket((SocketAddress) null);
 			if (this.sourceInetAddress != null)
 				multicastSocket.setInterface(this.sourceInetAddress);
-			multicastSocket.bind(new InetSocketAddress(
-			        this.destinationInetSocketAddress.getPort()));
-			multicastSocket.joinGroup(this.destinationInetSocketAddress
-			        .getAddress());
+			multicastSocket.setReuseAddress(true);
+			if (!multicastSocket.isBound()) {
+				LoggingTransmitter.getInstance().transmit(new LoggingData(this, LoggingEvent.INFO, "Bind on " + this.destinationInetSocketAddress));
+				multicastSocket.bind(new InetSocketAddress(this.destinationInetSocketAddress.getPort()));
+			} else {
+				LoggingTransmitter.getInstance().transmit(new LoggingData(this, LoggingEvent.WARN, "Inet socket address" + this.destinationInetSocketAddress + " already bound"));
+			}
+			multicastSocket.joinGroup(this.destinationInetSocketAddress.getAddress());
 			this.socket = multicastSocket;
 		} else {
-			this.socket = new DatagramSocket(this.destinationInetSocketAddress);
+			this.socket = new DatagramSocket(null);
+			if (this.bind) {
+				if (!this.socket.isBound()) {
+					LoggingTransmitter.getInstance().transmit(new LoggingData(this, LoggingEvent.INFO, "Bind on " + this.destinationInetSocketAddress));
+					this.socket.bind(this.destinationInetSocketAddress);
+				} else {
+					LoggingTransmitter.getInstance().transmit(new LoggingData(this, LoggingEvent.WARN, "Inet socket address" + this.destinationInetSocketAddress + " already bound"));
+				}
+			}
 		}
 		this.socket.setReuseAddress(this.reuse);
 	}
@@ -89,15 +103,17 @@ public class UdpIpParameters {
 		return this.reuse;
 	}
 
+	public boolean isBind() {
+		return this.bind;
+	}
+
 	public InetAddress getSourceInetAddress() {
 		return this.sourceInetAddress;
 	}
-	
 
 	@Override
 	public String toString() {
 		return this.destinationInetSocketAddress.toString();
 	}
-
 
 }

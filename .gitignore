@@ -2,4 +2,7 @@ bin
 .fr-ekvpx8
 .classpath
 .project
+CVS
+.cvsignore
+.settings
 *~

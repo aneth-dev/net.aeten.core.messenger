@@ -4,10 +4,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.Factory;
-import org.pititom.core.args4j.CommandLineParser;
+import org.pititom.core.args4j.CommandLineParserHelper;
 
 /**
  *
@@ -28,9 +29,9 @@ public class StreamControllerConfiguration {
 
 	public StreamControllerConfiguration(String... arguments)
 			throws CmdLineException {
-		CommandLineParser.registerHandler(StreamEditorStack.class,
+		CmdLineParser.registerHandler(StreamEditorStack.class,
 				StreamEditorStackOptionHandler.class);
-		CommandLineParser commandLineParser = new CommandLineParser(this);
+		CmdLineParser commandLineParser = new CmdLineParser(this);
 		commandLineParser.parseArgument(arguments);
 	}
 
@@ -49,7 +50,7 @@ public class StreamControllerConfiguration {
 
 	public StreamControllerConfiguration(String configuration)
 			throws CmdLineException {
-		this(CommandLineParser.splitArguments(configuration));
+		this(CommandLineParserHelper.splitArguments(configuration));
 	}
 
 	public String getName() {

@@ -5,24 +5,34 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Yaml2Args {
 	private Yaml2Args() {
 	}
-
+	private static class Entries extends ArrayList<Entry> {
+		private Entries parent;
+		public Entries(Entries parent) {
+			this.parent = parent;
+		}
+		public Entries getParent() {
+			return this.parent;
+		}
+	}
 	private static class Entry {
 		private final String key;
 		private Object value;
+		private List<Entry> parent;
 
-		public Entry(String key, Object value) {
+		public Entry(/*List<Entry> parent, */String key, Object value) {
 			this.key = key;
 			this.value = value;
+//			this.parent = parent;
 		}
 
 		/**
@@ -47,6 +57,13 @@ public class Yaml2Args {
 			return this.key;
 		}
 
+		/**
+		 * @return the key
+		 */
+		protected List<Entry> getParent() {
+			return this.parent;
+		}
+
 		@Override
 		public String toString() {
 			return this.key + " : " + this.value;
@@ -66,19 +83,18 @@ public class Yaml2Args {
 		return convert(new FileReader(file));
 	}
 
-	@SuppressWarnings("unchecked")
 	private static String editConfiguration(ArrayList<Entry> nodes, boolean isRoot) {
 		String args = "";
+		
 		for (Entry entry : nodes) {
 			args += " --" + entry.getKey().trim().replace(' ', '-') + " ";
 
 			if (entry.getValue() instanceof ArrayList) {
-				args += "\"" + editConfiguration((ArrayList<Entry>) entry.getValue(), false) + "\"";
+				String quote = isRoot ? "\"" : "\\\"";
+				args += quote + editConfiguration((ArrayList<Entry>) entry.getValue(), false) + quote;
 			} else {
 				String value = entry.getValue().toString();
-				if ("true".equals(value)) {
-					break;
-				} else {
+				if (!"true".equals(value)) {
 					String quote = value.matches(".*[\\s\\r\\n].*") ? (isRoot ? "\"" : "\\\"") : "";
 					args += quote + value + quote;
 				}
@@ -87,13 +103,11 @@ public class Yaml2Args {
 		return args.trim();
 	}
 
-	@SuppressWarnings("unchecked")
 	private static ArrayList<Entry> loadYamlConfiguration(BufferedReader reader) {
 		String indentation = null;
-		ArrayList<Entry> configuration = new ArrayList<Entry>();
-		ArrayList<Entry> currentLevelEntries = configuration;
+		Entries configuration = new Entries(null);
+		Entries currentLevelEntries = configuration;
 		Entry previousEntry = new Entry("root", currentLevelEntries);
-		ArrayList<Entry> previousLevelEntries = currentLevelEntries;
 		Entry previousLevelEntry = previousEntry;
 		Entry currentLevelEntry = previousEntry;
 		int currentLevel = 0, previousLevel = 0;
@@ -110,25 +124,28 @@ public class Yaml2Args {
 				if (indentation != null) {
 					while (line.startsWith(indentation)) {
 						currentLevel++;
-						line = line.substring(currentLevel * indentation.length());
+						line = line.substring(indentation.length());
 					}
+				}
+				if ("".equals(line)) {
+					continue;
 				}
 				int separatorIndex = line.indexOf(':');
 				Entry entry = new Entry(line.substring(0, separatorIndex).trim(), line.substring(separatorIndex + 1).trim());
 				if (currentLevel > previousLevel) {
 					previousLevelEntry = currentLevelEntry;
 					currentLevelEntry = previousEntry;
-					previousLevelEntries = currentLevelEntries;
-					currentLevelEntries = new ArrayList<Entry>();
+					currentLevelEntries = new Entries(currentLevelEntries);
 					currentLevelEntries.add(entry);
 					currentLevelEntry.setValue(currentLevelEntries);
 					currentLevelEntry = entry;
 					previousLevel++;
 				} else if (currentLevel < previousLevel) {
 					currentLevelEntry = previousLevelEntry;
-					currentLevelEntries = previousLevelEntries;
+					currentLevelEntries = currentLevelEntries.getParent();
 					previousLevel--;
-					((ArrayList<Entry>) currentLevelEntry.getValue()).add(entry);
+//					((ArrayList<Entry>) currentLevelEntry.getValue()).add(entry);
+					currentLevelEntries.add(entry);
 				} else {
 					currentLevelEntries.add(entry);
 				}

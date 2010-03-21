@@ -1,45 +1,89 @@
 package org.pititom.core.event;
 
-import java.util.concurrent.BlockingQueue;
+import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- *
+ * 
  * @author Thomas Pérennou
  */
-class AsynchronousTransmitter<Source, Event, Data> implements Transmitter<Source, Event, Data>, Runnable {
+class AsynchronousTransmitter<Source, Event, Data extends EventData<Source, Event>>
+		implements Transmitter<Data>, Runnable {
 
-	private final Transmitter<Source, Event, Data> transmitter;
-	private final BlockingQueue<EventEntry<Source, Event, Data>> queue;
+	private final Transmitter<Data> transmitter;
+	private final Queue<Data>[] queues;
+	private final Object mutex;
 	private final Thread eventTread;
 	private boolean isKilled;
 
-	public AsynchronousTransmitter(String threadName, Transmitter<Source, Event, Data> transmitter) {
+	public AsynchronousTransmitter(String threadName,
+			Transmitter<Data> transmitter, int threadPriority) {
 		this.transmitter = transmitter;
 		this.eventTread = new Thread(this, threadName);
-		this.queue = new LinkedBlockingQueue<EventEntry<Source, Event, Data>>();
+		this.eventTread.setPriority(threadPriority);
+		this.mutex = new Object();
+		this.queues = new LinkedBlockingQueue[Priority.values().length];
+		for (Priority priority : Priority.values()) {
+			this.queues[priority.ordinal()] = new LinkedBlockingQueue<Data>();
+		}
+
 		this.eventTread.start();
 	}
-	public AsynchronousTransmitter(String threadName, Handler<Source, Event, Data> eventHandler, Event... events) {
-		this(threadName, new SynchronousTransmitter<Source, Event, Data>(eventHandler, events));
+
+	public AsynchronousTransmitter(String threadName,
+			Transmitter<Data> transmitter) {
+		this(threadName, transmitter, Thread.NORM_PRIORITY);
+	}
+
+	public AsynchronousTransmitter(String threadName, int threadPriority,
+			Handler<Data> eventHandler, Event... events) {
+		this(threadName, new SynchronousTransmitter<Event, Data>(eventHandler,
+				events), threadPriority);
+	}
+
+	public AsynchronousTransmitter(String threadName,
+			Handler<Data> eventHandler, Event... events) {
+		this(threadName, new SynchronousTransmitter<Event, Data>(eventHandler,
+				events), Thread.NORM_PRIORITY);
 	}
 
 	@Override
 	public void run() {
-		this.queue.clear();
-		AsynchronousTransmitter.this.isKilled = false;
+		synchronized (this.mutex) {
+			for (Priority priority : Priority.values()) {
+				this.queues[priority.ordinal()].clear();
+			}
+		}
+		this.isKilled = false;
 		try {
-			EventEntry<Source, Event, Data> eventEntry;
-			while (!AsynchronousTransmitter.this.isKilled) {
-				eventEntry = AsynchronousTransmitter.this.queue.take();
-				this.transmitter.transmit(eventEntry.getSource(), eventEntry.getEvent(), eventEntry.getData());
+			while (!this.isKilled) {
+				synchronized (this.mutex) {
+					while (!this.haveEventToTransmit()) {
+						this.mutex.wait();
+					}
+				}
+				for (Priority priority : Priority.values()) {
+					this.transmit(this.queues[priority.ordinal()]);
+				}
 			}
 		} catch (InterruptedException exception) {
 		} finally {
-			synchronized (queue) {
-				AsynchronousTransmitter.this.queue.clear();
+			synchronized (this.mutex) {
+				for (Priority priority : Priority.values()) {
+					this.queues[priority.ordinal()].clear();
+				}
 			}
 		}
+	}
+
+	private boolean haveEventToTransmit() {
+		for (Priority priority : Priority.values()) {
+			if (!AsynchronousTransmitter.this.queues[priority.ordinal()]
+					.isEmpty()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void kill() {
@@ -47,42 +91,27 @@ class AsynchronousTransmitter<Source, Event, Data> implements Transmitter<Source
 		this.eventTread.interrupt();
 	}
 
+	private int transmit(Queue<Data> queue) {
+		synchronized (queue) {
+			int eventsToTransmitCount = queue.size();
+			if (eventsToTransmitCount > 0) {
+				for (int i = 0; i < eventsToTransmitCount; i++) {
+					this.transmitter.transmit(queue.poll());
+				}
+			}
+			return eventsToTransmitCount;
+		}
+	}
+
 	@Override
-	public void transmit(Source source, Event event, Data data) {
-		this.queue.add(new EventEntry<Source, Event, Data>(source, event, data));
-	}
-
-	static class EventEntry<Source, Event, Data> {
-
-		private final Source source;
-		private final Event event;
-		private final Data data;
-
-		public EventEntry(Source source, Event event, Data data) {
-			this.source = source;
-			this.event = event;
-			this.data = data;
+	public void transmit(Data data) {
+		Queue<Data> queue = this.queues[data.getPriority().ordinal()];
+		synchronized (queue) {
+			queue.add(data);
 		}
-
-		/**
-		 * @return the event
-		 */
-		public Event getEvent() {
-			return this.event;
-		}
-
-		/**
-		 * @return the data
-		 */
-		public Data getData() {
-			return this.data;
-		}
-
-		/**
-		 * @return the source
-		 */
-		public Source getSource() {
-			return source;
+		synchronized (this.mutex) {
+			this.mutex.notify();
 		}
 	}
+
 }

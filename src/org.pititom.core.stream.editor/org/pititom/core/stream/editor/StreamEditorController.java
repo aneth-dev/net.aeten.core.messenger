@@ -71,24 +71,24 @@ public class StreamEditorController {
 
 		@Override
 		public void run() {
-			final DataInputStream in;
+			final DataInputStream inputStream;
 			if (StreamEditorController.this.in instanceof DataInput) {
-				in = (DataInputStream) StreamEditorController.this.in;
+				inputStream = (DataInputStream) StreamEditorController.this.in;
 			} else {
-				in = new DataInputStream(StreamEditorController.this.in);
+				inputStream = new DataInputStream(StreamEditorController.this.in);
 			}
 
-			final DataOutputStream out;
+			final DataOutputStream outputStream;
 			if (StreamEditorController.this.out instanceof DataOutput) {
-				out = (DataOutputStream) StreamEditorController.this.out;
+				outputStream = (DataOutputStream) StreamEditorController.this.out;
 			} else {
-				out = new DataOutputStream(StreamEditorController.this.out);
+				outputStream = new DataOutputStream(StreamEditorController.this.out);
 			}
 
 			StreamEditorController.this.state = State.IN_PROGRESS;
 			try {
 				while (state == State.IN_PROGRESS) {
-					editor.edit(in, out);
+					editor.edit(inputStream, outputStream);
 					StreamEditorController.this.out.flush();
 				}
 			} catch (IOException exception) {

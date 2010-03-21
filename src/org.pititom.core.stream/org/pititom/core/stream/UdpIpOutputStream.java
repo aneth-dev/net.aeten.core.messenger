@@ -7,7 +7,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
-import org.kohsuke.args4j.CmdLineException;
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
 
@@ -19,16 +18,20 @@ public class UdpIpOutputStream extends OutputStream implements Configurable {
 	private UdpIpParameters parameters;
 	private ByteBuffer buffer;
 
+	public UdpIpOutputStream(UdpIpParameters parameters) {
+	    this.parameters = parameters;
+	    this.buffer = ByteBuffer.allocate(this.parameters.getMaxPacketSize());
+	}
+	
 	public UdpIpOutputStream(InetSocketAddress destinationInetSocketAddress,
-	        InetAddress sourceInetAddress, boolean reuse, int maxPacketSize)
+	        InetAddress sourceInetAddress, boolean autoBind, boolean reuse, int maxPacketSize)
 	        throws IOException {
-		this.parameters = new UdpIpParameters(destinationInetSocketAddress,
-		        sourceInetAddress, reuse, maxPacketSize);
+	   this(new UdpIpParameters(destinationInetSocketAddress,
+	                            sourceInetAddress, autoBind, reuse, maxPacketSize));
 		this.buffer = ByteBuffer.allocate(this.parameters.getMaxPacketSize());
 	}
 
-	public UdpIpOutputStream()
-	        throws CmdLineException, IOException {
+	public UdpIpOutputStream() {
 		this.parameters = null;
 		this.buffer = null;
 	}
@@ -66,7 +69,7 @@ public class UdpIpOutputStream extends OutputStream implements Configurable {
 		if (this.parameters != null)
 			throw new ConfigurationException(configuration, UdpIpInputStream.class
 			        .getCanonicalName()
-			        + " is allreaady configured");
+			        + " is already configured");
 		try {
 			this.parameters = new UdpIpParameters(configuration);
 			this.buffer = ByteBuffer.allocate(this.parameters.getMaxPacketSize());

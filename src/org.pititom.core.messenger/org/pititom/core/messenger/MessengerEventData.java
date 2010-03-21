@@ -1,55 +1,52 @@
 package org.pititom.core.messenger;
 
+import org.pititom.core.event.HookEvent;
+import org.pititom.core.event.HookEventData;
+import org.pititom.core.event.Priority;
+import org.pititom.core.messenger.service.Messenger;
+
 /**
- *
+ * 
  * @author Thomas Pérennou
  */
-public class MessengerEventData<Message, Acknowledge extends Enum<?>>  implements org.pititom.core.Cloneable<MessengerEventData<Message, Acknowledge>> {
+public class MessengerEventData<Message> extends HookEventData<Messenger<Message>, MessengerEvent> {
 
-	private Message sentMessage = null;
-	private Message recievedMessage = null;
-	private Acknowledge acknowledge = null;
+	private Message message;
+	private String contact;
 
-	public MessengerEventData() {
+  public MessengerEventData(Messenger<Message> source, String contact, MessengerEvent event, Message message) {
+     this(source, contact, event, message, Priority.MEDIUM, true);
+   }
+
+  public MessengerEventData(Messenger<Message> source, String contact, MessengerEvent event, Message message, boolean doIt) {
+     this(source, contact, event, message, Priority.MEDIUM, doIt);
+   }
+
+  public MessengerEventData(Messenger<Message> source, String contact, MessengerEvent event, Message message, Priority priority) {
+     this(source, contact, event, message, priority, true);
+   }
+
+	protected MessengerEventData(Messenger<Message> source, String contact, MessengerEvent event, Message message, Priority priority, boolean doIt) {
+		super(source, HookEvent.get(event), priority, doIt);
+		this.message = message;
+		this.contact = contact;
 	}
 
-	public MessengerEventData(Message sentMessage, Message recievedMessage, Acknowledge acknowledge) {
-		this.sentMessage = sentMessage;
-		this.recievedMessage = recievedMessage;
-		this.acknowledge = acknowledge;
+	public Message getMessage() {
+		return message;
 	}
 
-	public Acknowledge getAcknowledge() {
-		return acknowledge;
-	}
-
-	public Message getRecievedMessage() {
-		return recievedMessage;
-	}
-
-	public Message getSentMessage() {
-		return sentMessage;
-	}
-
-	public void setAcknowledge(Acknowledge acknowledge) {
-		this.acknowledge = acknowledge;
-	}
-
-	public void setRecievedMessage(Message recievedMessage) {
-		this.recievedMessage = recievedMessage;
-	}
-
-	public void setSentMessage(Message sentMessage) {
-		this.sentMessage = sentMessage;
+	public void setMessage(Message message) {
+		this.message = message;
 	}
 
 	@Override
 	public String toString() {
-		return "sent message={" + this.sentMessage + "}; recieved message={" + this.recievedMessage + "}; acknowledge={" + this.acknowledge + "}";
+		return super.toString() + " message=(" + this.message + ")";
 	}
 
-	@Override
-	public MessengerEventData<Message, Acknowledge> clone() {
-		return new MessengerEventData<Message, Acknowledge>(this.sentMessage, this.recievedMessage, this.acknowledge);
+	public String getContact() {
+		return this.contact;
 	}
+
 }
