@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,6 +15,7 @@ public class Yaml2Args {
 	private Yaml2Args() {
 	}
 	private static class Entries extends ArrayList<Entry> {
+		private static final long serialVersionUID = 4379344525217975425L;
 		private Entries parent;
 		public Entries(Entries parent) {
 			this.parent = parent;
@@ -27,12 +27,10 @@ public class Yaml2Args {
 	private static class Entry {
 		private final String key;
 		private Object value;
-		private List<Entry> parent;
 
-		public Entry(/*List<Entry> parent, */String key, Object value) {
+		public Entry(String key, Object value) {
 			this.key = key;
 			this.value = value;
-//			this.parent = parent;
 		}
 
 		/**
@@ -55,13 +53,6 @@ public class Yaml2Args {
 		 */
 		protected String getKey() {
 			return this.key;
-		}
-
-		/**
-		 * @return the key
-		 */
-		protected List<Entry> getParent() {
-			return this.parent;
 		}
 
 		@Override
@@ -87,9 +78,12 @@ public class Yaml2Args {
 		String args = "";
 		
 		for (Entry entry : nodes) {
+			if ("false".equals(entry.getValue())) {
+				continue;
+			}
 			args += " --" + entry.getKey().trim().replace(' ', '-') + " ";
 
-			if (entry.getValue() instanceof ArrayList) {
+			if (entry.getValue() instanceof ArrayList<?>) {
 				String quote = isRoot ? "\"" : "\\\"";
 				args += quote + editConfiguration((ArrayList<Entry>) entry.getValue(), false) + quote;
 			} else {

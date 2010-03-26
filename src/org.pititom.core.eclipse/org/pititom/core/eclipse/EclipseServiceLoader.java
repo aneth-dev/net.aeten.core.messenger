@@ -1,9 +1,6 @@
 package org.pititom.core.eclipse;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,46 +8,41 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
+import org.eclipse.core.internal.runtime.InternalPlatform;
 import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.Platform;
 import org.osgi.framework.Bundle;
 import org.pititom.core.Configurable;
-import org.pititom.core.Service;
+import org.pititom.core.DefaultServiceLoader;
 import org.pititom.core.args4j.Yaml2Args;
 
-public class EclipseService extends Service {
-	private static Collection<Bundle> bundles = new ArrayList<Bundle>();
-	
-	private EclipseService() {
-		registerBundle("org.pititom.core");
+@SuppressWarnings("restriction")
+class EclipseServiceLoader extends DefaultServiceLoader {
+	public EclipseServiceLoader() {
 	}
 
-	public static Service getInstance() {
-		if (instance == null) {
-			instance = new EclipseService();
+	public synchronized void registerRootPackage(String bundleName) {
+		for (Bundle bundle : InternalPlatform.getDefault().getBundleContext().getBundles()) {
+			if (bundle.getSymbolicName().startsWith(bundleName)) {
+				registerBundle(bundle);
+			}
 		}
-		return instance;
 	}
 
-	public Class<?> loadClass(String className) throws ClassNotFoundException {
-		for (Bundle bundle : bundles) {
-			try {
-	            return bundle.loadClass(className);
-            } catch (ClassNotFoundException exception) {}
+	public synchronized void registerBundle(Bundle bundle) {
+
+		if (bundle.getResource("/META-INF/MANIFEST.MF") != null) {
+			EclipseClassLoader.bundles.add(bundle);
+			loadFromBundle(bundle, ResourceType.SERVICE);
+			loadFromBundle(bundle, ResourceType.PROVIDER);
 		}
-		throw new ClassNotFoundException();
-	}
-
-	public synchronized void registerBundle(String bundleName) {
-		Bundle bundle = Platform.getBundle(bundleName);
-		bundles.add(bundle);
-		loadFromBundle(bundle, ResourceType.SERVICE);
-		loadFromBundle(bundle, ResourceType.PROVIDER);
 	}
 
 	private void loadFromBundle(Bundle bundle, ResourceType resourceType) {
 		Enumeration<URL> urls = bundle.findEntries("/bin", "*.class", true);
 
+		if (urls == null) {
+			return;
+		}
 		while (urls.hasMoreElements()) {
 			URL url = urls.nextElement();
 			String entryName = url.getFile().toString();
@@ -67,7 +59,7 @@ public class EclipseService extends Service {
 			if (entryName.matches(pattern)) {
 				Class<?> clazz;
 				try {
-					clazz = Class.forName(entryName.replace('/', '.').substring(5, entryName.length() - 6));
+					clazz = bundle.loadClass(entryName.replace('/', '.').substring(5, entryName.length() - 6));
 					switch (resourceType) {
 						case PROVIDER:
 							registerProvider(clazz);
@@ -97,7 +89,7 @@ public class EclipseService extends Service {
 				for (Class<?> clazz : services.get(service)) {
 					try {
 						if (Configurable.class.isAssignableFrom(clazz)) {
-							for (Bundle bundle : bundles) {
+							for (Bundle bundle : EclipseClassLoader.bundles) {
 								Enumeration<URL> files = bundle.findEntries("/META-INF/provider/" + clazz.getName(), "*", false);
 								if (files == null) {
 									continue;
@@ -120,6 +112,8 @@ public class EclipseService extends Service {
 					}
 				}
 			}
+			instances.put(service, (Collection<Object>) providers);
+
 		}
 
 		// Load standard java.util.ServiceLoader providers

@@ -21,7 +21,7 @@ public abstract class Sender<Message> implements Identifiable, Connection, Confi
 	protected String identifier = null;
 
 	protected String configuration;
-	private boolean connected = false;
+	protected boolean connected = false;
 
 	public Sender() {}
 
@@ -35,7 +35,7 @@ public abstract class Sender<Message> implements Identifiable, Connection, Confi
 	}
 
 	@Override
-	public void configure(@SuppressWarnings("hiding") String configuration) throws ConfigurationException {
+	public void configure(String configuration) throws ConfigurationException {
 		this.configuration = configuration;
 		CommandLineParserHelper.configure(this, this.configuration);
 	}
@@ -49,6 +49,7 @@ public abstract class Sender<Message> implements Identifiable, Connection, Confi
 	public final synchronized void connect() throws IOException {
 		if (!this.connected) {
 			try {
+				this.disconnect();
 				if (this.configuration != null) {
 					this.configure(this.configuration);
 				}
@@ -72,10 +73,8 @@ public abstract class Sender<Message> implements Identifiable, Connection, Confi
 		}
 	}
 
-	@SuppressWarnings("unused")
 	protected void doConnect() throws IOException {}
 
-	@SuppressWarnings("unused")
 	protected void doDisconnect() throws IOException {}
 
 	public abstract void send(Message message);

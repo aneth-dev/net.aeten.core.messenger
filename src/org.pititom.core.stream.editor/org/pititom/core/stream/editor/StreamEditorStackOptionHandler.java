@@ -6,6 +6,7 @@ import org.kohsuke.args4j.OptionDef;
 import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.Parameters;
 import org.kohsuke.args4j.spi.Setter;
+import org.pititom.core.ClassLoader;
 import org.pititom.core.Factory;
 
 /**
@@ -35,7 +36,7 @@ public class StreamEditorStackOptionHandler extends OptionHandler<StreamEditorSt
 					if (EDITOR_OPTION_NAME.equals(params.getParameter(i)) || contains(params.getParameter(i), EDITOR_OPTION_ALIASES)) {
 						++i;
 					}
-					clazz = Class.forName(params.getParameter(i));
+					clazz = ClassLoader.loadClass(params.getParameter(i));
 				} catch (CmdLineException exception) {
 					break;
 				}

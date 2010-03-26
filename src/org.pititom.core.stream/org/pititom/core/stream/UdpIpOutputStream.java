@@ -5,7 +5,6 @@ import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
@@ -16,11 +15,12 @@ import org.pititom.core.ConfigurationException;
  */
 public class UdpIpOutputStream extends OutputStream implements Configurable {
 	private UdpIpParameters parameters;
-	private ByteBuffer buffer;
+	private byte[] buffer;
+	private int position = 0;
 
 	public UdpIpOutputStream(UdpIpParameters parameters) {
 	    this.parameters = parameters;
-	    this.buffer = ByteBuffer.allocate(this.parameters.getMaxPacketSize());
+	    this.buffer = new byte[this.parameters.getMaxPacketSize()];
 	}
 	
 	public UdpIpOutputStream(InetSocketAddress destinationInetSocketAddress,
@@ -28,7 +28,7 @@ public class UdpIpOutputStream extends OutputStream implements Configurable {
 	        throws IOException {
 	   this(new UdpIpParameters(destinationInetSocketAddress,
 	                            sourceInetAddress, autoBind, reuse, maxPacketSize));
-		this.buffer = ByteBuffer.allocate(this.parameters.getMaxPacketSize());
+	    this.buffer = new byte[this.parameters.getMaxPacketSize()];
 	}
 
 	public UdpIpOutputStream() {
@@ -40,9 +40,9 @@ public class UdpIpOutputStream extends OutputStream implements Configurable {
 	public void write(int b) throws IOException {
 		if (this.buffer == null)
 			throw new IOException("Stream must be configured");
-		if (this.buffer.position() == this.buffer.capacity())
+		if (this.position == this.parameters.getMaxPacketSize())
 			this.flush();
-		this.buffer.put((byte) b);
+		this.buffer[this.position++] = (byte) b;
 	}
 
 	@Override
@@ -54,9 +54,9 @@ public class UdpIpOutputStream extends OutputStream implements Configurable {
 	@Override
 	public void flush() throws IOException {
 		this.parameters.getSocket().send(
-		        new DatagramPacket(this.buffer.array(), this.buffer.position(),
+		        new DatagramPacket(this.buffer, this.position,
 		                this.parameters.getDestinationInetSocketAddress()));
-		this.buffer.clear();
+		this.position = 0;
 	}
 
 	@Override
@@ -72,7 +72,7 @@ public class UdpIpOutputStream extends OutputStream implements Configurable {
 			        + " is already configured");
 		try {
 			this.parameters = new UdpIpParameters(configuration);
-			this.buffer = ByteBuffer.allocate(this.parameters.getMaxPacketSize());
+		    this.buffer = new byte[this.parameters.getMaxPacketSize()];
 		} catch (Exception exception) {
 			throw new ConfigurationException(configuration, exception);
 		}

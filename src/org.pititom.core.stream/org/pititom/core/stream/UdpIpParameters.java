@@ -21,7 +21,7 @@ import org.pititom.core.logging.LoggingTransmitter;
  */
 public class UdpIpParameters {
 
-	@Option(name = "-d", aliases = { "--destination", "--destination-inet-socket-adress" }, required = true)
+	@Option(name = "-d", aliases = { "--destination", "--destination-inet-socket-address" }, required = true)
 	private InetSocketAddress destinationInetSocketAddress;
 
 	@Option(name = "-p", aliases = "--max-packet-size", required = true)
@@ -33,7 +33,7 @@ public class UdpIpParameters {
 	@Option(name = "-b", aliases = "--bind", required = false)
 	private boolean bind = false;
 
-	@Option(name = "-s", aliases = { "--source", "--source-inet-adress" }, required = false)
+	@Option(name = "-s", aliases = { "--source", "--source-inet-address" }, required = false)
 	private InetAddress sourceInetAddress = null;
 
 	private DatagramSocket socket;

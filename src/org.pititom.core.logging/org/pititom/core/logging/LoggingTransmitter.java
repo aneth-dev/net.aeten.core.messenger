@@ -30,6 +30,18 @@ public final class LoggingTransmitter implements RegisterableTransmitter<Object,
 		this.transmitter.transmit(data);
 	}
 
+	public void transmit(Object source, LoggingEvent level, String message, Exception exception) {
+		this.transmitter.transmit(new LoggingData(source, level, message, exception));
+	}
+
+	public void transmit(Object source, LoggingEvent level, Exception exception) {
+		this.transmitter.transmit(new LoggingData(source, level, exception));
+	}
+
+	public void transmit(Object source, LoggingEvent level, String message) {
+		this.transmitter.transmit(new LoggingData(source, level, message));
+	}
+
 	@Override
 	public void addEventHandler(Handler<LoggingData> eventHandler, LoggingEvent... eventList) {
 		this.transmitter.addEventHandler(eventHandler, eventList);

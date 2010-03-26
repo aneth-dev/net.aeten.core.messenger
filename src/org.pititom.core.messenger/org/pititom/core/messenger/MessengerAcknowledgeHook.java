@@ -76,7 +76,7 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 		case SEND:
 			this.sendHook(data);
 			break;
-		case RECEIVE:
+		case RECIEVE:
 			this.startReception(data);
 			break;
 		default:

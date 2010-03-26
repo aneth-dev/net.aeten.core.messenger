@@ -5,7 +5,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 import org.kohsuke.args4j.Option;
-import org.pititom.core.logging.LoggingData;
+import org.pititom.core.ConfigurationException;
 import org.pititom.core.logging.LoggingEvent;
 import org.pititom.core.logging.LoggingTransmitter;
 import org.pititom.core.messenger.service.Sender;
@@ -28,7 +28,7 @@ public class StreamSender<Message> extends Sender<Message> {
 			((ObjectOutputStream) this.outputStream).writeObject(message);
 			this.outputStream.flush();
 		} catch (IOException exception) {
-			LoggingTransmitter.getInstance().transmit(new LoggingData(this, LoggingEvent.ERROR, exception));
+			LoggingTransmitter.getInstance().transmit(this.identifier, LoggingEvent.ERROR, exception);
 		}
 	}
 
@@ -36,5 +36,12 @@ public class StreamSender<Message> extends Sender<Message> {
 	protected void doDisconnect() throws IOException {
 		this.outputStream.close();
 	}
+
+	@Override
+	public void configure(String configuration) throws ConfigurationException {
+		super.configure(configuration);
+		this.connected = true;
+	}
+
 
 }

@@ -1,74 +1,59 @@
 package org.pititom.core.stream;
 
 import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
 
 /**
- *
+ * 
  * @author Thomas Pérennou
  */
-public class UdpIpInputStream extends PipedInputStream implements Configurable {
+public class UdpIpInputStream extends InputStream implements Configurable {
 
 	private UdpIpParameters parameters;
 
-	private PipedOutputStream pipedOutputStream;
 	private Thread receptionThread;
+	private final BlockingQueue<DatagramPacket> queue = new LinkedBlockingQueue<DatagramPacket>();
+	private int position = 0;
+	private int available = 0;
+	private DatagramPacket currentPacket = null;
 
-	public UdpIpInputStream() throws IOException {
+	public UdpIpInputStream() {
 		this.parameters = null;
-		this.pipedOutputStream = new PipedOutputStream();
-		this.connect(this.pipedOutputStream);
 		this.receptionThread = null;
 	}
 
-	public UdpIpInputStream(InetSocketAddress destinationInetSocketAddress,
-	        InetAddress sourceInetAddress, boolean autoBind, boolean reuse, int maxPacketSize)
-	        throws IOException {
-	   this(new UdpIpParameters(destinationInetSocketAddress,
-	                            sourceInetAddress, autoBind, reuse, maxPacketSize));
+	public UdpIpInputStream(InetSocketAddress destinationInetSocketAddress, InetAddress sourceInetAddress, boolean autoBind, boolean reuse, int maxPacketSize) throws IOException {
+		this(new UdpIpParameters(destinationInetSocketAddress, sourceInetAddress, autoBind, reuse, maxPacketSize));
 	}
-	
-	public UdpIpInputStream(UdpIpParameters parameters) throws IOException {
-	   this.parameters = parameters;
-	    this.pipedOutputStream = new PipedOutputStream();
-	    this.connect(this.pipedOutputStream);
-	    this.receptionThread = new Thread(new ReceptionThread(), this.toString());
-	    this.receptionThread.start();
+
+	public UdpIpInputStream(UdpIpParameters parameters) {
+		this.parameters = parameters;
+		this.receptionThread = new Thread(new ReceptionThread(), this.toString());
+		this.receptionThread.start();
 	}
 
 	private class ReceptionThread implements Runnable {
 		@Override
 		public void run() {
-			DatagramPacket packet = new DatagramPacket(
-			        new byte[UdpIpInputStream.this.parameters
-			                .getMaxPacketSize()],
-			        UdpIpInputStream.this.parameters.getMaxPacketSize(),
-			        UdpIpInputStream.this.parameters
-			                .getDestinationInetSocketAddress().getAddress(),
-			        UdpIpInputStream.this.parameters
-			                .getDestinationInetSocketAddress().getPort());
 			try {
-				while ((UdpIpInputStream.this.parameters.getSocket() != null)
-				        && !UdpIpInputStream.this.parameters.getSocket()
-				                .isClosed()) {
+				while ((UdpIpInputStream.this.parameters.getSocket() != null) && !UdpIpInputStream.this.parameters.getSocket().isClosed()) {
+					DatagramPacket packet = new DatagramPacket(new byte[UdpIpInputStream.this.parameters.getMaxPacketSize()], UdpIpInputStream.this.parameters.getMaxPacketSize(), UdpIpInputStream.this.parameters.getDestinationInetSocketAddress().getAddress(), UdpIpInputStream.this.parameters.getDestinationInetSocketAddress().getPort());
 					try {
-						UdpIpInputStream.this.parameters.getSocket().receive(
-						        packet);
-
-						UdpIpInputStream.this.pipedOutputStream.write(packet
-						        .getData(), 0, packet.getLength());
-						
-						UdpIpInputStream.this.pipedOutputStream.flush();
-						
+						UdpIpInputStream.this.parameters.getSocket().receive(packet);
+						UdpIpInputStream.this.available += packet.getLength();
+						UdpIpInputStream.this.queue.put(packet);
 					} catch (SocketTimeoutException exception) {
+						continue;
+					} catch (InterruptedException exception) {
 						continue;
 					}
 				}
@@ -88,9 +73,7 @@ public class UdpIpInputStream extends PipedInputStream implements Configurable {
 	@Override
 	public void configure(String configuration) throws ConfigurationException {
 		if (this.parameters != null)
-			throw new ConfigurationException(configuration, UdpIpInputStream.class
-			        .getCanonicalName()
-			        + " is already configured");
+			throw new ConfigurationException(configuration, UdpIpInputStream.class.getCanonicalName() + " is already configured");
 		try {
 			this.parameters = new UdpIpParameters(configuration);
 			this.receptionThread = new Thread(new ReceptionThread(), this.toString());
@@ -104,4 +87,33 @@ public class UdpIpInputStream extends PipedInputStream implements Configurable {
 	public String toString() {
 		return UdpIpInputStream.class.getName() + " (" + this.parameters + ")";
 	}
+
+	@Override
+	public int read() throws IOException {
+		if (this.currentPacket == null) {
+			try {
+				this.currentPacket = this.queue.take();
+				this.position = 0;
+			} catch (InterruptedException exception) {
+				return this.read();
+			}
+		}
+		if (this.currentPacket.getLength() == this.position) {
+			this.currentPacket = null;
+			return this.read();
+		}
+		this.available--;
+		return this.currentPacket.getData()[this.position++] & 0xFF;
+	}
+
+	@Override
+	public int available() throws IOException {
+		return this.available;
+	}
+	
+	@Override
+	public void close() throws IOException {
+		this.receptionThread.interrupt();
+	}
+
 }

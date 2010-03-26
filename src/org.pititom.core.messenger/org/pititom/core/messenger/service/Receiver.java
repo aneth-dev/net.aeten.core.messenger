@@ -10,7 +10,6 @@ import org.pititom.core.Connection;
 import org.pititom.core.Identifiable;
 import org.pititom.core.args4j.CommandLineParserHelper;
 import org.pititom.core.messenger.args4j.ReceiverOptionHandler;
-import org.pititom.core.messenger.args4j.SenderOptionHandler;
 
 public abstract class Receiver<Message> implements Identifiable, Iterable<Message>, Connection, Configurable {
 
@@ -22,7 +21,7 @@ public abstract class Receiver<Message> implements Identifiable, Iterable<Messag
 	protected String identifier = null;
 	
 	protected String configuration;
-	private boolean connected = false;
+	protected boolean connected = false;
 
 	public Receiver() {}
 
@@ -38,7 +37,7 @@ public abstract class Receiver<Message> implements Identifiable, Iterable<Messag
 	}
 
     @Override
-	public void configure(@SuppressWarnings("hiding") String configuration) throws ConfigurationException {
+	public void configure(String configuration) throws ConfigurationException {
 		this.configuration = configuration;
 		CommandLineParserHelper.configure(this, this.configuration);
 	}
@@ -78,11 +77,9 @@ public abstract class Receiver<Message> implements Identifiable, Iterable<Messag
 		}
 	}
 
-	@SuppressWarnings("unused")
 	protected void doConnect() throws IOException {
 	}
 
-	@SuppressWarnings("unused")
 	protected void doDisconnect() throws IOException {
 	}
 

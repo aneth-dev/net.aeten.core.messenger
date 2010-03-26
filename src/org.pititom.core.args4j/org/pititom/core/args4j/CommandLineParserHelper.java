@@ -6,7 +6,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.LinkedList;
 
-import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.Factory;
@@ -92,7 +91,7 @@ public class CommandLineParserHelper {
 
 	}
 
-	public static void main(String[] arguments) throws CmdLineException {
+	public static void main(String[] arguments) {
 		doAssertion(splitArguments("-a toto -b titi"), new String[] { "-a",
 		        "toto", "-b", "titi" });
 		doAssertion(

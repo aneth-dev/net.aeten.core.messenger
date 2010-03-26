@@ -6,6 +6,7 @@ import org.kohsuke.args4j.OptionDef;
 import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.Parameters;
 import org.kohsuke.args4j.spi.Setter;
+import org.pititom.core.ClassLoader;
 import org.pititom.core.messenger.service.Receiver;
 
 public class ReceiverOptionHandler extends OptionHandler<Receiver<?>> {
@@ -20,7 +21,7 @@ public class ReceiverOptionHandler extends OptionHandler<Receiver<?>> {
 	public int parseArguments(Parameters params) throws CmdLineException {
 		String configuration = null;
 		try {
-			Class<Receiver<?>> recieverClass = (Class<Receiver<?>>) Class.forName(params.getParameter(0));
+			Class<Receiver<?>> recieverClass = (Class<Receiver<?>>) ClassLoader.loadClass(params.getParameter(0));
 			Receiver<?> reciever = recieverClass.newInstance();
 			if (CONFIGURATION_OPTION_NAME.equals(params.getParameter(1)) || contains(params.getParameter(1), CONFIGURATION_OPTION_ALIASES)) {
 				configuration = params.getParameter(2);

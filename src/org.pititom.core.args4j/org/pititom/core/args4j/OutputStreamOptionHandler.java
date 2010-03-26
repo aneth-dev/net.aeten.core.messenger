@@ -9,7 +9,7 @@ import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.Parameters;
 import org.kohsuke.args4j.spi.Setter;
 import org.pititom.core.Configurable;
-import org.pititom.core.Service;
+import org.pititom.core.ClassLoader;
 
 /**
  * {@link Class} {@link OptionHandler}.
@@ -31,7 +31,7 @@ public class OutputStreamOptionHandler extends OptionHandler<OutputStream> {
 	public int parseArguments(Parameters params) throws CmdLineException {
 		int i = 0;
 		try {
-			Class<OutputStream> outputStreamClass = (Class<OutputStream>) Class.forName(params.getParameter(i));
+			Class<OutputStream> outputStreamClass = (Class<OutputStream>) ClassLoader.loadClass(params.getParameter(i));
 			String configuration;
 			try {
 				if (CONFIGURATION_OPTION_NAME.equals(params.getParameter(i + 1)) || contains(params.getParameter(i + 1), CONFIGURATION_OPTION_ALIASES)) {
@@ -57,7 +57,7 @@ public class OutputStreamOptionHandler extends OptionHandler<OutputStream> {
 					} else if (params.getParameter(i).startsWith("-")) {
 						break;
 					}
-					outputStreamClass = (Class<OutputStream>) Service.getInstance().loadClass(params.getParameter(i));
+					outputStreamClass = (Class<OutputStream>) ClassLoader.loadClass(params.getParameter(i));
 				} catch (ClassCastException exception) {
 					throw new CmdLineException(this.owner, exception);
 				} catch (CmdLineException exception) {

@@ -2,11 +2,12 @@ package org.pititom.core.messenger.provider;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
@@ -19,6 +20,8 @@ import org.pititom.core.event.Transmitter;
 import org.pititom.core.event.TransmitterFactory;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
+import org.pititom.core.messenger.args4j.ReceiverOptionHandler;
+import org.pititom.core.messenger.args4j.SenderOptionHandler;
 import org.pititom.core.messenger.service.Messenger;
 import org.pititom.core.messenger.service.Receiver;
 import org.pititom.core.messenger.service.Sender;
@@ -49,7 +52,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 	@Option(name = "-c", aliases = "--auto-connect", required = false)
 	private boolean autoConnect = false;
 
-	private Map<String, Sender<Message>> senderMap = new HashMap<String, Sender<Message>>();
+	private Map<String, Sender<Message>> senderMap = new LinkedHashMap<String, Sender<Message>>();
 
 	private boolean connected;
 
@@ -180,6 +183,8 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 
 	@Override
 	public synchronized void configure(String configuration) throws ConfigurationException {
+		CmdLineParser.registerHandler(Sender.class, SenderOptionHandler.class);
+		CmdLineParser.registerHandler(Receiver.class, ReceiverOptionHandler.class);
 		CommandLineParserHelper.configure(this, configuration);
 		if (this.threadPriority > -1) {
 			// TODO
@@ -211,7 +216,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 			public void run() {
 				for (Message message : reciever) {
 					if (message != null) {
-						MessengerProvider.this.receiveEventTransmitter.transmit(new MessengerEventData<Message>(MessengerProvider.this, reciever.getIdentifier(), MessengerEvent.RECEIVE, message));
+						MessengerProvider.this.receiveEventTransmitter.transmit(new MessengerEventData<Message>(MessengerProvider.this, reciever.getIdentifier(), MessengerEvent.RECIEVE, message));
 					}
 				}
 			}
