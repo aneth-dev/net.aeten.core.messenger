@@ -3,7 +3,6 @@ package org.pititom.core.messenger.service;
 import java.io.IOException;
 
 import org.pititom.core.Connection;
-import org.pititom.core.Descrivable;
 import org.pititom.core.Identifiable;
 import org.pititom.core.event.HandlerRegister;
 import org.pititom.core.event.HookEvent;
@@ -18,7 +17,7 @@ import org.pititom.core.messenger.MessengerEventData;
 public interface Messenger<Message>
 		extends
 		HandlerRegister<Messenger<Message>, HookEvent<MessengerEvent>, MessengerEventData<Message>>,
-		Connection, Identifiable, Descrivable {
+		Connection, Identifiable {
 
 	public void transmit(Message message, String contact);
 

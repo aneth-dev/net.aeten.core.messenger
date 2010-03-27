@@ -3,7 +3,6 @@ package org.pititom.core.messenger.stream.provider;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.util.Iterator;
 
 import org.kohsuke.args4j.Option;
 import org.pititom.core.ConfigurationException;
@@ -24,33 +23,6 @@ public class StreamReceiver<Message> extends Receiver<Message> {
 	}
 
 	@Override
-	public Iterator<Message> iterator() {
-		return new Iterator<Message>() {
-
-			@Override
-			public boolean hasNext() {
-				return StreamReceiver.this.isConnected();
-			}
-
-			@Override
-			public Message next() {
-				try {
-					return (Message) ((ObjectInputStream) StreamReceiver.this.inputStream).readObject();
-				} catch (Exception exception) {
-					LoggingTransmitter.getInstance().transmit(StreamReceiver.this.identifier, LoggingEvent.ERROR, exception);
-					return null;
-				}
-			}
-
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException();
-			}
-
-		};
-	}
-
-	@Override
 	protected void doDisconnect() throws IOException {
 		this.inputStream.close();
 	}
@@ -59,6 +31,15 @@ public class StreamReceiver<Message> extends Receiver<Message> {
 	public void configure(String configuration) throws ConfigurationException {
 		super.configure(configuration);
 		this.connected = true;
+	}
+	
+	public Message recieve() {
+		try {
+			return (Message) ((ObjectInputStream) StreamReceiver.this.inputStream).readObject();
+		} catch (Exception exception) {
+			LoggingTransmitter.getInstance().transmit(StreamReceiver.this.identifier, LoggingEvent.ERROR, exception);
+			return null;
+		}
 	}
 
 }

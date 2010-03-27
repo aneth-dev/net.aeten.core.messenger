@@ -18,6 +18,8 @@ import org.pititom.core.event.Priority;
 import org.pititom.core.event.RegisterableTransmitter;
 import org.pititom.core.event.Transmitter;
 import org.pititom.core.event.TransmitterFactory;
+import org.pititom.core.logging.LoggingEvent;
+import org.pititom.core.logging.LoggingTransmitter;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.args4j.ReceiverOptionHandler;
@@ -35,9 +37,6 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 	@Option(name = "-id", aliases = "--identifier", required = true)
 	private String identifier;
 
-	@Option(name = "-d", aliases = "--description", required = false)
-	private String description;
-
 	@Option(name = "-p", aliases = "--thread-priority", required = false)
 	private int threadPriority = -1;
 
@@ -53,6 +52,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 	private boolean autoConnect = false;
 
 	private Map<String, Sender<Message>> senderMap = new LinkedHashMap<String, Sender<Message>>();
+	private Map<String, Receiver<Message>> recieverMap = new LinkedHashMap<String, Receiver<Message>>();
 
 	private boolean connected;
 
@@ -62,28 +62,23 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 
 	/** @deprecated Reserved to configuration building */
 	public MessengerProvider() {
-		this(null, null, Thread.NORM_PRIORITY, new Sender[0], new Receiver[0]);
+		this(null, Thread.NORM_PRIORITY, new Sender[0], new Receiver[0]);
 	}
 
 	public MessengerProvider(String identifier) {
-		this(identifier, null, Thread.NORM_PRIORITY, new Sender[0], new Receiver[0]);
+		this(identifier, Thread.NORM_PRIORITY, new Sender[0], new Receiver[0]);
 	}
 
 	public MessengerProvider(String identifier, int threadPriority) {
-		this(identifier, null, threadPriority, new Sender[0], new Receiver[0]);
+		this(identifier, threadPriority, new Sender[0], new Receiver[0]);
 	}
 
-	public MessengerProvider(String identifier, String description) {
-		this(identifier, description, Thread.NORM_PRIORITY, new Sender[0], new Receiver[0]);
-	}
-	
-	public MessengerProvider(String identifier, String description, int threadPriority, Sender<Message> sender, Receiver<Message> receiver) {
-		this(identifier, description, threadPriority, new Sender[] {sender}, new Receiver[] {receiver});
+	public MessengerProvider(String identifier, int threadPriority, Sender<Message> sender, Receiver<Message> receiver) {
+		this(identifier, threadPriority, new Sender[] {sender}, new Receiver[] {receiver});
 	}
 
-	public MessengerProvider(String identifier, String description, int threadPriority, Sender<Message>[] senderList, Receiver<Message>[] receiverList) {
+	public MessengerProvider(String identifier, int threadPriority, Sender<Message>[] senderList, Receiver<Message>[] receiverList) {
 		this.identifier = identifier;
-		this.description = description;
 		this.threadPriority = threadPriority;
 
 		try {
@@ -106,9 +101,16 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 		this.hookTransmitter.addEventHandler(new Handler<MessengerEventData<Message>>() {
 			@Override
 			public void handleEvent(MessengerEventData<Message> data) {
-				MessengerProvider.this.senderMap.get(data.getContact()).send(data.getMessage());
+				switch (data.getEvent().getSourceEvent()) {
+				case SEND:
+					MessengerProvider.this.senderMap.get(data.getContact()).send(data.getMessage());
+					break;
+				case RECIEVE:
+					data.setMessage(MessengerProvider.this.recieverMap.get(data.getContact()).recieve());
+					break;
+				}
 			}
-		}, HookEvent.get(MessengerEvent.SEND));
+		}, HookEvent.get(MessengerEvent.SEND), HookEvent.get(MessengerEvent.RECIEVE));
 
 	}
 
@@ -126,7 +128,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 
 	@Override
 	public String toString() {
-		return this.identifier + ((this.description == null) ? " (" + this.description + ")" : "");
+		return this.identifier;
 	}
 
 	@Override
@@ -177,11 +179,6 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 	}
 
 	@Override
-	public String getDescription() {
-		return description;
-	}
-
-	@Override
 	public synchronized void configure(String configuration) throws ConfigurationException {
 		CmdLineParser.registerHandler(Sender.class, SenderOptionHandler.class);
 		CmdLineParser.registerHandler(Receiver.class, ReceiverOptionHandler.class);
@@ -191,6 +188,9 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 		}
 		for (Sender<Message> sender : this.senderList) {
 			this.senderMap.put(sender.getIdentifier(), sender);
+		}
+		for (Receiver<Message> recieve : this.receiverList) {
+			this.recieverMap.put(recieve.getIdentifier(), recieve);
 		}
 		if (this.autoConnect) {
 			try {
@@ -204,6 +204,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 	@Override
 	public synchronized void addReceiver(final Receiver<Message> reciever) throws IOException {
 		this.receiverList.add(reciever);
+		this.recieverMap.put(reciever.getIdentifier(), reciever);
 		if (this.connected) {
 			reciever.connect();
 			this.startReciever(reciever);
@@ -214,10 +215,14 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 		new Thread() {
 			@Override
 			public void run() {
-				for (Message message : reciever) {
-					if (message != null) {
-						MessengerProvider.this.receiveEventTransmitter.transmit(new MessengerEventData<Message>(MessengerProvider.this, reciever.getIdentifier(), MessengerEvent.RECIEVE, message));
-					}
+//				for (Message message : reciever) {
+//					if (message != null) {
+//						MessengerProvider.this.receiveEventTransmitter.transmit(new MessengerEventData<Message>(MessengerProvider.this, reciever.getIdentifier(), MessengerEvent.RECIEVE, message));
+//					}
+//				}
+//				while (reciever.isConnected()) {
+				while (reciever.isConnected()) {
+					MessengerProvider.this.hookTransmitter.transmit(new MessengerEventData<Message>(MessengerProvider.this, reciever.getIdentifier(), MessengerEvent.RECIEVE, null));
 				}
 			}
 		}.start();

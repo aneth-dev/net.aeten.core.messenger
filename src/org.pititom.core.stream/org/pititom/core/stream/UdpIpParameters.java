@@ -65,11 +65,13 @@ public class UdpIpParameters {
 			if (this.sourceInetAddress != null)
 				multicastSocket.setInterface(this.sourceInetAddress);
 			multicastSocket.setReuseAddress(true);
-			if (!multicastSocket.isBound()) {
-				LoggingTransmitter.getInstance().transmit(new LoggingData(this, LoggingEvent.INFO, "Bind on " + this.destinationInetSocketAddress));
-				multicastSocket.bind(new InetSocketAddress(this.destinationInetSocketAddress.getPort()));
-			} else {
-				LoggingTransmitter.getInstance().transmit(new LoggingData(this, LoggingEvent.WARN, "Inet socket address" + this.destinationInetSocketAddress + " already bound"));
+			if (this.bind) {
+				if (!multicastSocket.isBound()) {
+					LoggingTransmitter.getInstance().transmit(this, LoggingEvent.INFO, "Bind on " + this.destinationInetSocketAddress);
+					multicastSocket.bind(new InetSocketAddress(this.destinationInetSocketAddress.getPort()));
+				} else {
+					LoggingTransmitter.getInstance().transmit(this, LoggingEvent.WARN, "Inet socket address" + this.destinationInetSocketAddress + " already bound");
+				}
 			}
 			multicastSocket.joinGroup(this.destinationInetSocketAddress.getAddress());
 			this.socket = multicastSocket;
@@ -77,10 +79,10 @@ public class UdpIpParameters {
 			this.socket = new DatagramSocket(null);
 			if (this.bind) {
 				if (!this.socket.isBound()) {
-					LoggingTransmitter.getInstance().transmit(new LoggingData(this, LoggingEvent.INFO, "Bind on " + this.destinationInetSocketAddress));
+					LoggingTransmitter.getInstance().transmit(this, LoggingEvent.INFO, "Bind on " + this.destinationInetSocketAddress);
 					this.socket.bind(this.destinationInetSocketAddress);
 				} else {
-					LoggingTransmitter.getInstance().transmit(new LoggingData(this, LoggingEvent.WARN, "Inet socket address" + this.destinationInetSocketAddress + " already bound"));
+					LoggingTransmitter.getInstance().transmit(this, LoggingEvent.WARN, "Inet socket address" + this.destinationInetSocketAddress + " already bound");
 				}
 			}
 		}

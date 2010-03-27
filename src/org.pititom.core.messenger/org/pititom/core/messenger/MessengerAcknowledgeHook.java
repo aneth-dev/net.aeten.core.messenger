@@ -6,7 +6,6 @@ import java.util.Map;
 import org.kohsuke.args4j.Option;
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
-import org.pititom.core.Descrivable;
 import org.pititom.core.Identifiable;
 import org.pititom.core.event.Handler;
 import org.pititom.core.event.HandlerRegister;
@@ -25,16 +24,13 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 		implements
 		Handler<MessengerEventData<Message>>,
 		HandlerRegister<Messenger<Message>, MessengerAcknowledgeEvent, MessengerAcknowledgeEventData<Message, Acknowledge>>,
-		Configurable, Identifiable, Descrivable {
+		Configurable, Identifiable {
 
 	private static final Map<String, Object> MUTEX_MAP = new HashMap<String, Object>(
 			1);
 
 	@Option(name = "-id", aliases = "--identifier", required = true)
 	private String identifier;
-
-	@Option(name = "-d", aliases = "--description", required = false)
-	private String description;
 
 	@Option(name = "-ap", aliases = "--acknowledge-protocol", required = false)
 	private Class<? extends MessengerAcknowledgeProtocol<Message, Acknowledge>> acknowledgeProtocolClass;
@@ -63,7 +59,6 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 			MessengerAcknowledgeProtocol<Message, Acknowledge> acknowledgeProtocol) {
 		this.identifier = (identifier == null) ? this.getClass().getName()
 				: identifier;
-		this.description = (description == null) ? "" : description;
 		this.acknowledgeProtocol = acknowledgeProtocol;
 		this.eventTransmitter = TransmitterFactory
 				.asynchronous("Messenger acknowledge hook \"" + this
@@ -179,13 +174,8 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 	}
 
 	@Override
-	public String getDescription() {
-		return this.description;
-	}
-
-	@Override
 	public String toString() {
-		return "".equals(this.description) ? this.identifier : this.description;
+		return this.identifier;
 	}
 
 	@Override

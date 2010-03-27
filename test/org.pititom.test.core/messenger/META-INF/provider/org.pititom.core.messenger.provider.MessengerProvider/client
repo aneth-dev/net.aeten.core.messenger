@@ -1,5 +1,5 @@
 identifier : org.pititom.core.test.messenger.client
-auto connect : true
+auto connect : false
 receiver : org.pititom.core.messenger.stream.provider.StreamReceiver
 configuration : 
   identifier : org.pititom.core.test.messenger.client.receiver
@@ -15,9 +15,9 @@ configuration :
   identifier : org.pititom.core.test.messenger.client.sender
   output stream : org.pititom.core.stream.UdpIpOutputStream
   configuration : 
-    destination inet socket address : 230.2.15.2:5200
+    destination inet socket address : 230.2.15.2:5300
     max packet size : 64
-    bind : true
+    bind : false
     reuse : true
   over : org.pititom.core.messenger.stream.MessengerObjectOutputStream
   

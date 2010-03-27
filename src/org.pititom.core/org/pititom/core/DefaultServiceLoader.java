@@ -124,6 +124,7 @@ public class DefaultServiceLoader implements ServiceLoader {
 		Collection<S> providers = (Collection<S>) instances.get(service);
 		if (providers == null) {
 			providers = new ArrayList<S>();
+			instances.put((Class<?>) service, (Collection<Object>) providers);
 
 			Collection<?> classes = services.get(service);
 			if (classes != null) {

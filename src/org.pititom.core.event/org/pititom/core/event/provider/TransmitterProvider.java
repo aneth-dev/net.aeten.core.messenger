@@ -58,9 +58,4 @@ public class TransmitterProvider<Source, Event, Data extends EventData<Source, E
 		return identifier;
 	}
 
-	@Override
-	public String getDescription() {
-		return description;
-	}
-
 }
