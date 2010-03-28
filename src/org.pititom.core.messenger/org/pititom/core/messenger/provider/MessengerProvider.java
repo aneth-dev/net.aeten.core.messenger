@@ -18,8 +18,6 @@ import org.pititom.core.event.Priority;
 import org.pititom.core.event.RegisterableTransmitter;
 import org.pititom.core.event.Transmitter;
 import org.pititom.core.event.TransmitterFactory;
-import org.pititom.core.logging.LoggingEvent;
-import org.pititom.core.logging.LoggingTransmitter;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.args4j.ReceiverOptionHandler;
@@ -57,7 +55,6 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 	private boolean connected;
 
 	private Transmitter<MessengerEventData<Message>> sendEventTransmitter;
-	private Transmitter<MessengerEventData<Message>> receiveEventTransmitter;
 	private RegisterableTransmitter<Messenger<Message>, HookEvent<MessengerEvent>, MessengerEventData<Message>> hookTransmitter;
 
 	/** @deprecated Reserved to configuration building */
@@ -96,7 +93,6 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 
 		this.hookTransmitter = TransmitterFactory.synchronous(MessengerEvent.class);
 		this.sendEventTransmitter = TransmitterFactory.asynchronous("Sender transmitter", this.threadPriority, this.hookTransmitter);
-		this.receiveEventTransmitter = TransmitterFactory.asynchronous("Reciever transmitter", this.threadPriority, this.hookTransmitter);
 
 		this.hookTransmitter.addEventHandler(new Handler<MessengerEventData<Message>>() {
 			@Override
@@ -215,12 +211,6 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 		new Thread() {
 			@Override
 			public void run() {
-//				for (Message message : reciever) {
-//					if (message != null) {
-//						MessengerProvider.this.receiveEventTransmitter.transmit(new MessengerEventData<Message>(MessengerProvider.this, reciever.getIdentifier(), MessengerEvent.RECIEVE, message));
-//					}
-//				}
-//				while (reciever.isConnected()) {
 				while (reciever.isConnected()) {
 					MessengerProvider.this.hookTransmitter.transmit(new MessengerEventData<Message>(MessengerProvider.this, reciever.getIdentifier(), MessengerEvent.RECIEVE, null));
 				}

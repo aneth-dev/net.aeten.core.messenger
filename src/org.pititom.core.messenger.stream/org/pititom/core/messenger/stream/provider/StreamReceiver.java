@@ -6,8 +6,8 @@ import java.io.ObjectInputStream;
 
 import org.kohsuke.args4j.Option;
 import org.pititom.core.ConfigurationException;
-import org.pititom.core.logging.LoggingEvent;
-import org.pititom.core.logging.LoggingTransmitter;
+import org.pititom.core.logging.LogLevel;
+import org.pititom.core.logging.Logger;
 import org.pititom.core.messenger.service.Receiver;
 
 public class StreamReceiver<Message> extends Receiver<Message> {
@@ -37,7 +37,7 @@ public class StreamReceiver<Message> extends Receiver<Message> {
 		try {
 			return (Message) ((ObjectInputStream) StreamReceiver.this.inputStream).readObject();
 		} catch (Exception exception) {
-			LoggingTransmitter.getInstance().transmit(StreamReceiver.this.identifier, LoggingEvent.ERROR, exception);
+			Logger.log(StreamReceiver.this.identifier, LogLevel.ERROR, exception);
 			return null;
 		}
 	}

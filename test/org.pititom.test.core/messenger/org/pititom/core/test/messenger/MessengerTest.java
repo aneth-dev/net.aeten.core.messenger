@@ -8,8 +8,8 @@ import org.pititom.core.event.Handler;
 import org.pititom.core.event.HookEvent;
 import org.pititom.core.event.HookEvent.Hook;
 import org.pititom.core.logging.LoggingData;
-import org.pititom.core.logging.LoggingEvent;
-import org.pititom.core.logging.LoggingTransmitter;
+import org.pititom.core.logging.LogLevel;
+import org.pititom.core.logging.Logger;
 import org.pititom.core.messenger.MessengerAcknowledgeEvent;
 import org.pititom.core.messenger.MessengerAcknowledgeEventData;
 import org.pititom.core.messenger.MessengerAcknowledgeHook;
@@ -24,7 +24,7 @@ import org.pititom.core.messenger.service.Messenger;
 public class MessengerTest {
 
 	public static void main(String[] arguments) throws Exception {
-		LoggingTransmitter.getInstance().addEventHandler(new Handler<LoggingData>() {
+		Logger.addEventHandler(new Handler<LoggingData>() {
 			@Override
 			public void handleEvent(LoggingData data) {
 				/*
@@ -38,7 +38,7 @@ public class MessengerTest {
 					data.getException().printStackTrace(System.out);
 				}
 			}
-		}, LoggingEvent.values());
+		}, LogLevel.values());
 
 		// Client & server are both loaded from configuration files located in
 		// META-INF/provider/org.pititom.core.messenger.stream.provider.StreamMessenger/
@@ -54,7 +54,7 @@ public class MessengerTest {
 		Handler<MessengerAcknowledgeEventData<AbstractMessage, Acknowledge>> acknowledgeEventHandler = new Handler<MessengerAcknowledgeEventData<AbstractMessage, Acknowledge>>() {
 			@Override
 			public void handleEvent(MessengerAcknowledgeEventData<AbstractMessage, Acknowledge> data) {
-				LoggingTransmitter.getInstance().transmit(new LoggingData(data.getSource(), data.getEvent().equals(MessengerAcknowledgeEvent.ACKNOWLEDGED) ? LoggingEvent.INFO : LoggingEvent.ERROR, "event={" + data.getEvent() + "}; eventData={" + data + "}"));
+				Logger.log(data.getSource(), data.getEvent().equals(MessengerAcknowledgeEvent.ACKNOWLEDGED) ? LogLevel.INFO : LogLevel.ERROR, "event={" + data.getEvent() + "}; eventData={" + data + "}");
 			}
 		};
 		clientAcknowledgeHook.addEventHandler(acknowledgeEventHandler, MessengerAcknowledgeEvent.values());
@@ -96,8 +96,8 @@ public class MessengerTest {
 				if ((data.getEvent().getSourceEvent() == MessengerEvent.RECIEVE) && (!(data.getMessage() instanceof AcknowledgeMessage))) {
 					return;
 				}
-				LoggingEvent level = (data.getMessage().getAcknowledge() == Acknowledge.INVALID_MESSAGE) ? LoggingEvent.ERROR : LoggingEvent.INFO;
-				LoggingTransmitter.getInstance().transmit(data.getSource(), level, "event={" + data.getEvent() + "}; eventData={" + data.getMessage() + "}");
+				LogLevel level = (data.getMessage().getAcknowledge() == Acknowledge.INVALID_MESSAGE) ? LogLevel.ERROR : LogLevel.INFO;
+				Logger.log(data.getSource(), level, "event={" + data.getEvent() + "}; eventData={" + data.getMessage() + "}");
 			}
 		}, HookEvent.get(MessengerEvent.SEND), HookEvent.get(MessengerEvent.RECIEVE));
 

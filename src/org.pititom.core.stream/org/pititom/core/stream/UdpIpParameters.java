@@ -11,9 +11,8 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.pititom.core.args4j.CommandLineParserHelper;
-import org.pititom.core.logging.LoggingData;
-import org.pititom.core.logging.LoggingEvent;
-import org.pititom.core.logging.LoggingTransmitter;
+import org.pititom.core.logging.LogLevel;
+import org.pititom.core.logging.Logger;
 
 /**
  * 
@@ -67,10 +66,10 @@ public class UdpIpParameters {
 			multicastSocket.setReuseAddress(true);
 			if (this.bind) {
 				if (!multicastSocket.isBound()) {
-					LoggingTransmitter.getInstance().transmit(this, LoggingEvent.INFO, "Bind on " + this.destinationInetSocketAddress);
+					Logger.log(this, LogLevel.INFO, "Bind on " + this.destinationInetSocketAddress);
 					multicastSocket.bind(new InetSocketAddress(this.destinationInetSocketAddress.getPort()));
 				} else {
-					LoggingTransmitter.getInstance().transmit(this, LoggingEvent.WARN, "Inet socket address" + this.destinationInetSocketAddress + " already bound");
+					Logger.log(this, LogLevel.WARN, "Inet socket address" + this.destinationInetSocketAddress + " already bound");
 				}
 			}
 			multicastSocket.joinGroup(this.destinationInetSocketAddress.getAddress());
@@ -79,10 +78,10 @@ public class UdpIpParameters {
 			this.socket = new DatagramSocket(null);
 			if (this.bind) {
 				if (!this.socket.isBound()) {
-					LoggingTransmitter.getInstance().transmit(this, LoggingEvent.INFO, "Bind on " + this.destinationInetSocketAddress);
+					Logger.log(this, LogLevel.INFO, "Bind on " + this.destinationInetSocketAddress);
 					this.socket.bind(this.destinationInetSocketAddress);
 				} else {
-					LoggingTransmitter.getInstance().transmit(this, LoggingEvent.WARN, "Inet socket address" + this.destinationInetSocketAddress + " already bound");
+					Logger.log(this, LogLevel.WARN, "Inet socket address" + this.destinationInetSocketAddress + " already bound");
 				}
 			}
 		}

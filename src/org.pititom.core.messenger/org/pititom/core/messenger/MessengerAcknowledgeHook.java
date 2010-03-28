@@ -11,9 +11,8 @@ import org.pititom.core.event.Handler;
 import org.pititom.core.event.HandlerRegister;
 import org.pititom.core.event.RegisterableTransmitter;
 import org.pititom.core.event.TransmitterFactory;
-import org.pititom.core.logging.LoggingData;
-import org.pititom.core.logging.LoggingEvent;
-import org.pititom.core.logging.LoggingTransmitter;
+import org.pititom.core.logging.LogLevel;
+import org.pititom.core.logging.Logger;
 import org.pititom.core.messenger.service.Messenger;
 
 /**
@@ -114,9 +113,8 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 							this.currentEventData.getAcknowledge()));
 
 		} catch (Exception exception) {
-			LoggingTransmitter.getInstance().transmit(
-					new LoggingData(this.currentEventData.getSource(),
-							LoggingEvent.ERROR, exception));
+			Logger.log(this.currentEventData.getSource(),
+							LogLevel.ERROR, exception);
 		}
 	}
 
@@ -137,9 +135,8 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 				}
 
 			} catch (Exception exception) {
-				LoggingTransmitter.getInstance().transmit(
-						new LoggingData(this.currentEventData.getSource(),
-								LoggingEvent.ERROR, exception));
+				Logger.log(this.currentEventData.getSource(),
+								LogLevel.ERROR, exception);
 			}
 		}
 	}

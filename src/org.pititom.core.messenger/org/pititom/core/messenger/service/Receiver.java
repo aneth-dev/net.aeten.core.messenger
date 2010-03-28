@@ -1,8 +1,6 @@
 package org.pititom.core.messenger.service;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.util.Iterator;
 
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -11,12 +9,9 @@ import org.pititom.core.ConfigurationException;
 import org.pititom.core.Connection;
 import org.pititom.core.Identifiable;
 import org.pititom.core.args4j.CommandLineParserHelper;
-import org.pititom.core.logging.LoggingEvent;
-import org.pititom.core.logging.LoggingTransmitter;
 import org.pititom.core.messenger.args4j.ReceiverOptionHandler;
-import org.pititom.core.messenger.stream.provider.StreamReceiver;
 
-public abstract class Receiver<Message> implements Identifiable, Iterable<Message>, Connection, Configurable {
+public abstract class Receiver<Message> implements Identifiable, Connection, Configurable {
 
 	static {
 		CmdLineParser.registerHandler(Receiver.class, ReceiverOptionHandler.class);
@@ -89,27 +84,5 @@ public abstract class Receiver<Message> implements Identifiable, Iterable<Messag
 	}
 
 	public abstract Message recieve();
-	
-	@Override
-	public Iterator<Message> iterator() {
-		return new Iterator<Message>() {
-
-			@Override
-			public boolean hasNext() {
-				return Receiver.this.isConnected();
-			}
-
-			@Override
-			public Message next() {
-				return Receiver.this.recieve();
-			}
-
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException();
-			}
-
-		};
-	}
 
 }

@@ -5,9 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.pititom.core.logging.LoggingData;
-import org.pititom.core.logging.LoggingEvent;
-import org.pititom.core.logging.LoggingTransmitter;
+import org.pititom.core.logging.LogLevel;
+import org.pititom.core.logging.Logger;
 
 
 /**
@@ -55,7 +54,7 @@ class SynchronousTransmitterMultiHandlers<Source, Event, Data extends EventData<
 			try {
 				eventHandler.handleEvent(data);
 			} catch (Exception exception) {
-				LoggingTransmitter.getInstance().transmit(new LoggingData(eventHandler, LoggingEvent.ERROR, exception));
+				Logger.log(eventHandler, LogLevel.ERROR, exception);
 			}
 		}
 	}
