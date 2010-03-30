@@ -7,8 +7,8 @@ package org.pititom.core;
  */
 public class Factory<T> {
 
-	private Class<? extends T> clazz;
-	private String configuration;
+	private final Class<? extends T> clazz;
+	private final String configuration;
 	private T bean = null;
 
 	public Factory(Class<? extends T> clazz, String configuration) {

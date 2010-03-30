@@ -43,15 +43,14 @@ public class StreamEditorStackOptionHandler extends OptionHandler<StreamEditorSt
 
 				String configuration;
 
-
 				try {
-						if (EDITOR_CONFIGURATION_OPTION_NAME.equals(params.getParameter(i + 1)) || contains(params.getParameter(i + 1), EDITOR_CONFIGURATION_OPTION_ALIASES)) {
-							i += 2;
-							configuration = params.getParameter(i);
-						} else {
-					configuration = null;
-						}
-							} catch (CmdLineException exception) {
+					if (EDITOR_CONFIGURATION_OPTION_NAME.equals(params.getParameter(i + 1)) || contains(params.getParameter(i + 1), EDITOR_CONFIGURATION_OPTION_ALIASES)) {
+						i += 2;
+						configuration = params.getParameter(i);
+					} else {
+						configuration = null;
+					}
+				} catch (CmdLineException exception) {
 					configuration = null;
 				}
 

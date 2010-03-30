@@ -1,12 +1,12 @@
 package org.pititom.core.eclipse;
 
-import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
 import org.pititom.core.ClassLoader;
 import org.pititom.core.Service;
 
 
-public class Activator extends AbstractUIPlugin {
+public class Activator extends Plugin {
 	   // The plug-in ID
 	   public static final String PLUGIN_ID = "org.pititom.core";
 

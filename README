@@ -1,21 +1,27 @@
-org.pititom.core is an usefull java tools provider
+org.pititom.core is an useful java tools provider
 
 Note :
-	No totally free licence has currently been choiced. Maybe I would choice a BSD like one, but for commercial use, please wait so on.
+	This library is under MIT license (see LICENSE file).
 
 Provides :
-	- stream stack editor
-	- generic event transmitter and handler
+	- generic event transmitter and handler (synchronous and asynchronous)
 	- extensible messenger
+	- stream stack editor
+
+External dependences : 
+	- org.kohsuke.args4j (currently use 2.0.12, under MIT license)
 
 Details of modules :
 	- org.pititom.core
-	- org.pititom.core.args4j           -> requires org.kohsuke.args4j, org.pititom.core
+	- org.pititom.core.args4j           -> requires org.kohsuke.args4j, org.pititom.core
 	- org.pititom.core.event
 	- org.pititom.core.logging          -> requires org.pititom.core.event
 	- org.pititom.core.messenger        -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.event, org.pititom.core.args4j, org.pititom.core.logging
 	- org.pititom.core.messenger.stream -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.event, org.pititom.core.stream, org.pititom.core.stream.editor, org.pititom.core.logging, org.pititom.core.messenger
 	- org.pititom.core.stream           -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j
 	- org.pititom.core.stream.editor    -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j
+
+Helper modules:
+	- org.pititom.core.eclipse          -> requires org.osgi.util, org.eclipse.core.runtime, org.eclipse.ui, org.pititom.core, org.pititom.core.args4j
 
 See test directory for samples
