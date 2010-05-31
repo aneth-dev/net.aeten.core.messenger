@@ -20,7 +20,7 @@ public class Factory<T> {
 	public T getInstance() throws ConfigurationException {
 		if (this.bean == null) {
 			try {
-				this.bean = (T) clazz.newInstance();
+				this.bean = clazz.newInstance();
 				if ((configuration != null) && (bean instanceof Configurable)) {
 					((Configurable) bean).configure(configuration);
 				}

@@ -41,6 +41,8 @@ public abstract class ObjectInputStream extends java.io.ObjectInputStream {
 			readMethod.invoke(objSerialized, this);
 
 			return objSerialized;
+		} catch (ClassNotFoundException exception) {
+			throw exception;
 		} catch (Exception exception) {
 			throw new ClassNotFoundException(exception.getMessage(), exception);
 		}
@@ -278,5 +280,29 @@ public abstract class ObjectInputStream extends java.io.ObjectInputStream {
 	@Override
 	public int read(byte[] buf, int off, int len) throws IOException {
 		return in.read(buf, off, len);
+	}
+	
+	/**
+	 * @see java.io.ObjectInputStream#reset()
+	 */
+	@Override
+	public synchronized void reset() throws IOException {
+		this.in.reset();
+	}
+	
+	/**
+	 * @see java.io.ObjectInputStream#mark(int)
+	 */
+	@Override
+	public synchronized void mark(int readlimit) {
+		this.in.mark(readlimit);
+	}
+	
+	/**
+	 * @see java.io.ObjectInputStream#markSupported()
+	 */
+	@Override
+	public boolean markSupported() {
+		return this.in.markSupported();
 	}
 }

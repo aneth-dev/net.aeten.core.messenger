@@ -72,10 +72,15 @@ public abstract class Sender<Message> implements Identifiable, Connection, Confi
 			}
 		}
 	}
+	
+	@Override
+	public String toString() {
+		return "Sender \"" + this.getIdentifier() + "\"";
+	}
 
 	protected void doConnect() throws IOException {}
 
 	protected void doDisconnect() throws IOException {}
 
-	public abstract void send(Message message);
+	public abstract void send(Message message) throws IOException;
 }

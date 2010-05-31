@@ -3,8 +3,10 @@ package org.pititom.core.parsing.provider;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.pititom.core.event.Handler;
 import org.pititom.core.parsing.MarkupNode;
 import org.pititom.core.parsing.ParsingData;
@@ -25,12 +27,13 @@ public class PmlParser implements Parser<MarkupNode> {
 		}
 	}
 
-	public void parse(BufferedReader reader, Handler<ParsingData<MarkupNode>> handler) {
-		String line, indentation = null, previous = null;
+	public void parse(Reader reader, Handler<ParsingData<MarkupNode>> handler) {
+		BufferedReader bufferedReader = new BufferedReader(reader);
+		String line, indentation = null;
 		int currentLevel = 0, previousLevel = 0;
 		Tag current = null;
 		try {
-			while ((line = reader.readLine()) != null) {
+			while ((line = bufferedReader.readLine()) != null) {
 				previousLevel = currentLevel;
 				currentLevel = 0;
 				if ((indentation == null) && line.matches("^\\s.*")) {
@@ -60,7 +63,6 @@ public class PmlParser implements Parser<MarkupNode> {
 				}
 				if (currentLevel > previousLevel) {
 					this.fireEvent(handler, ParsingEvent.START_NODE, MarkupNode.LIST, null, current);
-					previous = current.name;
 					current = new Tag(current, key);
 					this.fireEvent(handler, ParsingEvent.START_NODE, MarkupNode.TAG, current.name, current.parent);
 				} else if (currentLevel < previousLevel) {
@@ -94,7 +96,7 @@ public class PmlParser implements Parser<MarkupNode> {
 
 	public static void main(String[] args) throws Exception {
 		PmlParser parser = new PmlParser();
-		parser.parse(new BufferedReader(new FileReader("C:/Users/Thomas/Projets/org.pititom.core/org.pititom.core/test/org.pititom.test.core/messenger/META-INF/provider/org.pititom.core.messenger.provider.MessengerProvider/client")), new Handler<ParsingData<MarkupNode>>() {
+		parser.parse(new BufferedReader(new FileReader("/home/thomas/Projects/org.pititom.core/java/org.pititom.core.eclipse.test/META-INF/provider/org.pititom.core.messenger.provider.MessengerProvider/client")), new Handler<ParsingData<MarkupNode>>() {
 			private int level = 0;
 			public void handleEvent(ParsingData<MarkupNode> data) {
 

@@ -5,19 +5,20 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
 import java.io.StringReader;
+
 import org.pititom.core.event.Handler;
 import org.pititom.core.parsing.MarkupNode;
-import org.pititom.core.parsing.Parser;
 import org.pititom.core.parsing.ParsingData;
-import org.pititom.core.parsing.provider.PmlParser;
+import org.pititom.core.parsing.service.Parser;
 
 public class Yaml2Args {
 	private Yaml2Args() {
 	}
 
-	public static String convert(Reader reader) {
+	public static String convert(Reader reader, Parser<MarkupNode> parser) {
 		final StringBuffer configuration = new StringBuffer();
-		Parser.parse(PmlParser.class.getName(), reader,  new Handler<ParsingData<MarkupNode>>() {
+		
+		parser.parse(reader,  new Handler<ParsingData<MarkupNode>>() {
 			private int level = 0, previousTagSize = 0;
 
 			public void handleEvent(ParsingData<MarkupNode> data) {
@@ -60,12 +61,12 @@ public class Yaml2Args {
 		return configuration.toString();
 	}
 
-	public static String convert(String configuration) {
-		return convert(new StringReader(configuration));
+	public static String convert(String configuration, Parser<MarkupNode> parser) {
+		return convert(new StringReader(configuration), parser);
 	}
 
-	public static String convert(File file) throws FileNotFoundException {
-		return convert(new FileReader(file));
+	public static String convert(File file, Parser<MarkupNode> parser) throws FileNotFoundException {
+		return convert(new FileReader(file), parser);
 	}
 
 

@@ -39,7 +39,7 @@ public class FactoryOptionHandler extends OptionHandler<Factory<?>> {
 		}
 
 		try {
-			Factory<Object> factory = new Factory<Object>(Class.forName(className), configuration);
+			Factory<Object> factory = new Factory<Object>(Thread.currentThread().getContextClassLoader().loadClass(className), configuration);
 			setter.addValue(factory);
 		} catch (ClassNotFoundException exception) {
 			throw new CmdLineException(this.owner, exception);

@@ -3,7 +3,6 @@ package org.pititom.core.stream;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 
-import org.pititom.core.ClassLoader;
 import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
 
@@ -34,7 +33,7 @@ public class OutputStreamFactory<T extends OutputStream> {
 					// TODO: Make it recursive and use eventual configuration
 					try {
 						Constructor<T> constructor = clazz.getConstructor(OutputStream.class);
-						this.bean = constructor.newInstance(ClassLoader.loadClass(configuration));
+						this.bean = constructor.newInstance(Thread.currentThread().getContextClassLoader().loadClass(configuration));
 					} catch (Exception exception) {
 						throw new ConfigurationException(this.configuration, new Exception(exception));
 					}

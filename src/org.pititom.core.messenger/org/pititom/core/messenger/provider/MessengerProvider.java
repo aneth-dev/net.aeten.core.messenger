@@ -13,11 +13,14 @@ import org.pititom.core.Configurable;
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.args4j.CommandLineParserHelper;
 import org.pititom.core.event.Handler;
+import org.pititom.core.event.Hook;
 import org.pititom.core.event.HookEvent;
 import org.pititom.core.event.Priority;
 import org.pititom.core.event.RegisterableTransmitter;
 import org.pititom.core.event.Transmitter;
 import org.pititom.core.event.TransmitterFactory;
+import org.pititom.core.logging.LogLevel;
+import org.pititom.core.logging.Logger;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
 import org.pititom.core.messenger.args4j.ReceiverOptionHandler;
@@ -30,7 +33,7 @@ import org.pititom.core.messenger.service.Sender;
  * 
  * @author Thomas Pérennou
  */
-public class MessengerProvider<Message> implements Messenger<Message>, Configurable {
+public class MessengerProvider<Message> implements Messenger<Message>, Configurable, Handler<MessengerEventData<Message>> {
 
 	@Option(name = "-id", aliases = "--identifier", required = true)
 	private String identifier;
@@ -50,71 +53,61 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 	private boolean autoConnect = false;
 
 	private Map<String, Sender<Message>> senderMap = new LinkedHashMap<String, Sender<Message>>();
-	private Map<String, Receiver<Message>> recieverMap = new LinkedHashMap<String, Receiver<Message>>();
 
 	private boolean connected;
 
-	private Transmitter<MessengerEventData<Message>> sendEventTransmitter;
-	private RegisterableTransmitter<Messenger<Message>, HookEvent<MessengerEvent>, MessengerEventData<Message>> hookTransmitter;
+	private Transmitter<MessengerEventData<Message>> asyncSendEventTransmitter;
+	private RegisterableTransmitter<Messenger<Message>, HookEvent<MessengerEvent, Hook>, MessengerEventData<Message>> hookTransmitter;
 
 	/** @deprecated Reserved to configuration building */
+	@SuppressWarnings("unchecked")
 	public MessengerProvider() {
 		this(null, Thread.NORM_PRIORITY, new Sender[0], new Receiver[0]);
 	}
 
+	@SuppressWarnings("unchecked")
 	public MessengerProvider(String identifier) {
 		this(identifier, Thread.NORM_PRIORITY, new Sender[0], new Receiver[0]);
 	}
 
+	@SuppressWarnings("unchecked")
 	public MessengerProvider(String identifier, int threadPriority) {
 		this(identifier, threadPriority, new Sender[0], new Receiver[0]);
 	}
 
+	@SuppressWarnings("unchecked")
 	public MessengerProvider(String identifier, int threadPriority, Sender<Message> sender, Receiver<Message> receiver) {
-		this(identifier, threadPriority, new Sender[] {sender}, new Receiver[] {receiver});
+		this(identifier, threadPriority, new Sender[] { sender }, new Receiver[] { receiver });
 	}
 
+	@SuppressWarnings("unchecked")
 	public MessengerProvider(String identifier, int threadPriority, Sender<Message>[] senderList, Receiver<Message>[] receiverList) {
 		this.identifier = identifier;
 		this.threadPriority = threadPriority;
 
-		try {
-			for (Sender<Message> sender : senderList) {
+		for (Sender<Message> sender : senderList) {
+			try {
 				this.addSender(sender);
+			} catch (IOException exception) {
+				Logger.log(sender, LogLevel.ERROR, "Sender \"" + sender.getIdentifier() + "\" has thrown an exception.", exception);
 			}
-
-			for (Receiver<Message> reciever : receiverList) {
-				this.addReceiver(reciever);
-			}
-		} catch (IOException exception) {
-			// TODO Auto-generated catch block
-			exception.printStackTrace();
 		}
 
-		this.hookTransmitter = TransmitterFactory.synchronous(MessengerEvent.class);
-		this.sendEventTransmitter = TransmitterFactory.asynchronous("Sender transmitter", this.threadPriority, this.hookTransmitter);
-
-		this.hookTransmitter.addEventHandler(new Handler<MessengerEventData<Message>>() {
-			@Override
-			public void handleEvent(MessengerEventData<Message> data) {
-				switch (data.getEvent().getSourceEvent()) {
-				case SEND:
-					MessengerProvider.this.senderMap.get(data.getContact()).send(data.getMessage());
-					break;
-				case RECIEVE:
-					data.setMessage(MessengerProvider.this.recieverMap.get(data.getContact()).recieve());
-					break;
-				}
+		for (Receiver<Message> reciever : receiverList) {
+			try {
+				this.addReceiver(reciever);
+			} catch (IOException exception) {
+				Logger.log(reciever, LogLevel.ERROR, "Receiver \"" + reciever.getIdentifier() + "\" has thrown an exception.", exception);
 			}
-		}, HookEvent.get(MessengerEvent.SEND), HookEvent.get(MessengerEvent.RECIEVE));
+		}
 
+		this.hookTransmitter = TransmitterFactory.synchronous();
+		this.asyncSendEventTransmitter = TransmitterFactory.asynchronous("Sender transmitter", this.threadPriority, this, EVENTS.get(MessengerEvent.SEND, Hook.PRE));
 	}
 
 	@Override
 	public void transmit(Message message, String contact, Priority priority) {
-		if (this.connected) {
-			this.sendEventTransmitter.transmit(new MessengerEventData<Message>(this, contact, MessengerEvent.SEND, message, priority));
-		}
+		this.asyncSendEventTransmitter.transmit(new MessengerEventData<Message>(this, contact, MessengerEvent.SEND, Hook.PRE, message, priority));
 	}
 
 	@Override
@@ -124,33 +117,53 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 
 	@Override
 	public String toString() {
-		return this.identifier;
+		return "Messenger \"" + this.getIdentifier() + "\"";
 	}
 
 	@Override
 	public synchronized void connect() throws IOException {
 		if (!this.connected) {
-			for (Receiver<Message> reciever : this.receiverList) {
-				reciever.connect();
-				this.startReciever(reciever);
+			MessengerEventData<Message> data = new MessengerEventData<Message>(this, null, MessengerEvent.CONNECT, Hook.PRE, null);
+			this.hookTransmitter.transmit(data);
+			
+			if (data.doIt()) {
+				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.START));
+				
+				for (Receiver<Message> reciever : this.receiverList) {
+					reciever.connect();
+					this.startReciever(reciever);
+				}
+				for (Sender<Message> sender : this.senderMap.values()) {
+					sender.connect();
+				}
+				this.connected = true;
+				
+				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.END));
+				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.POST));
 			}
-			for (Sender<Message> sender : this.senderMap.values()) {
-				sender.connect();
-			}
-			this.connected = true;
 		}
 	}
 
 	@Override
 	public synchronized void disconnect() throws IOException {
 		if (this.connected) {
-			for (Receiver<Message> reciever : this.receiverList) {
-				reciever.disconnect();
+			MessengerEventData<Message> data = new MessengerEventData<Message>(this, null, MessengerEvent.DISCONNECT, Hook.PRE, null);
+			this.hookTransmitter.transmit(data);
+			
+			if (data.doIt()) {
+				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.START));
+				
+				for (Receiver<Message> reciever : this.receiverList) {
+					reciever.disconnect();
+				}
+				for (Sender<Message> sender : this.senderMap.values()) {
+					sender.disconnect();
+				}
+				this.connected = false;
+				
+				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.END));
+				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.POST));
 			}
-			for (Sender<Message> sender : this.senderMap.values()) {
-				sender.disconnect();
-			}
-			this.connected = false;
 		}
 	}
 
@@ -160,12 +173,12 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 	}
 
 	@Override
-	public void addEventHandler(Handler<MessengerEventData<Message>> eventHandler, HookEvent<MessengerEvent>... eventList) {
+	public void addEventHandler(Handler<MessengerEventData<Message>> eventHandler, HookEvent<MessengerEvent, Hook>... eventList) {
 		this.hookTransmitter.addEventHandler(eventHandler, eventList);
 	}
 
 	@Override
-	public void removeEventHandler(Handler<MessengerEventData<Message>> eventHandler, HookEvent<MessengerEvent>... eventList) {
+	public void removeEventHandler(Handler<MessengerEventData<Message>> eventHandler, HookEvent<MessengerEvent, Hook>... eventList) {
 		this.hookTransmitter.removeEventHandler(eventHandler, eventList);
 	}
 
@@ -185,9 +198,6 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 		for (Sender<Message> sender : this.senderList) {
 			this.senderMap.put(sender.getIdentifier(), sender);
 		}
-		for (Receiver<Message> recieve : this.receiverList) {
-			this.recieverMap.put(recieve.getIdentifier(), recieve);
-		}
 		if (this.autoConnect) {
 			try {
 				this.connect();
@@ -200,19 +210,42 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 	@Override
 	public synchronized void addReceiver(final Receiver<Message> reciever) throws IOException {
 		this.receiverList.add(reciever);
-		this.recieverMap.put(reciever.getIdentifier(), reciever);
 		if (this.connected) {
 			reciever.connect();
 			this.startReciever(reciever);
 		}
 	}
 
-	private void startReciever(final Receiver<Message> reciever) {
+	private void startReciever(final Receiver<Message> receiver) {
 		new Thread() {
 			@Override
 			public void run() {
-				while (reciever.isConnected()) {
-					MessengerProvider.this.hookTransmitter.transmit(new MessengerEventData<Message>(MessengerProvider.this, reciever.getIdentifier(), MessengerEvent.RECIEVE, null));
+				while (receiver.isConnected()) {
+					
+					MessengerEventData<Message> data = new MessengerEventData<Message>(MessengerProvider.this, receiver.getIdentifier(), MessengerEvent.RECEIVE, Hook.PRE, null);
+					MessengerProvider.this.hookTransmitter.transmit(data);
+					
+					if (data.doIt()) {
+						MessengerProvider.this.hookTransmitter.transmit(EVENTS.hook(data, Hook.START));
+
+						try {
+							data.setMessage(receiver.receive());
+						} catch (IOException exception) {
+							try {
+								Logger.log(receiver, LogLevel.ERROR, exception);
+								receiver.disconnect();
+							} catch (IOException disconnectException) {
+								Logger.log(receiver, LogLevel.ERROR, "Unable to disconnect receiver \"" + receiver.getIdentifier() + "\"", disconnectException);
+							}
+						} catch (Throwable exception) {
+							Logger.log(receiver, LogLevel.ERROR, exception);
+						}
+						
+						MessengerProvider.this.hookTransmitter.transmit(EVENTS.hook(data, Hook.END));
+						MessengerProvider.this.hookTransmitter.transmit(EVENTS.hook(data, Hook.POST));
+					}
+					
+
 				}
 			}
 		}.start();
@@ -247,6 +280,35 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 	public synchronized String[] getSenders() {
 		Set<String> keySet = this.senderMap.keySet();
 		return keySet.toArray(new String[keySet.size()]);
+	}
+
+	@Override
+	public void handleEvent(MessengerEventData<Message> data) {
+		if (this.connected) {
+			// Data event is already MessengerEvent.SEND, Hook.PRE
+			this.hookTransmitter.transmit(data);
+			
+			if (data.doIt()) {
+				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.START));
+
+				Sender<Message> sender = MessengerProvider.this.senderMap.get(data.getContact());
+				try {
+					sender.send(data.getMessage());
+				} catch (IOException exception) {
+					try {
+						Logger.log(sender, LogLevel.ERROR, exception);
+						sender.disconnect();
+					} catch (IOException disconnectException) {
+						Logger.log(sender, LogLevel.ERROR, "Unable to disconnect sender \"" + sender.getIdentifier() + "\"", disconnectException);
+					}
+				} catch (Throwable exception) {
+					Logger.log(sender, LogLevel.ERROR, exception);
+				}
+				
+				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.END));
+				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.POST));
+			}
+		}
 	}
 
 }

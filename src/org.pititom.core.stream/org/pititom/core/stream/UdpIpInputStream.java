@@ -115,5 +115,22 @@ public class UdpIpInputStream extends InputStream implements Configurable {
 	public void close() throws IOException {
 		this.receptionThread.interrupt();
 	}
+	
+	@Override
+    public synchronized void reset() throws IOException {
+		this.currentPacket = null;
+		// TODO: reset on mark if >= 0
+    }
+
+	@Override
+	public synchronized void mark(int readlimit) {
+		this.position = readlimit;
+		// TODO: make a mark field instead of position use
+	}
+	
+	@Override
+	public boolean markSupported() {
+		return true;
+	}
 
 }

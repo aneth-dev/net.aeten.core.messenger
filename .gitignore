@@ -2,7 +2,9 @@ bin
 .fr-ekvpx8
 .classpath
 .project
+build.properties
 CVS
 .cvsignore
 .settings
+META-INF
 *~

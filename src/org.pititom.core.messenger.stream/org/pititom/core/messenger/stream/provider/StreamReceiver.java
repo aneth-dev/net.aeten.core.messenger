@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 
+import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.logging.LogLevel;
 import org.pititom.core.logging.Logger;
 import org.pititom.core.messenger.service.Receiver;
+import org.pititom.core.stream.args4j.InputStreamOptionHandler;
 
 public class StreamReceiver<Message> extends Receiver<Message> {
 	@Option(name = "-is", aliases = "--input-stream", required = true)
@@ -29,16 +31,24 @@ public class StreamReceiver<Message> extends Receiver<Message> {
 
 	@Override
 	public void configure(String configuration) throws ConfigurationException {
+		CmdLineParser.registerHandler(InputStream.class,
+				InputStreamOptionHandler.class);
+
 		super.configure(configuration);
 		this.connected = true;
 	}
-	
-	public Message recieve() {
+
+	@SuppressWarnings("unchecked")
+	public Message receive() throws IOException {
 		try {
-			return (Message) ((ObjectInputStream) StreamReceiver.this.inputStream).readObject();
-		} catch (Exception exception) {
-			Logger.log(StreamReceiver.this.identifier, LogLevel.ERROR, exception);
-			return null;
+			return (Message) ((ObjectInputStream) this.inputStream).readObject();
+		} catch (Throwable exception) {
+			if (this.inputStream.markSupported()) {
+				Logger.log(this, LogLevel.ERROR, this.getIdentifier() + " has not been able to read object. Trying to reset the stream…", exception);
+				this.inputStream.reset();
+				return this.receive();
+			}
+			throw new IOException(exception);
 		}
 	}
 

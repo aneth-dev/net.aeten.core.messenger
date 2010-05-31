@@ -76,6 +76,11 @@ public abstract class Receiver<Message> implements Identifiable, Connection, Con
 			}
 		}
 	}
+	
+	@Override
+	public String toString() {
+		return "Receiver \"" + this.getIdentifier() + "\"";
+	}
 
 	protected void doConnect() throws IOException {
 	}
@@ -83,6 +88,5 @@ public abstract class Receiver<Message> implements Identifiable, Connection, Con
 	protected void doDisconnect() throws IOException {
 	}
 
-	public abstract Message recieve();
-
+	public abstract Message receive() throws IOException;
 }

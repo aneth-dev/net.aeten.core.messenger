@@ -6,7 +6,6 @@ import org.kohsuke.args4j.OptionDef;
 import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.Parameters;
 import org.kohsuke.args4j.spi.Setter;
-import org.pititom.core.ClassLoader;
 import org.pititom.core.messenger.service.Sender;
 
 public class SenderOptionHandler extends OptionHandler<Sender<?>> {
@@ -17,11 +16,12 @@ public class SenderOptionHandler extends OptionHandler<Sender<?>> {
 		super(parser, option, setter);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public int parseArguments(Parameters params) throws CmdLineException {
 		String configuration = null;
 		try {
-			Class<Sender<?>> senderClass = (Class<Sender<?>>) ClassLoader.loadClass(params.getParameter(0));
+			Class<Sender<?>> senderClass = (Class<Sender<?>>) Thread.currentThread().getContextClassLoader().loadClass(params.getParameter(0));
 			Sender<?> sender = senderClass.newInstance();
 			if (CONFIGURATION_OPTION_NAME.equals(params.getParameter(1)) || contains(params.getParameter(1), CONFIGURATION_OPTION_ALIASES)) {
 				configuration = params.getParameter(2);

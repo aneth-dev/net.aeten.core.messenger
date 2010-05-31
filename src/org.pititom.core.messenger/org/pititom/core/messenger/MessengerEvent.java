@@ -7,6 +7,6 @@ package org.pititom.core.messenger;
 public enum MessengerEvent {
 	CONNECT,
 	DISCONNECT,
-	RECIEVE,
-	SEND
+	RECEIVE,
+	SEND;
 }

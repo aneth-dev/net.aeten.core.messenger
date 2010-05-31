@@ -5,23 +5,24 @@ Note :
 
 Provides :
 	- generic event transmitter and handler (synchronous and asynchronous)
+	- service loading based on package naming convension
 	- extensible messenger
 	- stream stack editor
 
-External dependences : 
+Third party dependences : 
 	- org.kohsuke.args4j (currently use 2.0.12, under MIT license)
 
 Details of modules :
 	- org.pititom.core
-	- org.pititom.core.args4j           -> requires org.kohsuke.args4j, org.pititom.core
-	- org.pititom.core.event
-	- org.pititom.core.logging          -> requires org.pititom.core.event
-	- org.pititom.core.messenger        -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.event, org.pititom.core.args4j, org.pititom.core.logging
-	- org.pititom.core.messenger.stream -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.event, org.pititom.core.stream, org.pititom.core.stream.editor, org.pititom.core.logging, org.pititom.core.messenger
+	- org.pititom.core.args4j           -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.parsing
+
+	- org.pititom.core.messenger        -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j, org.pititom.core.service
+	- org.pititom.core.messenger.stream -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j, org.pititom.core.messenger, org.pititom.core.stream
+	- org.pititom.core.parsing          -> org.pititom.core
+	- org.pititom.core.service          -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j, org.pititom.core.parsing, org.eclipse.core.runtime
 	- org.pititom.core.stream           -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j
-	- org.pititom.core.stream.editor    -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j
 
 Helper modules:
-	- org.pititom.core.eclipse          -> requires org.osgi.util, org.eclipse.core.runtime, org.eclipse.ui, org.pititom.core, org.pititom.core.args4j
+	- org.pititom.core.service.eclipse  -> org.eclipse.core.runtime (this module is intended to be fragment of org.pititom.core.service for eclipse plateform use)
 
 See test directory for samples
