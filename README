@@ -15,11 +15,10 @@ Third party dependences :
 Details of modules :
 	- org.pititom.core
 	- org.pititom.core.args4j           -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.parsing
-
 	- org.pititom.core.messenger        -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j, org.pititom.core.service
 	- org.pititom.core.messenger.stream -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j, org.pititom.core.messenger, org.pititom.core.stream
 	- org.pititom.core.parsing          -> org.pititom.core
-	- org.pititom.core.service          -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j, org.pititom.core.parsing, org.eclipse.core.runtime
+	- org.pititom.core.service          -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j, org.pititom.core.parsing
 	- org.pititom.core.stream           -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j
 
 Helper modules:
