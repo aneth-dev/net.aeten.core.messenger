@@ -11,15 +11,15 @@ import org.pititom.core.event.TransmitterFactory;
  * 
  * @author Thomas Pérennou
  */
-public final class Admonisher {
+public final class Alert {
 
 	private static final RegisterableTransmitter<?, HookEvent<AlertLevel, Hook>, AlertData> TRANSMITTER = TransmitterFactory.synchronous();
 	
 	public static final HookEventGroup<AlertLevel, Hook> EVENTS = HookEventGroup.get(AlertLevel.values());
 
-	private Admonisher() {}
+	private Alert() {}
 
-	public static AlertData alert(Object source, AlertLevel level, String message) {
+	public static AlertData start(Object source, AlertLevel level, String message) {
 		AlertData data = new AlertData(source, EVENTS.get(level, Hook.PRE), message);
 		TRANSMITTER.transmit(data);
 		if (data.doIt()) {
@@ -28,7 +28,7 @@ public final class Admonisher {
 		return data;
 	}
 	
-	public static void endOfAlert(AlertData data) {
+	public static void stop(AlertData data) {
 		TRANSMITTER.transmit(EVENTS.hook(data, Hook.END));
 		TRANSMITTER.transmit(EVENTS.hook(data, Hook.POST));
 	}
