@@ -14,13 +14,12 @@ import org.pititom.core.Factory;
  * @author Thomas Pérennou
  */
 public class StreamEditorStackOptionHandler extends OptionHandler<StreamEditorStack> {
-	public static final String EDITOR_OPTION_NAME = "-se";
-	public static final String[] EDITOR_OPTION_ALIASES = {"--stream-editor"};
-	public static final String EDITOR_CONFIGURATION_OPTION_NAME = "-c";
-	public static final String[] EDITOR_CONFIGURATION_OPTION_ALIASES = {"--configuration"};
-	
-	public StreamEditorStackOptionHandler(CmdLineParser parser, OptionDef option,
-	        Setter<StreamEditorStack> setter) {
+	public static final String		EDITOR_OPTION_NAME					= "-se";
+	public static final String[]	EDITOR_OPTION_ALIASES				= { "--stream-editor" };
+	public static final String		EDITOR_CONFIGURATION_OPTION_NAME	= "-c";
+	public static final String[]	EDITOR_CONFIGURATION_OPTION_ALIASES	= { "--configuration" };
+
+	public StreamEditorStackOptionHandler(CmdLineParser parser, OptionDef option, Setter<StreamEditorStack> setter) {
 		super(parser, option, setter);
 	}
 
@@ -66,12 +65,12 @@ public class StreamEditorStackOptionHandler extends OptionHandler<StreamEditorSt
 	public String getDefaultMetaVariable() {
 		return "EDITOR_STACK";
 	}
-	
+
 	private static boolean contains(String element, String[] list) {
-		for (String item: list)
+		for (String item : list)
 			if (element.equals(item))
 				return true;
 		return false;
-		
+
 	}
 }

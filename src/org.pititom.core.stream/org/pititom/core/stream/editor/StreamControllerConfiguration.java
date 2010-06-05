@@ -9,6 +9,8 @@ import org.kohsuke.args4j.Option;
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.Factory;
 import org.pititom.core.args4j.CommandLineParserHelper;
+import org.pititom.core.stream.args4j.InputStreamOptionHandler;
+import org.pititom.core.stream.args4j.OutputStreamOptionHandler;
 
 /**
  *
@@ -31,6 +33,10 @@ public class StreamControllerConfiguration {
 			throws CmdLineException {
 		CmdLineParser.registerHandler(StreamEditorStack.class,
 				StreamEditorStackOptionHandler.class);
+		CmdLineParser.registerHandler(InputStream.class,
+				InputStreamOptionHandler.class);
+		CmdLineParser.registerHandler(OutputStream.class,
+				OutputStreamOptionHandler.class);
 		CmdLineParser commandLineParser = new CmdLineParser(this);
 		commandLineParser.parseArgument(arguments);
 	}

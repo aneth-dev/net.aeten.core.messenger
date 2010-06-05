@@ -3,6 +3,7 @@ package org.pititom.core.stream.editor;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.pititom.core.Factory;
 
 /**

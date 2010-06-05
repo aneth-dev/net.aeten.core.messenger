@@ -15,7 +15,7 @@ public final class Alert {
 
 	private static final RegisterableTransmitter<?, HookEvent<AlertLevel, Hook>, AlertData> TRANSMITTER = TransmitterFactory.synchronous();
 	
-	public static final HookEventGroup<AlertLevel, Hook> EVENTS = HookEventGroup.get(AlertLevel.values());
+	public static final HookEventGroup<AlertLevel, Hook> EVENTS = HookEventGroup.get(AlertLevel.values(), new Hook[] {Hook.PRE, Hook.START, Hook.END, Hook.POST});
 
 	private Alert() {}
 
