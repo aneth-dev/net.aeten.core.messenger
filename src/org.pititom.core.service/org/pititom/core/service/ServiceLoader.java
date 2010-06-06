@@ -43,5 +43,6 @@ public interface ServiceLoader {
 	public void registerService(Class<?> service);
 	public <T> void registerProvider(Class<T> service, T provider);
 	public void registerRootPackage(String rootPackage);
+	public void excludePackage(String packageNamePattern);
 
 }

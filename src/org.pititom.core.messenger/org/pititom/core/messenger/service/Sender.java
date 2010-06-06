@@ -41,13 +41,13 @@ public abstract class Sender<Message> implements Identifiable, Connection, Confi
 	}
 
 	@Override
-	public final boolean isConnected() {
+	public boolean isConnected() {
 		return this.connected;
 	}
 
 	@Override
 	public final synchronized void connect() throws IOException {
-		if (!this.connected) {
+		if (!this.isConnected()) {
 			try {
 				this.disconnect();
 				if (this.configuration != null) {
@@ -63,7 +63,7 @@ public abstract class Sender<Message> implements Identifiable, Connection, Confi
 
 	@Override
 	public final synchronized void disconnect() throws IOException {
-		if (this.connected) {
+		if (this.isConnected()) {
 			try {
 				this.doDisconnect();
 			} catch (IOException exception) {

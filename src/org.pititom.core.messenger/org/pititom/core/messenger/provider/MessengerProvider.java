@@ -34,7 +34,11 @@ import org.pititom.core.messenger.service.Sender;
  * @author Thomas Pérennou
  */
 public class MessengerProvider<Message> implements Messenger<Message>, Configurable, Handler<MessengerEventData<Message>> {
-
+	static {
+		CmdLineParser.registerHandler(Sender.class, SenderOptionHandler.class);
+		CmdLineParser.registerHandler(Receiver.class, ReceiverOptionHandler.class);
+	}
+	
 	@Option(name = "-id", aliases = "--identifier", required = true)
 	private String identifier;
 
@@ -189,8 +193,6 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 
 	@Override
 	public synchronized void configure(String configuration) throws ConfigurationException {
-		CmdLineParser.registerHandler(Sender.class, SenderOptionHandler.class);
-		CmdLineParser.registerHandler(Receiver.class, ReceiverOptionHandler.class);
 		CommandLineParserHelper.configure(this, configuration);
 		if (this.threadPriority > -1) {
 			// TODO

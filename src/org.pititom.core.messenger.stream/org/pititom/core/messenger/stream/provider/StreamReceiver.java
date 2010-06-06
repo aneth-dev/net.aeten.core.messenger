@@ -25,6 +25,11 @@ public class StreamReceiver<Message> extends Receiver<Message> {
 	}
 
 	@Override
+	protected void doConnect() throws IOException {
+		// Does nothing. Streams are already connected.
+	}
+
+	@Override
 	protected void doDisconnect() throws IOException {
 		this.inputStream.close();
 	}
@@ -51,5 +56,4 @@ public class StreamReceiver<Message> extends Receiver<Message> {
 			throw new IOException(exception);
 		}
 	}
-
 }

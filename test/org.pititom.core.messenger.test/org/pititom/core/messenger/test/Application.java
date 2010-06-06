@@ -110,7 +110,7 @@ public class Application implements IApplication {
 				}
 				Logger.log(data.getSource(), LogLevel.INFO, "event={" + data.getEvent() + "}; eventData={" + data.getMessage() + "}");
 			}
-		}, Messenger.EVENTS.get(MessengerEvent.SEND, Hook.START), Messenger.EVENTS.get(MessengerEvent.RECEIVE, Hook.END));
+		}, Messenger.EVENTS.get(MessengerEvent.SEND, Hook.END), Messenger.EVENTS.get(MessengerEvent.RECEIVE, Hook.END));
 
 		server.connect();
 		client.connect();

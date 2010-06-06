@@ -29,7 +29,7 @@ public class ReceiverOptionHandler extends OptionHandler<Receiver<?>> {
 			}
 			setter.addValue(reciever);
 		} catch (Exception exception) {
-			throw new CmdLineException(this.owner, exception);
+			throw new CmdLineException(this.owner, params.getParameter(0), exception);
 		}
 		return (configuration == null) ? 1 : 3;
 	}

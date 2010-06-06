@@ -50,13 +50,19 @@ public class DefaultServiceLoader implements ServiceLoader {
 	protected Map<Class<?>, Collection<Class<?>>>	services				= new HashMap<Class<?>, Collection<Class<?>>>();
 	protected Map<Class<?>, Collection<Object>>		instances				= new HashMap<Class<?>, Collection<Object>>();
 	protected Collection<String>					rootPackages			= new ArrayList<String>();
+	protected Collection<String>					excludes				= new ArrayList<String>();
 
 	protected static DefaultServiceLoader			instance				= null;
 
 	protected DefaultServiceLoader() {
-		registerRootPackage("org.pititom.core");
+		this.excludePackage("org\\.pititom\\.core\\.service.*");
+		this.registerRootPackage("org.pititom.core");
 	}
 
+	public synchronized void excludePackage(String packageNamePattern) {
+		this.excludes.add("/" + packageNamePattern.replace('.', '/') + "/.*");
+	}
+	
 	/**
 	 * Register root search package
 	 * 
@@ -350,6 +356,11 @@ public class DefaultServiceLoader implements ServiceLoader {
 		}
 		for (File file : files) {
 			if (file.isDirectory()) {
+				for (String patternExclusion: excludes) {
+					if (file.getName().matches(patternExclusion)) {
+						continue;
+					}
+				}
 				String pkg = currentPackage + "." + file.getName();
 				packageNames.add(pkg);
 				findPackages(rootPath, pkg, file, packageNames);

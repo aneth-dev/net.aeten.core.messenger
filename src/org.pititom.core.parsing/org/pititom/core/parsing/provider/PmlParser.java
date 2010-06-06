@@ -8,6 +8,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.pititom.core.event.Handler;
+import org.pititom.core.logging.LogLevel;
+import org.pititom.core.logging.Logger;
 import org.pititom.core.parsing.MarkupNode;
 import org.pititom.core.parsing.ParsingData;
 import org.pititom.core.parsing.ParsingEvent;
@@ -66,9 +68,12 @@ public class PmlParser implements Parser<MarkupNode> {
 					current = new Tag(current, key);
 					this.fireEvent(handler, ParsingEvent.START_NODE, MarkupNode.TAG, current.name, current.parent);
 				} else if (currentLevel < previousLevel) {
-					this.fireEvent(handler, ParsingEvent.END_NODE, MarkupNode.TAG, current.name, current.parent);
-					this.fireEvent(handler, ParsingEvent.END_NODE, MarkupNode.LIST, null, current);
-					this.fireEvent(handler, ParsingEvent.END_NODE, MarkupNode.TAG, current.parent.name, current.parent.parent);
+					for (int i=previousLevel; i>currentLevel; i--) {
+						this.fireEvent(handler, ParsingEvent.END_NODE, MarkupNode.TAG, current.name, current.parent);
+						if (current.parent != null)
+							this.fireEvent(handler, ParsingEvent.END_NODE, MarkupNode.LIST, null, current);
+						current = current.parent;
+					}
 					current = new Tag(current.parent, key);
 					this.fireEvent(handler, ParsingEvent.START_NODE, MarkupNode.TAG, current.name, current.parent);
 				} else {
@@ -84,9 +89,9 @@ public class PmlParser implements Parser<MarkupNode> {
 				}
 			}
 		} catch (IOException exception) {
-			
+			Logger.log(this, LogLevel.ERROR, exception);
 		}
-		for (int i=currentLevel; i>0; i--) {
+		for (int i=currentLevel; i>=0; i--) {
 			this.fireEvent(handler, ParsingEvent.END_NODE, MarkupNode.TAG, current.name, current.parent);
 			if (current.parent != null)
 				this.fireEvent(handler, ParsingEvent.END_NODE, MarkupNode.LIST, null, current);
@@ -96,7 +101,7 @@ public class PmlParser implements Parser<MarkupNode> {
 
 	public static void main(String[] args) throws Exception {
 		PmlParser parser = new PmlParser();
-		parser.parse(new BufferedReader(new FileReader("/home/thomas/Projects/org.pititom.core/java/org.pititom.core.eclipse.test/META-INF/provider/org.pititom.core.messenger.provider.MessengerProvider/client")), new Handler<ParsingData<MarkupNode>>() {
+		parser.parse(new BufferedReader(new FileReader("/home/thomas/Projects/org.pititom.core/java/org.pititom.core.messenger.test/META-INF/provider/org.pititom.core.messenger.provider.MessengerProvider/client")), new Handler<ParsingData<MarkupNode>>() {
 			private int level = 0;
 			public void handleEvent(ParsingData<MarkupNode> data) {
 

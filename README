@@ -1,18 +1,18 @@
 org.pititom.core is an useful java tools provider
 
-Note :
+Note:
 	This library is under MIT license (see LICENSE file).
 
-Provides :
+Provides:
 	- generic event transmitter and handler (synchronous and asynchronous)
 	- service loading based on package naming convension
 	- extensible messenger
 	- stream stack editor
 
-Third party dependences : 
+Third party dependences: 
 	- org.kohsuke.args4j (currently use 2.0.12, under MIT license)
 
-Details of modules :
+Details of modules:
 	- org.pititom.core
 	- org.pititom.core.args4j           -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.parsing
 	- org.pititom.core.messenger        -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j, org.pititom.core.service

@@ -1,23 +1,21 @@
 identifier : org.pititom.core.test.messenger.client
 auto connect : false
-receiver : org.pititom.core.messenger.stream.provider.StreamReceiver
+receiver : org.pititom.core.messenger.net.provider.UdpIpReceiver
 configuration :
   identifier : org.pititom.core.test.messenger.client.receiver
-  input stream : org.pititom.core.stream.UdpIpInputStream
-  configuration :
+  message decoder : org.pititom.core.messenger.test.MessageCodec
+  udp ip configuration :
     destination inet socket address : 230.2.15.2:5200
     max packet size : 64
     bind : true
     reuse : true
-  over : org.pititom.core.messenger.test.TestObjectInputStream
-sender : org.pititom.core.messenger.stream.provider.StreamSender
+sender : org.pititom.core.messenger.net.provider.UdpIpSender
 configuration :
   identifier : org.pititom.core.test.messenger.client.sender
-  output stream : org.pititom.core.stream.UdpIpOutputStream
-  configuration : 
+  message encoder : org.pititom.core.messenger.test.MessageCodec
+  udp ip configuration : 
     destination inet socket address : 230.2.15.2:5200
     max packet size : 64
     bind : true
     reuse : true
-  over : org.pititom.core.messenger.test.TestObjectOutputStream
   

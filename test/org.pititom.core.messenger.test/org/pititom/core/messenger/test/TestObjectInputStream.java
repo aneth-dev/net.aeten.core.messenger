@@ -21,7 +21,6 @@ public class TestObjectInputStream extends ObjectInputStream {
 			final byte[] className = new byte[this.readInt()];
 			this.read(className);
 			return Thread.currentThread().getContextClassLoader().loadClass(new String(className));
-//			return Class.forName(new String(className), true, Thread.currentThread().getContextClassLoader());
 		} catch (ClassNotFoundException exception) {
 			throw new IOException(exception);
 		}

@@ -32,7 +32,6 @@ public abstract class Receiver<Message> implements Identifiable, Connection, Con
 
 	@Override
 	public String getIdentifier() {
-		// TODO Auto-generated method stub
 		return this.identifier;
 	}
 
@@ -44,17 +43,14 @@ public abstract class Receiver<Message> implements Identifiable, Connection, Con
 
 	
 	@Override
-	public final boolean isConnected() {
+	public boolean isConnected() {
 		return this.connected;
 	}
 	
 	@Override
 	public final synchronized void connect() throws IOException {
-		if (!this.connected) {
+		if (!this.isConnected()) {
 			try {
-				if (this.configuration != null) {
-					this.configure(this.configuration);
-				}
 				this.doConnect();
 				this.connected = true;
 			} catch (Exception exception) {
@@ -66,7 +62,7 @@ public abstract class Receiver<Message> implements Identifiable, Connection, Con
 
 	@Override
 	public final synchronized void disconnect() throws IOException {
-		if (this.connected) {
+		if (this.isConnected()) {
 			try {
 				this.doDisconnect();
 				this.connected = false;
@@ -82,11 +78,9 @@ public abstract class Receiver<Message> implements Identifiable, Connection, Con
 		return "Receiver \"" + this.getIdentifier() + "\"";
 	}
 
-	protected void doConnect() throws IOException {
-	}
+	protected abstract void doConnect() throws IOException;
 
-	protected void doDisconnect() throws IOException {
-	}
+	protected abstract void doDisconnect() throws IOException;
 
 	public abstract Message receive() throws IOException;
 }

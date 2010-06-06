@@ -75,4 +75,7 @@ public class Service {
 		proxy.registerRootPackage(rootPackage);
 	}
 
+	public static void excludePackage(String packageNamePattern) {
+		proxy.registerRootPackage(packageNamePattern);
+	}
 }

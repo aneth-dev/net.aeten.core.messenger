@@ -28,26 +28,17 @@ import org.pititom.core.service.Service;
 
 @SuppressWarnings("restriction")
 public class EclipseServiceLoader extends DefaultServiceLoader {
-	
-	private static final ClassLoader CLASS_LOADER_REPLACEMENT = new ClassLoader() {
-		@Override
-		public Class<?> loadClass(String name) throws ClassNotFoundException {
-			for (Bundle bundle : bundles) {
-				try {
-					return bundle.loadClass(name);
-				} catch (ClassNotFoundException exception) {
-					
-				}
-			}
-			throw new ClassNotFoundException(name);
-		}
-	};
+	private static final ClassLoader		CLASS_LOADER_REPLACEMENT	= new ClassLoaderReplacement();
+	public static Collection<Bundle>		bundles						= new ArrayList<Bundle>();
 
-	
-	public static Collection<Bundle> bundles = new ArrayList<Bundle>();
+	protected Map<Class<?>, BundleContext>	serviceBundleContexts;
 
-	protected Map<Class<?>, BundleContext> serviceBundleContexts;
-	public EclipseServiceLoader() {}
+	public EclipseServiceLoader() {
+	}
+
+	public synchronized void excludePackage(String packageNamePattern) {
+		this.excludes.add(packageNamePattern);
+	}
 
 	public synchronized void registerRootPackage(String bundleName) {
 		if (serviceBundleContexts == null) {
@@ -75,9 +66,9 @@ public class EclipseServiceLoader extends DefaultServiceLoader {
 		if (urls == null) {
 			return;
 		}
-		while (urls.hasMoreElements()) {
+		URL_ELEMENT: while (urls.hasMoreElements()) {
 			URL url = urls.nextElement();
-			
+
 			String entryName = url.getFile().toString();
 			String pattern = ".+/";
 			switch (resourceType) {
@@ -90,9 +81,16 @@ public class EclipseServiceLoader extends DefaultServiceLoader {
 			}
 			pattern += "/[^/^$]+\\.class";
 			if (entryName.matches(pattern)) {
+				String className = entryName.replace('/', '.').substring(entryName.startsWith("/bin/") ? 5 : 1, entryName.length() - 6);
+				for (String patternExclusion : excludes) {
+					if (className.matches(patternExclusion)) {
+						continue URL_ELEMENT;
+					}
+				}
+
 				Class<?> clazz;
 				try {
-					clazz = bundle.loadClass(entryName.replace('/', '.').substring(entryName.startsWith("/bin/") ? 5 : 1, entryName.length() - 6));
+					clazz = bundle.loadClass(className);
 					switch (resourceType) {
 						case PROVIDER:
 							this.registerProvider(clazz);
@@ -115,7 +113,7 @@ public class EclipseServiceLoader extends DefaultServiceLoader {
 		super.registerService(service);
 		this.serviceBundleContexts.put(service, InternalPlatform.getDefault().getBundleContext());
 	}
-	
+
 	@Override
 	public synchronized <T> void registerProvider(Class<T> service, T provider) {
 		super.registerProvider(service, provider);
@@ -125,13 +123,13 @@ public class EclipseServiceLoader extends DefaultServiceLoader {
 			bundleContext = InternalPlatform.getDefault().getBundleContext();
 		}
 		bundleContext.registerService(service.getName(), provider, null);
-		
+
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public synchronized <S> Iterable<S> getProviders(Class<S> service) {
 		// Load conventional packaging providers
-		
+
 		Collection<S> providers = (Collection<S>) instances.get(service);
 		if (providers == null) {
 			providers = new HashSet<S>();
@@ -140,7 +138,7 @@ public class EclipseServiceLoader extends DefaultServiceLoader {
 			ClassLoader savedClassloader = Thread.currentThread().getContextClassLoader();
 			Thread.currentThread().setContextClassLoader(CLASS_LOADER_REPLACEMENT);
 
-				Collection<Class<?>> classes = services.get(service);
+			Collection<Class<?>> classes = services.get(service);
 			if (classes != null) {
 				for (Class<?> clazz : classes) {
 					try {
@@ -156,7 +154,7 @@ public class EclipseServiceLoader extends DefaultServiceLoader {
 									if (!file.isDirectory()) {
 										Configurable provider = (Configurable) clazz.newInstance();
 										provider.configure(Yaml2Args.convert(file, Service.getProvider(Parser.class, PmlParser.class.getName())));
-										
+
 										Logger.log(this, LogLevel.TRACE, "Instantiate provider " + provider + " for service " + service.getName());
 										this.serviceBundleContexts.get(service).registerService(service.getName(), provider, null);
 										providers.add((S) provider);
@@ -175,7 +173,7 @@ public class EclipseServiceLoader extends DefaultServiceLoader {
 				}
 			}
 			instances.put(service, (Collection<Object>) providers);
-			
+
 			for (Iterator<S> serviceIterator = ServiceLoader.load(service).iterator(); serviceIterator.hasNext();) {
 				providers.add(serviceIterator.next());
 			}
@@ -204,9 +202,23 @@ public class EclipseServiceLoader extends DefaultServiceLoader {
 		// Load standard java.util.ServiceLoader providers
 		for (Iterator<S> serviceIterator = ServiceLoader.load(service).iterator(); serviceIterator.hasNext();) {
 			providers.add(serviceIterator.next());
-		}		
-		
+		}
+
 		return providers;
+	}
+
+	private static class ClassLoaderReplacement extends ClassLoader {
+		@Override
+		public Class<?> loadClass(String name) throws ClassNotFoundException {
+			for (Bundle bundle : bundles) {
+				try {
+					return bundle.loadClass(name);
+				} catch (ClassNotFoundException exception) {
+
+				}
+			}
+			throw new ClassNotFoundException(name);
+		}
 	}
 
 }

@@ -19,8 +19,8 @@ public final class Alert {
 
 	private Alert() {}
 
-	public static AlertData start(Object source, AlertLevel level, String message) {
-		AlertData data = new AlertData(source, EVENTS.get(level, Hook.PRE), message);
+	public static AlertData start(Object source, AlertLevel level, String detail) {
+		AlertData data = new AlertData(source, EVENTS.get(level, Hook.PRE), detail);
 		TRANSMITTER.transmit(data);
 		if (data.doIt()) {
 			TRANSMITTER.transmit(EVENTS.hook(data, Hook.START));

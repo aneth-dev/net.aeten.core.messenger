@@ -66,7 +66,7 @@ public class CommandLineParserHelper {
 			}
 			if (end == -1)
 				throw new IllegalArgumentException("Unclosed quote at char "
-				        + begin);
+				        + begin + ". Configuration=" + arguments);
 			i = end;
 		}
 		String[] result = new String[splittedArguments.size()];
