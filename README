@@ -2,6 +2,10 @@ org.pititom.core is an useful java tools provider
 
 Note:
 	This library is under MIT license (see LICENSE file).
+	API become quite stable.
+
+Current version:
+	0.0.5
 
 Provides:
 	- generic event transmitter and handler (synchronous and asynchronous)
