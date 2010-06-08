@@ -50,9 +50,6 @@ public abstract class Sender<Message> implements Identifiable, Connection, Confi
 		if (!this.isConnected()) {
 			try {
 				this.disconnect();
-				if (this.configuration != null) {
-					this.configure(this.configuration);
-				}
 				this.doConnect();
 			} catch (Exception exception) {
 				this.connected = false;

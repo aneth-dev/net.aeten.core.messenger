@@ -7,22 +7,23 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import org.kohsuke.args4j.Option;
-import org.pititom.core.ConfigurationException;
 import org.pititom.core.Factory;
 import org.pititom.core.args4j.UdpIpParameters;
+import org.pititom.core.logging.LogLevel;
+import org.pititom.core.logging.Logger;
 import org.pititom.core.messenger.service.MessageEncoder;
 import org.pititom.core.messenger.service.Sender;
 
 public class UdpIpSender<Message> extends Sender<Message> {
-	
-	@Option(name = "-e", aliases = "--message-encoder", required = true)
-	private Factory<MessageEncoder<Message>>	messageEncoderFactory;
-	@Option(name = "-udpip", aliases = "--udp-ip-configuration", required = true)
-	private String								udpIpConfiguration;
 
-	private MessageEncoder<Message>				messageEncoder;
-	private UdpIpParameters						parameters;
-	private DatagramSocket						socket;
+	@Option(name = "-e", aliases = "--message-encoder", required = true)
+	private Factory<MessageEncoder<Message>> messageEncoderFactory;
+	@Option(name = "-udpip", aliases = "--udp-ip-configuration", required = true)
+	private String udpIpConfiguration;
+
+	private MessageEncoder<Message> messageEncoder;
+	private UdpIpParameters parameters;
+	private DatagramSocket socket;
 
 	/** @deprecated Reserved to configuration building */
 	public UdpIpSender() {
@@ -41,13 +42,19 @@ public class UdpIpSender<Message> extends Sender<Message> {
 
 	@Override
 	public boolean isConnected() {
-		return this.socket.isBound();
+		return (this.socket != null) && !this.socket.isClosed();
 	}
 
 	@Override
 	protected void doConnect() throws IOException {
-		this.parameters.createSocket();
-		this.socket = this.parameters.getSocket();
+		try {
+			this.parameters = new UdpIpParameters(this.udpIpConfiguration);
+			this.socket = this.parameters.getSocket();
+			this.messageEncoder = this.messageEncoderFactory.getInstance();
+			this.messageEncoderFactory = null;
+		} catch (Exception exception) {
+			throw new IOException("Configuration: " + configuration, exception);
+		}
 	}
 
 	@Override
@@ -55,21 +62,15 @@ public class UdpIpSender<Message> extends Sender<Message> {
 		this.socket.close();
 	}
 
-	@Override
-	public void configure(String configuration) throws ConfigurationException {
-		super.configure(configuration);
-		try {
-			this.parameters = new UdpIpParameters(this.udpIpConfiguration);
-			this.socket = this.parameters.getSocket();
-			this.messageEncoder = this.messageEncoderFactory.getInstance();
-			this.messageEncoderFactory = null;
-		} catch (Exception exception) {
-			throw new ConfigurationException(configuration, exception);
-		}
-	}
-
 	public void send(Message message) throws IOException {
-		byte[] data = this.messageEncoder.encode(message);
-		this.socket.send(new DatagramPacket(data, data.length, this.parameters.getDestinationInetSocketAddress()));
+		try {
+			byte[] data = this.messageEncoder.encode(message);
+			this.socket.send(new DatagramPacket(data, data.length, this.parameters.getDestinationInetSocketAddress()));
+		} catch (IOException exception) {
+			throw exception;
+		} catch (Throwable exception) {
+			Logger.log(this, LogLevel.ERROR, "Error while encoding message " + message, exception);
+		}
+
 	}
 }

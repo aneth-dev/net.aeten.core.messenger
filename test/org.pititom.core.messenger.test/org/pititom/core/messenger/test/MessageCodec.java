@@ -5,8 +5,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
-import org.pititom.core.logging.LogLevel;
-import org.pititom.core.logging.Logger;
+import org.pititom.core.messenger.service.DecodingException;
+import org.pititom.core.messenger.service.EncodingException;
 import org.pititom.core.messenger.service.MessageDecoder;
 import org.pititom.core.messenger.service.MessageEncoder;
 
@@ -14,32 +14,28 @@ public class MessageCodec implements MessageDecoder<AbstractMessage>, MessageEnc
 	private ByteArrayOutputStream buffer;
 	private ObjectOutputStream out;
 
-	public MessageCodec() {
+	public MessageCodec() throws IOException {
 		this.buffer = new ByteArrayOutputStream();
-		try {
-			this.out = new TestObjectOutputStream(this.buffer);
-		} catch (IOException exception) {
-			// This should not happen
-			Logger.log(this, LogLevel.ERROR, exception);
-		}
-	
-	}
-	
-	@Override
-	public AbstractMessage decode(byte[] data, int offset, int length) throws IOException, ClassNotFoundException {
-		return (AbstractMessage) new TestObjectInputStream(new ByteArrayInputStream(data, offset, length)).readObject();
+		this.out = new TestObjectOutputStream(this.buffer);
 	}
 
 	@Override
-	public byte[] encode(AbstractMessage message) {
+	public AbstractMessage decode(byte[] data, int offset, int length) throws DecodingException {
+		try {
+			return (AbstractMessage) new TestObjectInputStream(new ByteArrayInputStream(data, offset, length)).readObject();
+		} catch (Throwable exception) {
+			throw new DecodingException(exception);
+		}
+	}
+
+	@Override
+	public byte[] encode(AbstractMessage message) throws EncodingException {
 		try {
 			this.buffer.reset();
 			this.out.writeObject(message);
 			return this.buffer.toByteArray();
-		} catch (IOException exception) {
-			// This should not happen
-			Logger.log(this, LogLevel.ERROR, exception);
-			return null;
+		} catch (Throwable exception) {
+			throw new EncodingException(exception);
 		}
 	}
 

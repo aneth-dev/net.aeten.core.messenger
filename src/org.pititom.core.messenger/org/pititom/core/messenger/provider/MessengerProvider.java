@@ -38,7 +38,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 		CmdLineParser.registerHandler(Sender.class, SenderOptionHandler.class);
 		CmdLineParser.registerHandler(Receiver.class, ReceiverOptionHandler.class);
 	}
-	
+
 	@Option(name = "-id", aliases = "--identifier", required = true)
 	private String identifier;
 
@@ -106,7 +106,11 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 		}
 
 		this.hookTransmitter = TransmitterFactory.synchronous();
-		this.asyncSendEventTransmitter = TransmitterFactory.asynchronous("Sender transmitter", this.threadPriority, this, EVENTS.get(MessengerEvent.SEND, Hook.PRE));
+		if (this.identifier == null) {
+			this.asyncSendEventTransmitter = null;
+		} else {
+			this.asyncSendEventTransmitter = TransmitterFactory.asynchronous("Sender transmitter", this.threadPriority, this, EVENTS.get(MessengerEvent.SEND, Hook.PRE));
+		}
 	}
 
 	@Override
@@ -129,10 +133,10 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 		if (!this.connected) {
 			MessengerEventData<Message> data = new MessengerEventData<Message>(this, null, MessengerEvent.CONNECT, Hook.PRE, null);
 			this.hookTransmitter.transmit(data);
-			
+
 			if (data.doIt()) {
 				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.START));
-				
+
 				for (Receiver<Message> reciever : this.receiverList) {
 					reciever.connect();
 					this.startReciever(reciever);
@@ -141,7 +145,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 					sender.connect();
 				}
 				this.connected = true;
-				
+
 				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.END));
 				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.POST));
 			}
@@ -153,10 +157,10 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 		if (this.connected) {
 			MessengerEventData<Message> data = new MessengerEventData<Message>(this, null, MessengerEvent.DISCONNECT, Hook.PRE, null);
 			this.hookTransmitter.transmit(data);
-			
+
 			if (data.doIt()) {
 				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.START));
-				
+
 				for (Receiver<Message> reciever : this.receiverList) {
 					reciever.disconnect();
 				}
@@ -164,7 +168,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 					sender.disconnect();
 				}
 				this.connected = false;
-				
+
 				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.END));
 				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.POST));
 			}
@@ -194,8 +198,11 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 	@Override
 	public synchronized void configure(String configuration) throws ConfigurationException {
 		CommandLineParserHelper.configure(this, configuration);
-		if (this.threadPriority > -1) {
-			// TODO
+		if (this.threadPriority < 0) {
+			this.threadPriority = Thread.NORM_PRIORITY;
+		}
+		if (this.asyncSendEventTransmitter == null) {
+			this.asyncSendEventTransmitter = TransmitterFactory.asynchronous("Sender transmitter", this.threadPriority, this, EVENTS.get(MessengerEvent.SEND, Hook.PRE));
 		}
 		for (Sender<Message> sender : this.senderList) {
 			this.senderMap.put(sender.getIdentifier(), sender);
@@ -219,14 +226,14 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 	}
 
 	private void startReciever(final Receiver<Message> receiver) {
-		new Thread() {
+		new Thread("Receiver " + receiver.getIdentifier()) {
 			@Override
 			public void run() {
 				while (receiver.isConnected()) {
-					
+
 					MessengerEventData<Message> data = new MessengerEventData<Message>(MessengerProvider.this, receiver.getIdentifier(), MessengerEvent.RECEIVE, Hook.PRE, null);
 					MessengerProvider.this.hookTransmitter.transmit(data);
-					
+
 					if (data.doIt()) {
 						MessengerProvider.this.hookTransmitter.transmit(EVENTS.hook(data, Hook.START));
 
@@ -242,11 +249,10 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 						} catch (Throwable exception) {
 							Logger.log(receiver, LogLevel.ERROR, exception);
 						}
-						
+
 						MessengerProvider.this.hookTransmitter.transmit(EVENTS.hook(data, Hook.END));
 						MessengerProvider.this.hookTransmitter.transmit(EVENTS.hook(data, Hook.POST));
 					}
-					
 
 				}
 			}
@@ -289,7 +295,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 		if (this.connected) {
 			// Data event is already MessengerEvent.SEND, Hook.PRE
 			this.hookTransmitter.transmit(data);
-			
+
 			if (data.doIt()) {
 				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.START));
 
@@ -306,7 +312,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 				} catch (Throwable exception) {
 					Logger.log(sender, LogLevel.ERROR, exception);
 				}
-				
+
 				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.END));
 				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.POST));
 			}
