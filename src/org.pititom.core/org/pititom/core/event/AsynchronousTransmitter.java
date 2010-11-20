@@ -1,105 +1,155 @@
 package org.pititom.core.event;
 
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.pititom.core.Factory;
+import org.pititom.core.logging.LogLevel;
+import org.pititom.core.logging.Logger;
 
 /**
  * 
  * @author Thomas Pérennou
  */
-class AsynchronousTransmitter<Source, Event, Data extends EventData<Source, Event>> implements Transmitter<Data>, Runnable {
+class AsynchronousTransmitter<Event, Data extends EventData<?, Event>>
+		implements TransmitterService<Event, Data> {
 
-	private final Transmitter<Data> transmitter;
-	private final Queue<Data>[] queues;
-	private final Object mutex;
-	private final Thread eventTread;
-	private boolean isKilled;
+	private final String identifier;
+	private final Factory<ExecutorService> executorServiceFactory;
+	private volatile ExecutorService executorService;
+	private final RegisterableTransmitter<Event, Data> transmitter;
+
+	AsynchronousTransmitter(String identifier) {
+		this(identifier, new SynchronousRegisterableTransmitter<Event, Data>(), true);
+	}
+	
+	AsynchronousTransmitter(String identifier, RegisterableTransmitter<Event, Data> transmitter) {
+		this(identifier, transmitter, true);
+	}
+		
+	AsynchronousTransmitter(String identifier, RegisterableTransmitter<Event, Data> transmitter, boolean autoStart, ExecutorService executorService) {
+		this.identifier = identifier;
+		this.executorServiceFactory = null;
+		this.executorService = executorService;
+		this.transmitter = transmitter;
+	}
+	
+	AsynchronousTransmitter(String identifier, RegisterableTransmitter<Event, Data> transmitter, boolean autoStart, Factory<ExecutorService> executorServiceFactory) {
+		this.identifier = identifier;
+		this.executorServiceFactory = executorServiceFactory;
+		try {
+			this.executorService = this.executorServiceFactory.create();
+		} catch (Exception exception) {
+			throw new Error(exception);
+		}
+		this.transmitter = transmitter;
+	}
+	
+	AsynchronousTransmitter(String identifier, RegisterableTransmitter<Event, Data> transmitter, boolean autoStart, int corePoolSize, int maximumPoolSize,
+			long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler rejectedExecutionHandler) {
+		this(identifier, transmitter, autoStart, new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, rejectedExecutionHandler));
+	}
+	
+	AsynchronousTransmitter(final String identifier, RegisterableTransmitter<Event, Data> transmitter, boolean autoStart) {
+		this(identifier, transmitter, autoStart, 1, 1, 0L, TimeUnit.MILLISECONDS, new TransmissionTaskPriorityQueue(), new ThreadFactory() {
+			private AtomicInteger counter = new AtomicInteger(0);
+			@Override
+			public Thread newThread(Runnable runnable) {
+				return new Thread(runnable, identifier + " (" + counter.incrementAndGet() + ")");
+			}
+		}, new RejectedExecutionHandler() {
+			@SuppressWarnings("unchecked")
+			@Override
+			public void rejectedExecution(Runnable runnable, ThreadPoolExecutor executor) {
+				if (runnable instanceof FutureTask) {
+					try {
+						Logger.log(identifier, LogLevel.ERROR, "Task " + ((FutureTask<Data>) runnable).get() + " has been regected");
+					} catch (Exception exception) {
+					}
+				} else {
+					Logger.log(identifier, LogLevel.ERROR, "Task " + runnable + " has been regected");
+				}
+			}
+		});
+	}
+
+	@Override
+	public String getIdentifier() {
+		return identifier;
+	}
+
+	@Override
+	public void addEventHandler(Handler<Data> eventHandler, Event... eventList) {
+		transmitter.addEventHandler(eventHandler, eventList);
+	}
+
+	@Override
+	public void removeEventHandler(Handler<Data> eventHandler, Event... eventList) {
+		transmitter.removeEventHandler(eventHandler, eventList);
+	}
+
+	@Override
+	public Future<Data> transmit(Data data) {
+		TransmissionTask<Data> task = new TransmissionTask<Data>(data, transmitter);
+		executorService.execute(task);
+		return task;
+	}
+
+	@Override
+	public void shutdown() {
+		executorService.shutdown();
+	}
 
 	@SuppressWarnings("unchecked")
-	public AsynchronousTransmitter(String threadName, Transmitter<Data> transmitter, int threadPriority) {
-		this.transmitter = transmitter;
-		this.eventTread = new Thread(this, threadName);
-		this.eventTread.setPriority(threadPriority);
-		this.mutex = new Object();
-		this.queues = new LinkedBlockingQueue[Priority.values().length];
-		for (Priority priority : Priority.values()) {
-			this.queues[priority.ordinal()] = new LinkedBlockingQueue<Data>();
+	@Override
+	public List<Data> shutdownNow() {
+		List<Runnable> tasks = executorService.shutdownNow();
+		List<Data> datas = new ArrayList<Data>(tasks.size());
+		for (Runnable task : tasks) {
+			if (task instanceof TransmissionTask) {
+				datas.add(((TransmissionTask<Data>)task).data);
+			}
 		}
-
-		this.eventTread.start();
-	}
-
-	public AsynchronousTransmitter(String threadName, Transmitter<Data> transmitter) {
-		this(threadName, transmitter, Thread.NORM_PRIORITY);
-	}
-
-	public AsynchronousTransmitter(String threadName, int threadPriority, Handler<Data> eventHandler, Event... events) {
-		this(threadName, new SynchronousTransmitter<Event, Data>(eventHandler, events), threadPriority);
-	}
-
-	public AsynchronousTransmitter(String threadName, Handler<Data> eventHandler, Event... events) {
-		this(threadName, new SynchronousTransmitter<Event, Data>(eventHandler, events), Thread.NORM_PRIORITY);
+		return datas;
 	}
 
 	@Override
-	public void run() {
-		synchronized (this.mutex) {
-			for (Priority priority : Priority.values()) {
-				this.queues[priority.ordinal()].clear();
-			}
+	public boolean isShutdown() {
+		return executorService.isShutdown();
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return executorService.isTerminated();
+	}
+
+	@Override
+	public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+		return executorService.awaitTermination(timeout, unit);
+	}
+
+	@Override
+	public void start() {
+		if (executorService.isShutdown()) {
+			throw new IllegalStateException("Transmitter service is already running");
 		}
-		this.isKilled = false;
+		if (executorServiceFactory == null) {
+			throw new UnsupportedOperationException("None executor service factory given");
+		}
 		try {
-			while (!this.isKilled) {
-				synchronized (this.mutex) {
-					while (!this.haveEventToTransmit()) {
-						this.mutex.wait();
-					}
-				}
-				for (Priority priority : Priority.values()) {
-					this.transmit(this.queues[priority.ordinal()]);
-				}
-			}
-		} catch (InterruptedException exception) {} finally {
-			synchronized (this.mutex) {
-				for (Priority priority : Priority.values()) {
-					this.queues[priority.ordinal()].clear();
-				}
-			}
+			executorService = executorServiceFactory.create();
+		} catch (Exception exception) {
+			throw new Error(exception);
 		}
 	}
-
-	private boolean haveEventToTransmit() {
-		for (Priority priority : Priority.values()) {
-			if (!AsynchronousTransmitter.this.queues[priority.ordinal()].isEmpty()) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public void kill() {
-		this.isKilled = true;
-		this.eventTread.interrupt();
-	}
-
-	private int transmit(Queue<Data> queue) {
-		int eventsToTransmitCount = queue.size();
-		if (eventsToTransmitCount > 0) {
-			for (int i = 0; i < eventsToTransmitCount; i++) {
-				this.transmitter.transmit(queue.poll());
-			}
-		}
-		return eventsToTransmitCount;
-	}
-
-	@Override
-	public void transmit(Data data) {
-		Queue<Data> queue = this.queues[data.getPriority().ordinal()];
-		queue.add(data);
-		synchronized (this.mutex) {
-			this.mutex.notify();
-		}
-	}
-
+	
 }

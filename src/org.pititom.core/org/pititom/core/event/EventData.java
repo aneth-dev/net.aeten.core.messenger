@@ -1,5 +1,6 @@
 package org.pititom.core.event;
 
+
 public class EventData<Source, Event> {
 	protected Source source;
 	protected Event event;

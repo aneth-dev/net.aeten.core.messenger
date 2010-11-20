@@ -4,7 +4,7 @@ package org.pititom.core.stream.editor;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.pititom.core.Factory;
+import org.pititom.core.Singleton;
 
 /**
  *
@@ -12,9 +12,9 @@ import org.pititom.core.Factory;
  */
 public class StreamEditorStack {
 	
-	private final List<Factory<StreamEditor>> stack = new ArrayList<Factory<StreamEditor>>();
+	private final List<Singleton<StreamEditor>> stack = new ArrayList<Singleton<StreamEditor>>();
 	
-	public List<Factory<StreamEditor>> getStack() {
+	public List<Singleton<StreamEditor>> getStack() {
 		return this.stack;
 	}	
 }

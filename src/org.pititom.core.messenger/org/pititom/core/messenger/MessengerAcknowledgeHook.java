@@ -9,11 +9,10 @@ import org.pititom.core.ConfigurationException;
 import org.pititom.core.Identifiable;
 import org.pititom.core.event.Handler;
 import org.pititom.core.event.HandlerRegister;
-import org.pititom.core.event.RegisterableTransmitter;
 import org.pititom.core.event.TransmitterFactory;
+import org.pititom.core.event.TransmitterService;
 import org.pititom.core.logging.LogLevel;
 import org.pititom.core.logging.Logger;
-import org.pititom.core.messenger.service.Messenger;
 
 /**
  * 
@@ -22,8 +21,8 @@ import org.pititom.core.messenger.service.Messenger;
 public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 		implements
 		Handler<MessengerEventData<Message>>,
-		HandlerRegister<Messenger<Message>, MessengerAcknowledgeEvent, MessengerAcknowledgeEventData<Message, Acknowledge>>,
-		Configurable, Identifiable {
+		HandlerRegister<MessengerAcknowledgeEvent, MessengerAcknowledgeEventData<Message, Acknowledge>>,
+		Configurable<String>, Identifiable {
 
 	private static final Map<String, Object> MUTEX_MAP = new HashMap<String, Object>(
 			1);
@@ -42,7 +41,7 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 
 	MessengerAcknowledgeEventData<Message, Acknowledge> currentEventData = null;
 
-	private RegisterableTransmitter<Messenger<Message>, MessengerAcknowledgeEvent, MessengerAcknowledgeEventData<Message, Acknowledge>> eventTransmitter = null;
+	private TransmitterService<MessengerAcknowledgeEvent, MessengerAcknowledgeEventData<Message, Acknowledge>> eventTransmitter = null;
 
 	public MessengerAcknowledgeHook(String identifier) {
 		this(identifier, null, null);
@@ -141,6 +140,7 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void configure(String configuration) throws ConfigurationException {
 		try {
@@ -153,7 +153,7 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 			this.acknowledgeProtocol = acknowledgeProtocolClass.newInstance();
 			if ((this.acknowledgeProtocolConfiguration != null)
 					&& this.acknowledgeProtocol instanceof Configurable) {
-				((Configurable) this.acknowledgeProtocol)
+				((Configurable<String>) this.acknowledgeProtocol)
 						.configure(this.acknowledgeProtocolConfiguration);
 			}
 

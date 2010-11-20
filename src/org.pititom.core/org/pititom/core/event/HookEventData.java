@@ -1,5 +1,6 @@
 package org.pititom.core.event;
 
+
 public class HookEventData<Source, E, H> extends EventData<Source, HookEvent<E, H>> {
 	private boolean	doIt;
 

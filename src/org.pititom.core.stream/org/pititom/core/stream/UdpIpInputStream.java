@@ -17,7 +17,7 @@ import org.pititom.core.args4j.UdpIpParameters;
  * 
  * @author Thomas Pérennou
  */
-public class UdpIpInputStream extends InputStream implements Configurable {
+public class UdpIpInputStream extends InputStream implements Configurable<String> {
 
 	private UdpIpParameters parameters;
 

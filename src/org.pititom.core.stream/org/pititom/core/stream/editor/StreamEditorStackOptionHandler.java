@@ -6,7 +6,8 @@ import org.kohsuke.args4j.OptionDef;
 import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.Parameters;
 import org.kohsuke.args4j.spi.Setter;
-import org.pititom.core.Factory;
+import org.pititom.core.Configurable;
+import org.pititom.core.Singleton;
 
 /**
  * {@link Class} {@link OptionHandler}.
@@ -23,6 +24,7 @@ public class StreamEditorStackOptionHandler extends OptionHandler<StreamEditorSt
 		super(parser, option, setter);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public int parseArguments(Parameters params) throws CmdLineException {
 		int i = 0;
@@ -52,7 +54,13 @@ public class StreamEditorStackOptionHandler extends OptionHandler<StreamEditorSt
 					configuration = null;
 				}
 
-				editorStackOption.getStack().add(new Factory<StreamEditor>(clazz.asSubclass(StreamEditor.class), configuration));
+				Singleton<StreamEditor> streamEditor;
+				if ((configuration != null) && clazz.isAssignableFrom(Configurable.class)) {
+					streamEditor = new Singleton<StreamEditor>((Class<Configurable<String>>)clazz, configuration);
+				} else {
+					streamEditor = new Singleton<StreamEditor>((Class<StreamEditor>)clazz);
+				}
+				editorStackOption.getStack().add(streamEditor);
 			}
 			setter.addValue(editorStackOption);
 		} catch (ClassNotFoundException exception) {

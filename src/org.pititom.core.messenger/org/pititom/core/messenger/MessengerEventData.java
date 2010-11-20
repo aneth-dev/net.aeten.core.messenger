@@ -3,7 +3,6 @@ package org.pititom.core.messenger;
 import org.pititom.core.event.Hook;
 import org.pititom.core.event.HookEventData;
 import org.pititom.core.event.Priority;
-import org.pititom.core.messenger.service.Messenger;
 
 /**
  * 
@@ -13,23 +12,42 @@ public class MessengerEventData<Message> extends HookEventData<Messenger<Message
 
 	private Message message;
 	private String contact;
+	private String subcontractor;
+	private String service;
 
-  public MessengerEventData(Messenger<Message> source, String contact, MessengerEvent event, Hook hook, Message message) {
-     this(source, contact, event, hook, message, Priority.MEDIUM, true);
-   }
+	public MessengerEventData(Messenger<Message> source, String contact, MessengerEvent event, Hook hook, Message message) {
+		this(source, contact, event, hook, message, Priority.MEDIUM, true);
+	}
 
-  public MessengerEventData(Messenger<Message> source, String contact, MessengerEvent event, Hook hook, Message message, boolean doIt) {
-     this(source, contact, event, hook, message, Priority.MEDIUM, doIt);
-   }
+	public MessengerEventData(Messenger<Message> source, String contact, MessengerEvent event, Hook hook, Message message, boolean doIt) {
+		this(source, contact, event, hook, message, Priority.MEDIUM, doIt);
+	}
 
-  public MessengerEventData(Messenger<Message> source, String contact, MessengerEvent event, Hook hook, Message message, Priority priority) {
-     this(source, contact, event, hook, message, priority, true);
-   }
+	public MessengerEventData(Messenger<Message> source, String contact, MessengerEvent event, Hook hook, Message message, Priority priority) {
+		this(source, contact, event, hook, message, priority, true);
+	}
 
 	protected MessengerEventData(Messenger<Message> source, String contact, MessengerEvent event, Hook hook, Message message, Priority priority, boolean doIt) {
+		this(source, contact, null, event, hook, message, priority, doIt);
+	}
+
+	public MessengerEventData(Messenger<Message> source, String contact, String service, MessengerEvent event, Hook hook, Message message) {
+		this(source, contact, service, event, hook, message, Priority.MEDIUM, true);
+	}
+
+	public MessengerEventData(Messenger<Message> source, String contact, String service, MessengerEvent event, Hook hook, Message message, boolean doIt) {
+		this(source, contact, service, event, hook, message, Priority.MEDIUM, doIt);
+	}
+
+	public MessengerEventData(Messenger<Message> source, String contact, String service, MessengerEvent event, Hook hook, Message message, Priority priority) {
+		this(source, contact, service, event, hook, message, priority, true);
+	}
+
+	protected MessengerEventData(Messenger<Message> source, String contact, String service, MessengerEvent event, Hook hook, Message message, Priority priority, boolean doIt) {
 		super(source, Messenger.EVENTS.get(event, hook), priority, doIt);
 		this.message = message;
 		this.contact = contact;
+		this.service = service;
 	}
 
 	public Message getMessage() {
@@ -39,14 +57,34 @@ public class MessengerEventData<Message> extends HookEventData<Messenger<Message
 	public void setMessage(Message message) {
 		this.message = message;
 	}
-	
+
 	@Override
 	public String toString() {
-		return super.toString() + " message=(" + this.message + ")";
+		return super.toString() + " message=(" + this.message + ")" + " contact=(" + this.contact + ")" + " service=(" + this.service + ")" + " subcontractor=(" + this.subcontractor + ")";
+	}
+
+	public void setSubcontractor(String subcontractor) {
+		this.subcontractor = subcontractor;
+	}
+
+	public String getSubcontractor() {
+		return this.subcontractor;
 	}
 
 	public String getContact() {
 		return this.contact;
+	}
+
+	public void setContact(String contact) {
+		this.contact = contact;
+	}
+
+	public void setService(String service) {
+		this.service = service;
+	}
+
+	public String getService() {
+		return service;
 	}
 
 }

@@ -3,35 +3,32 @@ package org.pititom.core.messenger.test;
 import java.util.Calendar;
 import java.util.Date;
 
-import org.eclipse.equinox.app.IApplication;
-import org.eclipse.equinox.app.IApplicationContext;
 import org.pititom.core.event.Handler;
 import org.pititom.core.event.Hook;
+import org.pititom.core.event.Priority;
 import org.pititom.core.logging.LogLevel;
 import org.pititom.core.logging.Logger;
 import org.pititom.core.logging.LoggingData;
+import org.pititom.core.messenger.Messenger;
 import org.pititom.core.messenger.MessengerAcknowledgeEvent;
 import org.pititom.core.messenger.MessengerAcknowledgeEventData;
 import org.pititom.core.messenger.MessengerAcknowledgeHook;
 import org.pititom.core.messenger.MessengerEvent;
 import org.pititom.core.messenger.MessengerEventData;
-import org.pititom.core.messenger.service.Messenger;
+import org.pititom.core.messenger.MessengerProvider;
+import org.pititom.core.messenger.net.UdpIpReceiver;
+import org.pititom.core.service.Configuration;
+import org.pititom.core.service.Configurations;
 import org.pititom.core.service.Service;
 
-/**
- * This class controls all aspects of the application's execution
- */
-public class Application implements IApplication {
+@Configurations({
+	@Configuration(name = "server.pml", provider = MessengerProvider.class),
+	@Configuration(name = "client.toto", provider = MessengerProvider.class, parser = "org.pititom.core.parsing.PmlParser", converter = "org.pititom.core.args4j.Markup2Args4j"),
+	@Configuration(name = "client.receiver.pml", provider = UdpIpReceiver.class)})
+public class Application {
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @seeorg.eclipse.equinox.app.IApplication#start(org.eclipse.equinox.app.
-	 * IApplicationContext)
-	 */
 	@SuppressWarnings("unchecked")
-	public Object start(IApplicationContext context) throws Exception {
-
+	public static void main(String[] args) throws Exception {
 		   Logger.addEventHandler(new Handler<LoggingData>() {
 			@Override
 			public void handleEvent(LoggingData data) {
@@ -41,18 +38,19 @@ public class Application implements IApplication {
 				 * by this way
 				 */
 				Date date = Calendar.getInstance().getTime();
-				System.out.println(date + " " + (date.getTime() % 1000) + "ms " + data.getEvent() + " source={" + data.getSource() + "} " + data.getMessage() + ((data.getThrowable() == null) ? "" : " : "));
+
+				System.out.println(date + String.format(" %3dms %5s  source={%s} %s%s", date.getTime() % 1000, data.getEvent(),data.getSource(), data.getMessage(), (data.getThrowable() == null) ? "" : " : "));
 				if (data.getThrowable() != null) {
 					data.getThrowable().printStackTrace(System.out);
 				}
 			}
 		}, LogLevel.values());
 
-		Logger.log(this, LogLevel.INFO, "Start");
+		Logger.log(Application.class, LogLevel.INFO, "Start");
 
 		// Client & server are both loaded from configuration files located in
-		// META-INF/provider/org.pititom.core.messenger.stream.provider.
-		// StreamMessenger/
+		// META-INF/provider/org.pititom.core.messenger.provider.
+		// MessengerProvider/
 		Messenger<AbstractMessage> client = Service.getProvider(Messenger.class, "org.pititom.core.test.messenger.client");
 		Messenger<AbstractMessage> server = Service.getProvider(Messenger.class, "org.pititom.core.test.messenger.server");
 
@@ -114,28 +112,37 @@ public class Application implements IApplication {
 
 		server.connect();
 		client.connect();
-
+		
 		Message valid = new Message();
 		valid.setAcknowledge(Acknowledge.UNSOLLICITED_NEED_ACKNOWLEDGE);
 		valid.setValue(4);
-		client.transmit(valid, "org.pititom.core.test.messenger.client.sender");
 
 		Message invalidData = new Message();
 		invalidData.setAcknowledge(Acknowledge.UNSOLLICITED_NEED_ACKNOWLEDGE);
 		invalidData.setValue(10);
-		client.transmit(invalidData, "org.pititom.core.test.messenger.client.sender");
+		
+		Message highData = new Message();
+		highData.setAcknowledge(Acknowledge.UNSOLLICITED_NEED_ACKNOWLEDGE);
+		highData.setValue(3);
 
 		Message invalidMessage = new Message();
-		client.transmit(invalidMessage, "org.pititom.core.test.messenger.client.sender");
-		return IApplication.EXIT_OK;
+
+//		System.out.println(client.transmit(valid, "org.pititom.core.test.messenger.client.sender").get());
+//		System.out.println(client.transmit(invalidData, "org.pititom.core.test.messenger.client.sender").get());
+//		System.out.println(client.transmit(invalidMessage, "org.pititom.core.test.messenger.client.sender").get());
+		client.transmit(valid, "org.pititom.core.test.messenger.client.sender");
+		client.transmit(valid, "org.pititom.core.test.messenger.client.sender", Priority.LOW);
+		client.transmit(valid, "org.pititom.core.test.messenger.client.sender", Priority.LOW);
+		client.transmit(valid, "org.pititom.core.test.messenger.client.sender", Priority.LOW);
+		client.transmit(valid, "org.pititom.core.test.messenger.client.sender", Priority.LOW);
+		client.transmit(valid, "org.pititom.core.test.messenger.client.sender", Priority.LOW);
+		client.transmit(valid, "org.pititom.core.test.messenger.client.sender", Priority.LOW);
+		client.transmit(valid, "org.pititom.core.test.messenger.client.sender", Priority.LOW);
+		client.transmit(highData, "org.pititom.core.test.messenger.client.sender", Priority.HIGH);
+		client.transmit(invalidData, "org.pititom.core.test.messenger.client.sender", Priority.LOW);
+		client.transmit(invalidMessage, "org.pititom.core.test.messenger.client.sender", Priority.HIGH);
+
+                Thread.currentThread().join();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.equinox.app.IApplication#stop()
-	 */
-	public void stop() {
-		// nothing to do
-	}
 }

@@ -6,20 +6,21 @@ import org.kohsuke.args4j.OptionDef;
 import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.Parameters;
 import org.kohsuke.args4j.spi.Setter;
-import org.pititom.core.Factory;
+import org.pititom.core.Configurable;
+import org.pititom.core.Singleton;
 
 /**
  * {@link Class} {@link OptionHandler}.
  * 
  * @author Thomas Pérennou
  */
-public class FactoryOptionHandler extends OptionHandler<Factory<?>> {
+public class FactoryOptionHandler extends OptionHandler<Singleton<Configurable<String>>> {
 
 	public static final String CONFIGURATION_OPTION_NAME = "-c";
 	public static final String[] CONFIGURATION_OPTION_ALIASES = {"--configuration"};
 
 	public FactoryOptionHandler(CmdLineParser parser, OptionDef option,
-			Setter<Factory<?>> setter) {
+			Setter<Singleton<Configurable<String>>> setter) {
 		super(parser, option, setter);
 	}
 
@@ -39,7 +40,8 @@ public class FactoryOptionHandler extends OptionHandler<Factory<?>> {
 		}
 
 		try {
-			Factory<Object> factory = new Factory<Object>(Thread.currentThread().getContextClassLoader().loadClass(className), configuration);
+			@SuppressWarnings("unchecked")
+			Singleton<Configurable<String>> factory = new Singleton<Configurable<String>>((Class<Configurable<String>>)Thread.currentThread().getContextClassLoader().loadClass(className), configuration);
 			setter.addValue(factory);
 		} catch (ClassNotFoundException exception) {
 			throw new CmdLineException(this.owner, exception);

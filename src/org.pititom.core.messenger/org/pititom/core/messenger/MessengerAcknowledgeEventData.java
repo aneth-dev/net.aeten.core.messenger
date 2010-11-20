@@ -1,7 +1,6 @@
 package org.pititom.core.messenger;
 
 import org.pititom.core.event.EventData;
-import org.pititom.core.messenger.service.Messenger;
 
 /**
  *
@@ -46,7 +45,7 @@ public class MessengerAcknowledgeEventData<Message, Acknowledge extends Enum<?>>
 
 	@Override
 	public String toString() {
-		return  "sent message={" + this.sentMessage + "}" + "recieved message={" + this.recievedMessage + "}" + " acknowledge={" + this.acknowledge + "}";
+		return  "sent_message={" + this.sentMessage + "}" + " recieved_message={" + this.recievedMessage + "}" + " acknowledge={" + this.acknowledge + "}";
 	}
 
 }

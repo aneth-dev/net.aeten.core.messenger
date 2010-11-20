@@ -5,10 +5,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
-import org.pititom.core.messenger.service.DecodingException;
-import org.pititom.core.messenger.service.EncodingException;
-import org.pititom.core.messenger.service.MessageDecoder;
-import org.pititom.core.messenger.service.MessageEncoder;
+import org.pititom.core.messenger.MessageDecoder;
+import org.pititom.core.messenger.MessageEncoder;
 
 public class MessageCodec implements MessageDecoder<AbstractMessage>, MessageEncoder<AbstractMessage> {
 	private ByteArrayOutputStream buffer;

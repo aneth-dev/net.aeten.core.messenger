@@ -8,7 +8,7 @@ import java.io.PipedOutputStream;
 
 import org.pititom.core.ConfigurationException;
 import org.pititom.core.Connection;
-import org.pititom.core.Factory;
+import org.pititom.core.Singleton;
 
 /**
  * 
@@ -52,8 +52,12 @@ public class StreamControllerConnection implements Connection {
 		this.editorStack = new StreamEditor[(configuration.getEditorStack() == null) ? 0 : configuration.getEditorStack().getStack().size()];
 		if (this.editorStack.length > 0) {
 			int index = 0;
-			for (Factory<? extends StreamEditor> editorFactory : configuration.getEditorStack().getStack()) {
-				this.editorStack[index++] = editorFactory.getInstance();
+			try {
+			for (Singleton<? extends StreamEditor> editorFactory : configuration.getEditorStack().getStack()) {
+					this.editorStack[index++] = editorFactory.getInstance();
+			}
+			} catch (Exception exception) {
+				throw new ConfigurationException(configuration.getName(), exception);
 			}
 		}
 	}

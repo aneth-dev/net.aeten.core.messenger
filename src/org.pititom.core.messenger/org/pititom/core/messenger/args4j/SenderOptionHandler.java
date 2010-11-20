@@ -6,11 +6,11 @@ import org.kohsuke.args4j.OptionDef;
 import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.Parameters;
 import org.kohsuke.args4j.spi.Setter;
-import org.pititom.core.messenger.service.Sender;
+import org.pititom.core.Configurable;
+import org.pititom.core.messenger.Sender;
 
 public class SenderOptionHandler extends OptionHandler<Sender<?>> {
-	public static final String CONFIGURATION_OPTION_NAME = "-c";
-	public static final String[] CONFIGURATION_OPTION_ALIASES = { "--configuration" };
+	public static final String[] CONFIGURATION_OPTION_ALIASES = { "-c", "--configuration" };
 
 	public SenderOptionHandler(CmdLineParser parser, OptionDef option, Setter<? super Sender<?>> setter) {
 		super(parser, option, setter);
@@ -23,9 +23,9 @@ public class SenderOptionHandler extends OptionHandler<Sender<?>> {
 		try {
 			Class<Sender<?>> senderClass = (Class<Sender<?>>) Thread.currentThread().getContextClassLoader().loadClass(params.getParameter(0));
 			Sender<?> sender = senderClass.newInstance();
-			if (CONFIGURATION_OPTION_NAME.equals(params.getParameter(1)) || contains(params.getParameter(1), CONFIGURATION_OPTION_ALIASES)) {
+			if (contains(params.getParameter(1), CONFIGURATION_OPTION_ALIASES)) {
 				configuration = params.getParameter(2);
-				sender.configure(configuration);
+				((Configurable<String>) sender).configure(configuration);
 			}
 			setter.addValue(sender);
 		} catch (Exception exception) {

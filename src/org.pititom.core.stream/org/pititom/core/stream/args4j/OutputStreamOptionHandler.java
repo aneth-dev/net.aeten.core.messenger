@@ -47,7 +47,7 @@ public class OutputStreamOptionHandler extends OptionHandler<OutputStream> {
 
 			OutputStream outputStream = outputStreamClass.newInstance();
 			if (outputStream instanceof Configurable) {
-				((Configurable) outputStream).configure(configuration);
+				((Configurable<String>) outputStream).configure(configuration);
 			}
 
 			for (;; i++) {
@@ -77,7 +77,7 @@ public class OutputStreamOptionHandler extends OptionHandler<OutputStream> {
 
 				outputStream = outputStreamClass.getConstructor(OutputStream.class).newInstance(outputStream);
 				if (outputStream instanceof Configurable) {
-					((Configurable) outputStream).configure(configuration);
+					((Configurable<String>) outputStream).configure(configuration);
 				}
 
 			}

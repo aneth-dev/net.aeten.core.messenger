@@ -1,5 +1,7 @@
 package org.pititom.core.event;
 
+import java.util.concurrent.Future;
+
 /**
  *
  * @author Thomas Pérennou
@@ -14,11 +16,12 @@ class SynchronousTransmitter<Event, Data extends EventData<?, Event>> implements
 		this.events = events;
 	}
 
-	public void transmit(Data data) {
+	public Future<Data> transmit(Data data) {
 		for (Event registredEvent : this.events) {
 			if (registredEvent.equals(data.getEvent())) {
-				eventHandler.handleEvent(data);
+				this.eventHandler.handleEvent(data);
 			}
 		}
+		return new FutureDone<Data>(data);
 	}
 }

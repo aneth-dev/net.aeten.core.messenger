@@ -17,7 +17,7 @@ public class LoggingData extends EventData<Object, LogLevel> {
 	}
 
 	public LoggingData(Object source, LogLevel level, Throwable throwable) {
-		this(source, level, source.toString() + " has thrown an exception…", throwable);
+		this(source, level, source.toString() + " has thrown an exception… ", throwable);
 	}
 
 	public LoggingData(Object source, LogLevel level, String message) {

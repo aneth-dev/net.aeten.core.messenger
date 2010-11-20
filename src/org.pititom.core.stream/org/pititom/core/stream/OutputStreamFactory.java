@@ -21,12 +21,13 @@ public class OutputStreamFactory<T extends OutputStream> {
 		this.configuration = configuration;
 	}
 
+	@SuppressWarnings("unchecked")
 	public OutputStream getInstance() throws ConfigurationException {
 		if (this.bean == null) {
 			try {
 				this.bean = clazz.newInstance();
 				if ((configuration != null) && (bean instanceof Configurable)) {
-					((Configurable) bean).configure(configuration);
+					((Configurable<String>) bean).configure(configuration);
 				}
 			} catch (Exception defaultConstructorException) {
 				if (configuration != null) {

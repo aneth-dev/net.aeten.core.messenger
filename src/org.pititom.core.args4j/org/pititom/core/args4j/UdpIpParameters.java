@@ -34,6 +34,19 @@ public class UdpIpParameters {
 	@Option(name = "-s", aliases = { "--source", "--source-inet-address" }, required = false)
 	private InetAddress sourceInetAddress = null;
 
+	/** @see {@link MulticastSocket#setTrafficClass(int)} */
+	@Option(name = "-c", aliases = { "--traffic-class" }, required = false)
+	private String trafficClassOption = "0";
+	private int trafficClass = 0;
+
+	/** @see {@link DatagramSocket#setTimeout(int)} */
+	@Option(name = "-t", aliases = { "--time-out" }, required = false)
+	private int timeout = -1;
+
+	/** @see {@link MulticastSocket#setTimeToLive(int)} */
+	@Option(name = "-ttl", aliases = { "--time-to-live" }, required = false)
+	private int timeToLive = -1;
+
 	private DatagramSocket socket;
 
 	public UdpIpParameters(String configuration) throws CmdLineException, IOException {
@@ -44,20 +57,31 @@ public class UdpIpParameters {
 		CmdLineParser parser = new CmdLineParser(this);
 		parser.parseArgument(arguments);
 
+		this.trafficClass = Integer.parseInt(this.trafficClassOption, 2);
 		this.createSocket();
 	}
 
 	public UdpIpParameters(InetSocketAddress destinationInetSocketAddress, InetAddress sourceInetAddress, boolean bind, boolean reuse, int maxPacketSize) throws IOException {
+		this(destinationInetSocketAddress, sourceInetAddress, bind, reuse, maxPacketSize, 0, -1, -1);
+	}
+
+	public UdpIpParameters(InetSocketAddress destinationInetSocketAddress, InetAddress sourceInetAddress, boolean bind, boolean reuse, int maxPacketSize, int trafficClass, int timeout, int timeToLive) throws IOException {
 		this.destinationInetSocketAddress = destinationInetSocketAddress;
 		this.sourceInetAddress = sourceInetAddress;
 		this.bind = bind;
 		this.reuse = reuse;
 		this.maxPacketSize = maxPacketSize;
+		this.trafficClass = trafficClass;
+		this.timeout = timeout;
+		this.timeToLive = timeToLive;
 
 		this.createSocket();
 	}
 
-	public void createSocket() throws IOException {
+	public DatagramSocket createSocket() throws IOException {
+		if ((this.socket != null) && !this.socket.isClosed()) {
+			throw new IOException("Socket not closed");
+		}
 		if (this.destinationInetSocketAddress.getAddress().isMulticastAddress()) {
 			MulticastSocket multicastSocket = new MulticastSocket((SocketAddress) null);
 			if (this.sourceInetAddress != null)
@@ -70,8 +94,11 @@ public class UdpIpParameters {
 				} else {
 					Logger.log(this, LogLevel.WARN, "Inet socket address" + this.destinationInetSocketAddress + " already bound");
 				}
+				multicastSocket.joinGroup(this.destinationInetSocketAddress.getAddress());
 			}
-			multicastSocket.joinGroup(this.destinationInetSocketAddress.getAddress());
+			if (this.timeToLive != -1) {
+				multicastSocket.setTimeToLive(this.timeToLive);
+			}
 			this.socket = multicastSocket;
 		} else {
 			this.socket = new DatagramSocket(null);
@@ -84,11 +111,27 @@ public class UdpIpParameters {
 				}
 			}
 		}
+		this.socket.setTrafficClass(this.trafficClass);
+		if (this.timeout != -1) {
+			this.socket.setSoTimeout(this.timeout);
+		}
 		this.socket.setReuseAddress(this.reuse);
+		return this.socket;
 	}
 
 	public DatagramSocket getSocket() {
 		return this.socket;
+	}
+
+	public void closeSocket() {
+		if (this.socket instanceof MulticastSocket) {
+			try {
+				((MulticastSocket) this.socket).leaveGroup(this.destinationInetSocketAddress.getAddress());
+			} catch (IOException exception) {
+				Logger.log(this, LogLevel.ERROR, "Unable to leave multicast group " + this.destinationInetSocketAddress.getAddress(), exception);
+			}
+		}
+		this.socket.close();
 	}
 
 	public InetSocketAddress getDestinationInetSocketAddress() {
@@ -97,6 +140,10 @@ public class UdpIpParameters {
 
 	public int getMaxPacketSize() {
 		return this.maxPacketSize;
+	}
+
+	public int getTrafficClass() {
+		return this.trafficClass;
 	}
 
 	public boolean isReuse() {

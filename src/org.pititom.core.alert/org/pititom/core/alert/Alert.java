@@ -13,12 +13,21 @@ import org.pititom.core.event.TransmitterFactory;
  */
 public final class Alert {
 
-	private static final RegisterableTransmitter<?, HookEvent<AlertLevel, Hook>, AlertData> TRANSMITTER = TransmitterFactory.synchronous();
+	private static final RegisterableTransmitter<HookEvent<AlertLevel, Hook>, AlertData> TRANSMITTER = TransmitterFactory.synchronous();
 	
 	public static final HookEventGroup<AlertLevel, Hook> EVENTS = HookEventGroup.get(AlertLevel.values(), new Hook[] {Hook.PRE, Hook.START, Hook.END, Hook.POST});
 
 	private Alert() {}
 
+	public static AlertData start(Object source, AlertLevel level, String title) {
+		AlertData data = new AlertData(source, EVENTS.get(level, Hook.PRE), detail);
+		TRANSMITTER.transmit(data);
+		if (data.doIt()) {
+			TRANSMITTER.transmit(EVENTS.hook(data, Hook.START));
+		}
+		return data;
+	}
+	
 	public static AlertData start(Object source, AlertLevel level, String detail) {
 		AlertData data = new AlertData(source, EVENTS.get(level, Hook.PRE), detail);
 		TRANSMITTER.transmit(data);
