@@ -1,4 +1,4 @@
-org.pititom.core is an useful java tools provider
+net.aeten.core is an useful java tools provider
 
 Note:
 	This library is under MIT license (see LICENSE file).
@@ -17,15 +17,15 @@ Third party dependences:
 	- org.kohsuke.args4j (currently use 2.0.12, under MIT license)
 
 Details of modules:
-	- org.pititom.core
-	- org.pititom.core.args4j           -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.parsing
-	- org.pititom.core.messenger        -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j, org.pititom.core.service
-	- org.pititom.core.messenger.stream -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j, org.pititom.core.messenger, org.pititom.core.stream
-	- org.pititom.core.parsing          -> org.pititom.core
-	- org.pititom.core.service          -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j, org.pititom.core.parsing
-	- org.pititom.core.stream           -> requires org.kohsuke.args4j, org.pititom.core, org.pititom.core.args4j
+	- net.aeten.core
+	- net.aeten.core.args4j           -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.parsing
+	- net.aeten.core.messenger        -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.args4j, net.aeten.core.service
+	- net.aeten.core.messenger.stream -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.args4j, net.aeten.core.messenger, net.aeten.core.stream
+	- net.aeten.core.parsing          -> net.aeten.core
+	- net.aeten.core.service          -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.args4j, net.aeten.core.parsing
+	- net.aeten.core.stream           -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.args4j
 
 Helper modules:
-	- org.pititom.core.service.eclipse  -> org.eclipse.core.runtime (this module is intended to be fragment of org.pititom.core.service for eclipse plateform use)
+	- net.aeten.core.service.eclipse  -> org.eclipse.core.runtime (this module is intended to be fragment of net.aeten.core.service for eclipse plateform use)
 
 See test directory for samples
