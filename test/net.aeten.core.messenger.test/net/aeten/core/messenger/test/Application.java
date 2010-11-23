@@ -24,7 +24,8 @@ import net.aeten.core.service.Service;
 
 @Configurations({
 	@Configuration(name = "server.aeml", provider = MessengerProvider.class),
-	@Configuration(name = "client.toto", provider = MessengerProvider.class, parser = "net.aeten.core.parsing.aeml.AEmlParser", converter = "net.aeten.core.args4j.Markup2Args4j"),
+//	@Configuration(name = "client.properties", provider = MessengerProvider.class, parser = "net.aeten.core.parsing.aeml.AEmlParser", converter = "net.aeten.core.args4j.Markup2Args4j"),
+	@Configuration(name = "client.properties", provider = MessengerProvider.class),
 	@Configuration(name = "client.receiver.aeml", provider = UdpIpReceiver.class)})
 public class Application {
 

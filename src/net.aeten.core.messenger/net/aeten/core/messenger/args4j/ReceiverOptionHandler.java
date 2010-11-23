@@ -24,6 +24,7 @@ public class ReceiverOptionHandler extends OptionHandler<Receiver<?>> {
 	@Override
 	public int parseArguments(Parameters params) throws CmdLineException {
 		String configuration = null;
+		boolean hasConfigurationTagOption = false;
 		try {
 			try {
 				setter.addValue(Service.getProvider(Receiver.class, params.getParameter(0)));
@@ -31,16 +32,23 @@ public class ReceiverOptionHandler extends OptionHandler<Receiver<?>> {
 			} catch (NoSuchElementException exception) {
 				Class<Receiver<?>> recieverClass = (Class<Receiver<?>>) Thread.currentThread().getContextClassLoader().loadClass(params.getParameter(0));
 				Receiver<?> reciever = recieverClass.newInstance();
-				if (contains(params.getParameter(1), CONFIGURATION_OPTION_ALIASES)) {
-					configuration = params.getParameter(2);
-					((Configurable<String>) reciever).configure(configuration);
+
+				if (reciever instanceof Configurable) {
+					if (contains(params.getParameter(1), CONFIGURATION_OPTION_ALIASES)) {
+						configuration = params.getParameter(2);
+						((Configurable<String>) reciever).configure(configuration);
+						hasConfigurationTagOption = true;
+					} else {
+						configuration = params.getParameter(1);
+						((Configurable<String>) reciever).configure(configuration);
+					}
 				}
 				setter.addValue(reciever);
 			}
 		} catch (Exception exception) {
 			throw new CmdLineException(this.owner, params.getParameter(0), exception);
 		}
-		return (configuration == null) ? 1 : 3;
+		return (configuration == null) ? 1 : hasConfigurationTagOption ? 3 : 2;
 	}
 
 	@Override
