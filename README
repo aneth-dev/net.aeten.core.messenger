@@ -1,31 +1,30 @@
-net.aeten.core is an useful java tools provider
+net.aeten.core is a java tools provider
 
 Note:
 	This library is under MIT license (see LICENSE file).
 	API become quite stable.
 
 Current version:
-	0.0.5
+	0.0.6
 
 Provides:
 	- generic event transmitter and handler (synchronous and asynchronous)
-	- service loading based on package naming convension
+	- configurable service providers loading based on annotaions
 	- extensible messenger
 	- stream stack editor
 
 Third party dependences: 
 	- org.kohsuke.args4j (currently use 2.0.12, under MIT license)
+	- net.jcip.annotations (Creative Commons Attribution License)
 
 Details of modules:
-	- net.aeten.core
-	- net.aeten.core.args4j           -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.parsing
-	- net.aeten.core.messenger        -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.args4j, net.aeten.core.service
-	- net.aeten.core.messenger.stream -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.args4j, net.aeten.core.messenger, net.aeten.core.stream
-	- net.aeten.core.parsing          -> net.aeten.core
-	- net.aeten.core.service          -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.args4j, net.aeten.core.parsing
-	- net.aeten.core.stream           -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.args4j
-
-Helper modules:
-	- net.aeten.core.service.eclipse  -> org.eclipse.core.runtime (this module is intended to be fragment of net.aeten.core.service for eclipse plateform use)
+	- net.aeten.core                    -> requires net.jcip.annotations
+	- net.aeten.core.alert              -> requires net.aeten.core (alert event management)
+	- net.aeten.core.args4j             -> requires org.kohsuke.args4j, net.aeten.core
+	- net.aeten.core.messenger          -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.args4j
+	- net.aeten.core.messenger.stream   -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.args4j, net.aeten.core.messenger, net.aeten.core.stream
+	- net.aeten.core.parsing.properties -> net.aeten.core
+	- net.aeten.core.parsing.aeml       -> net.aeten.core (markup language in developement based on YAML but not based on keys)
+	- net.aeten.core.stream             -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.args4j
 
 See test directory for samples

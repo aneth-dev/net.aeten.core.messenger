@@ -1,7 +1,7 @@
 identifier: net.aeten.core.test.messenger.client.receiver
 message decoder: net.aeten.core.messenger.test.MessageCodec
 udp ip configuration: 
-  destination inet socket address: 230.2.15.2:5200
+  destination inet socket address: 127.0.0.1:5201
   max packet size: 64
   bind: true
   reuse: true

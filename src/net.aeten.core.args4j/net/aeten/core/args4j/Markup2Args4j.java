@@ -46,7 +46,7 @@ public class Markup2Args4j implements MarkupConverter<String> {
 										configuration.append(" \"");
 										break;
 									default:
-										configuration.append("\\\"");
+										configuration.append(" \\\"");
 										break;
 								}
 								break;

@@ -5,7 +5,7 @@ configuration :
   identifier: net.aeten.core.test.messenger.server.receiver
   input stream: net.aeten.core.stream.UdpIpInputStream
   configuration :
-    destination inet socket address: 230.2.15.2:5200
+    destination inet socket address: 127.0.0.1:5200
     max packet size: 64
     bind: true
     reuse: true
@@ -15,8 +15,8 @@ configuration :
   identifier: net.aeten.core.test.messenger.server.sender
   output stream: net.aeten.core.stream.UdpIpOutputStream
   configuration: 
-    destination inet socket address: 230.2.15.2:5200
+    destination inet socket address: 127.0.0.1:5201
     max packet size: 64
-    bind: true
+    bind: false
     reuse: true
   over: net.aeten.core.messenger.test.TestObjectOutputStream
