@@ -3,9 +3,10 @@ package net.aeten.core.messenger.args4j;
 import java.util.NoSuchElementException;
 
 import net.aeten.core.Configurable;
-import net.aeten.core.messenger.Receiver;
+import net.aeten.core.args4j.ValueType;
 import net.aeten.core.messenger.Sender;
-import net.aeten.core.service.Service;
+import net.aeten.core.spi.Provider;
+import net.aeten.core.spi.Service;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -14,6 +15,8 @@ import org.kohsuke.args4j.spi.OptionHandler;
 import org.kohsuke.args4j.spi.Parameters;
 import org.kohsuke.args4j.spi.Setter;
 
+//@Provider(OptionHandler.class)
+@ValueType(Sender.class)
 public class SenderOptionHandler extends OptionHandler<Sender<?>> {
 	public static final String[] CONFIGURATION_OPTION_ALIASES = { "-c", "--configuration" };
 	public static final String[] CLASS_OPTION_ALIASES = { "--class" };
@@ -29,7 +32,7 @@ public class SenderOptionHandler extends OptionHandler<Sender<?>> {
 		boolean hasConfigurationTagOption = false;
 		try {
 			try {
-				setter.addValue(Service.getProvider(Sender.class, params.getParameter(0)));
+				setter.addValue((Sender<?>)Service.getProvider(Sender.class, params.getParameter(0)));
 				return 1;
 			} catch (NoSuchElementException exception) {
 				Class<Sender<?>> senderClass = null;
@@ -61,9 +64,11 @@ public class SenderOptionHandler extends OptionHandler<Sender<?>> {
 	}
 
 	private static boolean contains(String element, String[] list) {
-		for (String item : list)
-			if (element.equals(item))
+		for (String item : list) {
+			if (element.equals(item)) {
 				return true;
+			}
+		}
 		return false;
 
 	}

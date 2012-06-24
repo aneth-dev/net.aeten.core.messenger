@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.aeten.core.Configurable;
 import net.aeten.core.ConfigurationException;
 import net.aeten.core.Format;
 import net.aeten.core.args4j.CommandLineParserHelper;
@@ -22,7 +21,8 @@ import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
 import net.aeten.core.messenger.args4j.ReceiverOptionHandler;
 import net.aeten.core.messenger.args4j.SenderOptionHandler;
-import net.aeten.core.service.Provider;
+import net.aeten.core.spi.Provider;
+import net.aeten.core.spi.SpiInitializer;
 
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -33,52 +33,49 @@ import org.kohsuke.args4j.Option;
  */
 @Provider(Messenger.class)
 @Format("args")
-public class MessengerProvider<Message> implements Messenger<Message>, Configurable<String>, Handler<MessengerEventData<Message>> {
+public class MessengerProvider<Message> implements Messenger<Message>, Handler<MessengerEventData<Message>> {
 	static {
 		CmdLineParser.registerHandler(Sender.class, SenderOptionHandler.class);
 		CmdLineParser.registerHandler(Receiver.class, ReceiverOptionHandler.class);
 	}
 
 	@Option(name = "-id", aliases = "--identifier", required = true)
-	private String identifier;
+	private final String identifier;
 
-    @Option(name = "-s", aliases = "--sender", required = false)
-	private List<Sender<Message>> senderList = new ArrayList<Sender<Message>>(0);
+	@Option(name = "-s", aliases = "--sender", required = false)
+	private final List<Sender<Message>> senderList = new ArrayList<>();
 
-    @Option(name = "-r", aliases = "--receiver", required = false)
-	private List<Receiver<Message>> receiverList = new ArrayList<Receiver<Message>>(0);
+	@Option(name = "-r", aliases = "--receiver", required = false)
+	private final List<Receiver<Message>> receiverList = new ArrayList<>();
 
 	@Option(name = "-c", aliases = "--auto-connect", required = false)
-	private boolean autoConnect = false;
+	private final boolean autoConnect;
 
-	private Map<String, Sender<Message>> senderMap = new LinkedHashMap<String, Sender<Message>>();
+	private final Map<String, Sender<Message>> senderMap = new LinkedHashMap<>();
 
-	private boolean connected;
+	private volatile boolean connected;
 
 	private Transmitter<MessengerEventData<Message>> asyncSendEventTransmitter;
 	private RegisterableTransmitter<HookEvent<MessengerEvent, Hook>, MessengerEventData<Message>> hookTransmitter;
 
 	/** @deprecated Reserved to configuration building */
-	@SuppressWarnings("unchecked")
 	@Deprecated
 	public MessengerProvider() {
-		this(null, new Sender[0], new Receiver[0]);
+		this(null, new Sender[0], new Receiver[0], true);
 	}
 
-	@SuppressWarnings("unchecked")
-	public MessengerProvider(String identifier) {
-		this(identifier, new Sender[0], new Receiver[0]);
+	protected MessengerProvider(String identifier) {
+		this(identifier, new Sender[0], new Receiver[0], true);
 	}
 
-	@SuppressWarnings("unchecked")
-	public MessengerProvider(String identifier, Sender<Message> sender, Receiver<Message> receiver) {
-		this(identifier, new Sender[] { sender }, new Receiver[] { receiver });
+	protected MessengerProvider(String identifier, Sender<Message> sender, Receiver<Message> receiver) {
+		this(identifier, new Sender[] { sender }, new Receiver[] { receiver }, true);
 	}
 
-	@SuppressWarnings("unchecked")
-	public MessengerProvider(String identifier, Sender<Message>[] senderList, Receiver<Message>[] receiverList) {
+	@SpiInitializer
+	protected MessengerProvider(String identifier, Sender<Message>[] senderList, Receiver<Message>[] receiverList, boolean autoConnect) {
 		this.identifier = identifier;
-
+		this.autoConnect = autoConnect;
 		for (Sender<Message> sender : senderList) {
 			try {
 				this.addSender(sender);
@@ -95,11 +92,11 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 			}
 		}
 
-		this.hookTransmitter = TransmitterFactory.synchronous();
+		this.hookTransmitter = TransmitterFactory.synchronous(EVENTS.values());
 		if (this.identifier == null) {
 			this.asyncSendEventTransmitter = null;
 		} else {
-			this.asyncSendEventTransmitter = TransmitterFactory.asynchronous("Sender transmitter of Messenger " + this.identifier, this, EVENTS.get(MessengerEvent.SEND, Hook.PRE));
+			this.asyncSendEventTransmitter = TransmitterFactory.asynchronous("Sender transmitter of Messenger " + this.identifier, EVENTS.values(), this, EVENTS.get(MessengerEvent.SEND, Hook.PRE));
 		}
 	}
 
@@ -119,26 +116,26 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 	}
 
 	@Override
-    public void transmit(Message message, String sender, String contact) {
+	public void transmit(Message message, String sender, String contact) {
 		this.transmit(message, sender, contact, Priority.MEDIUM);
-    }
+	}
 
 	@Override
-    public void transmit(Message message, String sender, String contact, String service) {
+	public void transmit(Message message, String sender, String contact, String service) {
 		this.transmit(message, sender, contact, service, Priority.MEDIUM);
-    }
+	}
 
 	@Override
-    public void transmit(Message message, String sender, String contact, Priority priority) {
+	public void transmit(Message message, String sender, String contact, Priority priority) {
 		this.transmit(message, sender, contact, null, priority);
-    }
+	}
 
 	@Override
-    public void transmit(Message message, String sender, String contact, String service, Priority priority) {
+	public void transmit(Message message, String sender, String contact, String service, Priority priority) {
 		MessengerEventData<Message> data = new MessengerEventData<Message>(this, contact, service, MessengerEvent.SEND, Hook.PRE, message, priority);
 		data.setSubcontractor(sender);
 		this.asyncSendEventTransmitter.transmit(data);
-    }
+	}
 
 	@Override
 	public String toString() {
@@ -193,11 +190,6 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 	}
 
 	@Override
-	public boolean isConnected() {
-		return this.connected;
-	}
-
-	@Override
 	public void addEventHandler(Handler<MessengerEventData<Message>> eventHandler, HookEvent<MessengerEvent, Hook>... eventList) {
 		this.hookTransmitter.addEventHandler(eventHandler, eventList);
 	}
@@ -207,17 +199,11 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 		this.hookTransmitter.removeEventHandler(eventHandler, eventList);
 	}
 
-	@Override
-	public String getIdentifier() {
-		return identifier;
-	}
-
 	@SuppressWarnings("unchecked")
-	@Override
 	public synchronized void configure(String configuration) throws ConfigurationException {
 		CommandLineParserHelper.configure(this, configuration);
 		if (this.asyncSendEventTransmitter == null) {
-			this.asyncSendEventTransmitter = TransmitterFactory.asynchronous("Sender transmitter of Messenger " + this.identifier, this, EVENTS.get(MessengerEvent.SEND, Hook.PRE));
+			this.asyncSendEventTransmitter = TransmitterFactory.asynchronous("Sender transmitter of Messenger " + this.identifier, EVENTS.values(), this, EVENTS.get(MessengerEvent.SEND, Hook.PRE));
 		}
 		for (Sender<Message> sender : this.senderList) {
 			this.senderMap.put(sender.getIdentifier(), sender);
@@ -306,6 +292,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 
 	@Override
 	public void handleEvent(MessengerEventData<Message> data) {
+
 		if (this.connected) {
 			Sender<Message> sender = MessengerProvider.this.senderMap.get(data.getSubcontractor());
 			// Data event is already MessengerEvent.SEND, Hook.PRE
@@ -314,7 +301,6 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 			if (data.doIt()) {
 				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.START));
 
-				
 				try {
 					sender.send(data);
 				} catch (IOException exception) {
@@ -332,6 +318,16 @@ public class MessengerProvider<Message> implements Messenger<Message>, Configura
 				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.POST));
 			}
 		}
+	}
+
+	@Override
+	public boolean isConnected() {
+		return this.connected;
+	}
+
+	@Override
+	public String getIdentifier() {
+		return this.identifier;
 	}
 
 }

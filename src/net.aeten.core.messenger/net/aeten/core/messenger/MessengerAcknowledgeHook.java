@@ -3,7 +3,6 @@ package net.aeten.core.messenger;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.aeten.core.Configurable;
 import net.aeten.core.ConfigurationException;
 import net.aeten.core.Identifiable;
 import net.aeten.core.event.Handler;
@@ -19,14 +18,9 @@ import org.kohsuke.args4j.Option;
  * 
  * @author Thomas Pérennou
  */
-public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
-		implements
-		Handler<MessengerEventData<Message>>,
-		HandlerRegister<MessengerAcknowledgeEvent, MessengerAcknowledgeEventData<Message, Acknowledge>>,
-		Configurable<String>, Identifiable {
+public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>> implements Handler<MessengerEventData<Message>>, HandlerRegister<MessengerAcknowledgeEvent, MessengerAcknowledgeEventData<Message, Acknowledge>>, Identifiable {
 
-	private static final Map<String, Object> MUTEX_MAP = new HashMap<String, Object>(
-			1);
+	private static final Map<String, Object> MUTEX_MAP = new HashMap<>(1);
 
 	@Option(name = "-id", aliases = "--identifier", required = true)
 	private String identifier;
@@ -40,8 +34,11 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 	private MessengerAcknowledgeProtocol<Message, Acknowledge> acknowledgeProtocol = null;
 	private Object acknowledgeMutex = new Object();
 
-	MessengerAcknowledgeEventData<Message, Acknowledge> currentEventData = null;
+	private volatile MessengerAcknowledgeEventData<Message, Acknowledge> currentEventData = null;
 
+	// private RegisterableTransmitter<MessengerAcknowledgeEvent,
+	// MessengerAcknowledgeEventData<Message, Acknowledge>> eventTransmitter =
+	// null;
 	private TransmitterService<MessengerAcknowledgeEvent, MessengerAcknowledgeEventData<Message, Acknowledge>> eventTransmitter = null;
 
 	public MessengerAcknowledgeHook(String identifier) {
@@ -52,16 +49,12 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 		this(null, null, null);
 	}
 
-	public MessengerAcknowledgeHook(
-			String identifier,
-			String description,
-			MessengerAcknowledgeProtocol<Message, Acknowledge> acknowledgeProtocol) {
-		this.identifier = (identifier == null) ? this.getClass().getName()
-				: identifier;
+	public MessengerAcknowledgeHook(String identifier, String description, MessengerAcknowledgeProtocol<Message, Acknowledge> acknowledgeProtocol) {
+		this.identifier = (identifier == null) ? this.getClass().getName() : identifier;
 		this.acknowledgeProtocol = acknowledgeProtocol;
-		this.eventTransmitter = TransmitterFactory
-				.asynchronous("Messenger acknowledge hook \"" + this
-						+ "\" event transmitter");
+		this.eventTransmitter = TransmitterFactory.asynchronous("Messenger acknowledge hook \"" + this + "\" event transmitter", MessengerAcknowledgeEvent.values());
+		// this.eventTransmitter =
+		// TransmitterFactory.synchronous(MessengerAcknowledgeEvent.values());
 	}
 
 	@Override
@@ -79,10 +72,8 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 	}
 
 	private void sendHook(MessengerEventData<Message> eventData) {
-		this.currentEventData = new MessengerAcknowledgeEventData<Message, Acknowledge>(
-				eventData.getSource(), null, eventData.getMessage(), null, null);
-		long timeOut = this.acknowledgeProtocol
-				.getAcknowledgedTimeout(eventData.getMessage());
+		this.currentEventData = new MessengerAcknowledgeEventData<Message, Acknowledge>(eventData.getSource(), null, eventData.getMessage(), null, null);
+		long timeOut = this.acknowledgeProtocol.getAcknowledgedTimeout(eventData.getMessage());
 		if (timeOut == 0) {
 			return;
 		}
@@ -96,38 +87,24 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 			if (this.currentEventData.getRecievedMessage() == null) {
 				notificationEvent = MessengerAcknowledgeEvent.UNACKNOWLEDGED;
 			} else {
-				final boolean success = (this.currentEventData.getAcknowledge() == null) ? false
-						: this.acknowledgeProtocol
-								.isSuccess(this.currentEventData
-										.getAcknowledge());
-				notificationEvent = success ? MessengerAcknowledgeEvent.ACKNOWLEDGED
-						: MessengerAcknowledgeEvent.UNACKNOWLEDGED;
+				final boolean success = (this.currentEventData.getAcknowledge() == null) ? false : this.acknowledgeProtocol.isSuccess(this.currentEventData.getAcknowledge());
+				notificationEvent = success ? MessengerAcknowledgeEvent.ACKNOWLEDGED : MessengerAcknowledgeEvent.UNACKNOWLEDGED;
 			}
 
-			this.eventTransmitter
-					.transmit(new MessengerAcknowledgeEventData<Message, Acknowledge>(
-							this.currentEventData.getSource(),
-							notificationEvent, this.currentEventData
-									.getSentMessage(), this.currentEventData
-									.getRecievedMessage(),
-							this.currentEventData.getAcknowledge()));
+			this.eventTransmitter.transmit(new MessengerAcknowledgeEventData<Message, Acknowledge>(this.currentEventData.getSource(), notificationEvent, this.currentEventData.getSentMessage(), this.currentEventData.getRecievedMessage(), this.currentEventData.getAcknowledge()));
 
 		} catch (Exception exception) {
-			Logger.log(this.currentEventData.getSource(),
-							LogLevel.ERROR, exception);
+			Logger.log(this.currentEventData.getSource(), LogLevel.ERROR, exception);
 		}
 	}
 
 	private void startReception(MessengerEventData<Message> eventData) {
 		if (this.currentEventData != null) {
 			try {
-				final Acknowledge acknowledge = this.acknowledgeProtocol
-						.getAcknowledge(this.currentEventData.getSentMessage(),
-								eventData.getMessage());
+				final Acknowledge acknowledge = this.acknowledgeProtocol.getAcknowledge(this.currentEventData.getSentMessage(), eventData.getMessage());
 
 				if (acknowledge != null) {
-					this.currentEventData.setRecievedMessage(eventData
-							.getMessage());
+					this.currentEventData.setRecievedMessage(eventData.getMessage());
 					this.currentEventData.setAcknowledge(acknowledge);
 					synchronized (this.acknowledgeMutex) {
 						this.acknowledgeMutex.notifyAll();
@@ -135,14 +112,12 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 				}
 
 			} catch (Exception exception) {
-				Logger.log(this.currentEventData.getSource(),
-								LogLevel.ERROR, exception);
+				Logger.log(this.currentEventData.getSource(), LogLevel.ERROR, exception);
 			}
 		}
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override
 	public void configure(String configuration) throws ConfigurationException {
 		try {
 			this.acknowledgeMutex = MUTEX_MAP.get(this.getIdentifier());
@@ -152,15 +127,13 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 			}
 
 			this.acknowledgeProtocol = acknowledgeProtocolClass.newInstance();
-			if ((this.acknowledgeProtocolConfiguration != null)
-					&& this.acknowledgeProtocol instanceof Configurable) {
-				((Configurable<String>) this.acknowledgeProtocol)
-						.configure(this.acknowledgeProtocolConfiguration);
-			}
+//			if ((this.acknowledgeProtocolConfiguration != null) && (this.acknowledgeProtocol instanceof Configurable)) {
+//				((Configurable<String>) this.acknowledgeProtocol).configure(this.acknowledgeProtocolConfiguration);
+//			}
 
-			this.eventTransmitter = TransmitterFactory
-					.asynchronous("Messenger acknowledge hook \""
-							+ this.getIdentifier() + "\" event transmitter");
+			this.eventTransmitter = TransmitterFactory.asynchronous("Messenger acknowledge hook \"" + this.getIdentifier() + "\" event transmitter", MessengerAcknowledgeEvent.values());
+			// this.eventTransmitter =
+			// TransmitterFactory.synchronous(MessengerAcknowledgeEvent.values());
 		} catch (Exception exception) {
 			throw new ConfigurationException(configuration, exception);
 		}
@@ -177,17 +150,13 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>>
 	}
 
 	@Override
-	public void addEventHandler(
-			Handler<MessengerAcknowledgeEventData<Message, Acknowledge>> eventHandler,
-			MessengerAcknowledgeEvent... eventList) {
+	public void addEventHandler(Handler<MessengerAcknowledgeEventData<Message, Acknowledge>> eventHandler, MessengerAcknowledgeEvent... eventList) {
 		this.eventTransmitter.addEventHandler(eventHandler, eventList);
 
 	}
 
 	@Override
-	public void removeEventHandler(
-			Handler<MessengerAcknowledgeEventData<Message, Acknowledge>> eventHandler,
-			MessengerAcknowledgeEvent... eventList) {
+	public void removeEventHandler(Handler<MessengerAcknowledgeEventData<Message, Acknowledge>> eventHandler, MessengerAcknowledgeEvent... eventList) {
 		this.eventTransmitter.removeEventHandler(eventHandler, eventList);
 	}
 

@@ -17,21 +17,16 @@ import net.aeten.core.messenger.MessengerEvent;
 import net.aeten.core.messenger.MessengerEventData;
 import net.aeten.core.messenger.MessengerProvider;
 import net.aeten.core.messenger.net.UdpIpReceiver;
-import net.aeten.core.service.Configuration;
-import net.aeten.core.service.Configurations;
-import net.aeten.core.service.Service;
+import net.aeten.core.spi.Configuration;
+import net.aeten.core.spi.Configurations;
+import net.aeten.core.spi.Service;
 
-
-@Configurations({
-	@Configuration(name = "server.aeml", provider = MessengerProvider.class),
-//	@Configuration(name = "client.properties", provider = MessengerProvider.class, parser = "net.aeten.core.parsing.aeml.AEmlParser", converter = "net.aeten.core.args4j.Markup2Args4j"),
-	@Configuration(name = "client.properties", provider = MessengerProvider.class),
-	@Configuration(name = "client.receiver.aeml", provider = UdpIpReceiver.class)})
+@Configurations({ @Configuration(name = "server.aeml", provider = MessengerProvider.class), @Configuration(name = "client.properties", provider = MessengerProvider.class, parser = "net.aeten.core.parsing.properties.PropertiesParser", converter = "net.aeten.core.args4j.Markup2Args4j"), @Configuration(name = "client.receiver.aeml", provider = UdpIpReceiver.class) })
 public class Application {
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws Exception {
-		   Logger.addEventHandler(new Handler<LoggingData>() {
+		Logger.addEventHandler(new Handler<LoggingData>() {
 			@Override
 			public void handleEvent(LoggingData data) {
 				/*
@@ -39,11 +34,13 @@ public class Application {
 				 * net.aeten.core.messenger.Messenger exceptions can be caught
 				 * by this way
 				 */
-				Date date = Calendar.getInstance().getTime();
+				synchronized (this) {
+					Date date = Calendar.getInstance().getTime();
 
-				System.out.println(date + String.format(" %3dms %5s  source={%s} %s%s", date.getTime() % 1000, data.getEvent(),data.getSource(), data.getMessage(), (data.getThrowable() == null) ? "" : " : "));
-				if (data.getThrowable() != null) {
-					data.getThrowable().printStackTrace(System.out);
+					System.out.println(date + String.format(" %3dms %5s  source={%s} %s%s", date.getTime() % 1000, data.getEvent(), data.getSource(), data.getMessage(), (data.getThrowable() == null) ? "" : ": "));
+					if (data.getThrowable() != null) {
+						data.getThrowable().printStackTrace(System.out);
+					}
 				}
 			}
 		}, LogLevel.values());
@@ -73,7 +70,6 @@ public class Application {
 		serverAcknowledgeHook.addEventHandler(acknowledgeEventHandler, MessengerAcknowledgeEvent.values());
 
 		server.addEventHandler(new Handler<MessengerEventData<AbstractMessage>>() {
-
 			@Override
 			public void handleEvent(MessengerEventData<AbstractMessage> data) {
 				if (data.getMessage() instanceof AcknowledgeMessage) {
@@ -84,22 +80,28 @@ public class Application {
 					return;
 				}
 				switch (data.getMessage().getAcknowledge()) {
-					case SOLLICITED_NEED_ACKNOWLEDGE:
-					case UNSOLLICITED_NEED_ACKNOWLEDGE:
-						if (data.getMessage() instanceof Message) {
-							Message recievedMessage = (Message) data.getMessage();
-							if ((recievedMessage.getValue() < Message.MIN_VALUE) || (recievedMessage.getValue() > Message.MAX_VALUE)) {
-								data.getSource().transmit(new AcknowledgeMessage(Acknowledge.INVALID_DATA), "net.aeten.core.test.messenger.server.sender");
-							} else {
-								data.getSource().transmit(new AcknowledgeMessage(Acknowledge.OK), "net.aeten.core.test.messenger.server.sender");
-							}
+				case SOLLICITED_NEED_ACKNOWLEDGE:
+				case UNSOLLICITED_NEED_ACKNOWLEDGE:
+					if (data.getMessage() instanceof Message) {
+						Message recievedMessage = (Message) data.getMessage();
+						if ((recievedMessage.getValue() < Message.MIN_VALUE) || (recievedMessage.getValue() > Message.MAX_VALUE)) {
+							data.getSource().transmit(new AcknowledgeMessage(Acknowledge.INVALID_DATA), "net.aeten.core.test.messenger.server.sender");
+						} else {
+							data.getSource().transmit(new AcknowledgeMessage(Acknowledge.OK), "net.aeten.core.test.messenger.server.sender");
 						}
-						break;
-					default:
-						break;
+					}
+					break;
+				default:
+					break;
 				}
 			}
 		}, Messenger.EVENTS.get(MessengerEvent.RECEIVE, Hook.END));
+		server.addEventHandler(new Handler<MessengerEventData<AbstractMessage>>() {
+			@Override
+			public void handleEvent(MessengerEventData<AbstractMessage> data) {
+				Logger.log(data.getSource(), LogLevel.INFO, "event={" + data.getEvent() + "}; data={" + data.getMessage() + "}");
+			}
+		}, Messenger.EVENTS.get(MessengerEvent.RECEIVE, Hook.END), Messenger.EVENTS.get(MessengerEvent.SEND, Hook.END));
 
 		client.addEventHandler(new Handler<MessengerEventData<AbstractMessage>>() {
 
@@ -108,43 +110,48 @@ public class Application {
 				if ((data.getEvent().getSourceEvent() == MessengerEvent.RECEIVE) && (!(data.getMessage() instanceof AcknowledgeMessage))) {
 					return;
 				}
-				Logger.log(data.getSource(), LogLevel.INFO, "event={" + data.getEvent() + "}; eventData={" + data.getMessage() + "}");
+				Logger.log(data.getSource(), LogLevel.INFO, "event={" + data.getEvent() + "}; data={" + data.getMessage() + "}");
 			}
 		}, Messenger.EVENTS.get(MessengerEvent.SEND, Hook.END), Messenger.EVENTS.get(MessengerEvent.RECEIVE, Hook.END));
 
 		server.connect();
 		client.connect();
-		
-		Message valid = new Message();
-		valid.setAcknowledge(Acknowledge.UNSOLLICITED_NEED_ACKNOWLEDGE);
-		valid.setValue(4);
 
 		Message invalidData = new Message();
 		invalidData.setAcknowledge(Acknowledge.UNSOLLICITED_NEED_ACKNOWLEDGE);
 		invalidData.setValue(10);
-		
+
 		Message highData = new Message();
 		highData.setAcknowledge(Acknowledge.UNSOLLICITED_NEED_ACKNOWLEDGE);
 		highData.setValue(3);
 
 		Message invalidMessage = new Message();
 
-//		System.out.println(client.transmit(valid, "net.aeten.core.test.messenger.client.sender").get());
-//		System.out.println(client.transmit(invalidData, "net.aeten.core.test.messenger.client.sender").get());
-//		System.out.println(client.transmit(invalidMessage, "net.aeten.core.test.messenger.client.sender").get());
-		client.transmit(valid, "net.aeten.core.test.messenger.client.sender");
-		client.transmit(valid, "net.aeten.core.test.messenger.client.sender", Priority.LOW);
-		client.transmit(valid, "net.aeten.core.test.messenger.client.sender", Priority.LOW);
-		client.transmit(valid, "net.aeten.core.test.messenger.client.sender", Priority.LOW);
-		client.transmit(valid, "net.aeten.core.test.messenger.client.sender", Priority.LOW);
-		client.transmit(valid, "net.aeten.core.test.messenger.client.sender", Priority.LOW);
-		client.transmit(valid, "net.aeten.core.test.messenger.client.sender", Priority.LOW);
-		client.transmit(valid, "net.aeten.core.test.messenger.client.sender", Priority.LOW);
+		// System.out.println(client.transmit(valid,
+		// "net.aeten.core.test.messenger.client.sender").get());
+		// System.out.println(client.transmit(invalidData,
+		// "net.aeten.core.test.messenger.client.sender").get());
+		// System.out.println(client.transmit(invalidMessage,
+		// "net.aeten.core.test.messenger.client.sender").get());
+		client.transmit(valid(), "net.aeten.core.test.messenger.client.sender");
+		client.transmit(valid(), "net.aeten.core.test.messenger.client.sender", Priority.LOW);
+		client.transmit(valid(), "net.aeten.core.test.messenger.client.sender", Priority.LOW);
+		client.transmit(valid(), "net.aeten.core.test.messenger.client.sender", Priority.LOW);
+		client.transmit(valid(), "net.aeten.core.test.messenger.client.sender", Priority.LOW);
+		client.transmit(valid(), "net.aeten.core.test.messenger.client.sender", Priority.LOW);
+		client.transmit(valid(), "net.aeten.core.test.messenger.client.sender", Priority.LOW);
+		client.transmit(valid(), "net.aeten.core.test.messenger.client.sender", Priority.LOW);
 		client.transmit(highData, "net.aeten.core.test.messenger.client.sender", Priority.HIGH);
 		client.transmit(invalidData, "net.aeten.core.test.messenger.client.sender", Priority.LOW);
 		client.transmit(invalidMessage, "net.aeten.core.test.messenger.client.sender", Priority.HIGH);
 
-                Thread.currentThread().join();
+		Thread.currentThread().join();
 	}
 
+	private static Message valid() {
+		Message valid = new Message();
+		valid.setAcknowledge(Acknowledge.UNSOLLICITED_NEED_ACKNOWLEDGE);
+		valid.setValue(4);
+		return valid;
+	}
 }
