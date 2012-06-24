@@ -8,7 +8,7 @@ import net.aeten.core.parsing.MarkupConverter;
 import net.aeten.core.parsing.MarkupNode;
 import net.aeten.core.parsing.Parser;
 import net.aeten.core.parsing.ParsingData;
-import net.aeten.core.service.Provider;
+import net.aeten.core.spi.Provider;
 
 @Provider(MarkupConverter.class)
 @Format("args")

@@ -5,7 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 /**
- *
+ * 
  * @author Thomas Pérennou
  */
 public class Message extends AbstractMessage {

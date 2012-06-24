@@ -8,3 +8,7 @@ CVS
 .settings
 META-INF
 *~
+/dist/
+/.metadata/
+/build/
+/nbproject/private/

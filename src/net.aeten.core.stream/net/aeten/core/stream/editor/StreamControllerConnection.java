@@ -8,7 +8,7 @@ import java.io.PipedOutputStream;
 
 import net.aeten.core.ConfigurationException;
 import net.aeten.core.Connection;
-import net.aeten.core.Singleton;
+import net.aeten.core.Lazy;
 
 /**
  * 
@@ -18,7 +18,7 @@ public class StreamControllerConnection implements Connection {
 
 	private InputStream input;
 	private OutputStream output;
-	private StreamEditor[] editorStack;
+	private final StreamEditor[] editorStack;
 	private StreamEditorController[] controllerStack;
 	private boolean isConnected;
 
@@ -53,9 +53,9 @@ public class StreamControllerConnection implements Connection {
 		if (this.editorStack.length > 0) {
 			int index = 0;
 			try {
-			for (Singleton<? extends StreamEditor> editorFactory : configuration.getEditorStack().getStack()) {
-					this.editorStack[index++] = editorFactory.getInstance();
-			}
+				for (Lazy<? extends StreamEditor, ?> editorFactory : configuration.getEditorStack().getStack()) {
+					this.editorStack[index++] = editorFactory.instance();
+				}
 			} catch (Exception exception) {
 				throw new ConfigurationException(configuration.getName(), exception);
 			}

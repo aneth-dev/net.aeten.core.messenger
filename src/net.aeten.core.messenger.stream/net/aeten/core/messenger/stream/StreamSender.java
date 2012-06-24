@@ -8,7 +8,7 @@ import net.aeten.core.ConfigurationException;
 import net.aeten.core.Format;
 import net.aeten.core.messenger.MessengerEventData;
 import net.aeten.core.messenger.Sender;
-import net.aeten.core.service.Provider;
+import net.aeten.core.spi.Provider;
 import net.aeten.core.stream.args4j.OutputStreamOptionHandler;
 
 import org.kohsuke.args4j.CmdLineParser;

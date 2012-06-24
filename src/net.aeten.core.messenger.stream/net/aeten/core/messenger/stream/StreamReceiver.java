@@ -10,7 +10,7 @@ import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
 import net.aeten.core.messenger.MessengerEventData;
 import net.aeten.core.messenger.Receiver;
-import net.aeten.core.service.Provider;
+import net.aeten.core.spi.Provider;
 import net.aeten.core.stream.args4j.InputStreamOptionHandler;
 
 import org.kohsuke.args4j.CmdLineParser;

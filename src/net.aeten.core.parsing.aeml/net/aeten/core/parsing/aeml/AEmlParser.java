@@ -14,11 +14,12 @@ import net.aeten.core.Format;
 import net.aeten.core.event.Handler;
 import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
+import net.aeten.core.parsing.AbstractParser;
 import net.aeten.core.parsing.MarkupNode;
 import net.aeten.core.parsing.Parser;
 import net.aeten.core.parsing.ParsingData;
 import net.aeten.core.parsing.ParsingEvent;
-import net.aeten.core.service.Provider;
+import net.aeten.core.spi.Provider;
 
 /**
  * 
@@ -26,16 +27,7 @@ import net.aeten.core.service.Provider;
  */
 @Provider(Parser.class)
 @Format("aeml")
-public class AEmlParser implements Parser<MarkupNode> {
-	private class Tag {
-		protected final Tag parent;
-		protected final String name;
-
-		public Tag(Tag parent, String name) {
-			this.parent = parent;
-			this.name = name;
-		}
-	}
+public class AEmlParser extends AbstractParser<MarkupNode> {
 
 	public void parse(Reader reader, Handler<ParsingData<MarkupNode>> handler) {
 		BufferedReader bufferedReader = new BufferedReader(reader);
@@ -190,13 +182,5 @@ public class AEmlParser implements Parser<MarkupNode> {
 				this.print(text + '\n');
 			}
 		});
-	}
-
-	public String getIdentifier() {
-		return AEmlParser.class.getName();
-	}
-
-	private void fireEvent(Handler<ParsingData<MarkupNode>> handler, ParsingEvent event, MarkupNode nodeType, String value, Tag parent) {
-		handler.handleEvent(new ParsingData<MarkupNode>(this, event, nodeType, value, (parent == null) ? null : parent.name));
 	}
 }

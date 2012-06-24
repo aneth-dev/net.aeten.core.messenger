@@ -1,20 +1,19 @@
 package net.aeten.core.stream.editor;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
-import net.aeten.core.Singleton;
+import net.aeten.core.Lazy;
 
 /**
- *
+ * 
  * @author Thomas Pérennou
  */
 public class StreamEditorStack {
-	
-	private final List<Singleton<StreamEditor>> stack = new ArrayList<Singleton<StreamEditor>>();
-	
-	public List<Singleton<StreamEditor>> getStack() {
+
+	private final List<Lazy<StreamEditor, ?>> stack = new ArrayList<Lazy<StreamEditor, ?>>();
+
+	public List<Lazy<StreamEditor, ?>> getStack() {
 		return this.stack;
-	}	
+	}
 }

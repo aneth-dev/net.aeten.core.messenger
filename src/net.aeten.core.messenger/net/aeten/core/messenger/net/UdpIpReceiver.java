@@ -7,14 +7,14 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import net.aeten.core.Format;
-import net.aeten.core.Singleton;
+import net.aeten.core.Lazy;
 import net.aeten.core.args4j.UdpIpParameters;
 import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
 import net.aeten.core.messenger.MessageDecoder;
 import net.aeten.core.messenger.MessengerEventData;
 import net.aeten.core.messenger.Receiver;
-import net.aeten.core.service.Provider;
+import net.aeten.core.spi.Provider;
 
 import org.kohsuke.args4j.Option;
 
@@ -23,7 +23,7 @@ import org.kohsuke.args4j.Option;
 public class UdpIpReceiver<Message> extends Receiver.Helper<Message> {
 
 	@Option(name = "-d", aliases = "--message-decoder", required = true)
-	private Singleton<MessageDecoder<Message>> messageBuilderFactory;
+	private Lazy<MessageDecoder<Message>, ?> messageBuilderFactory;
 	@Option(name = "-udpip", aliases = "--udp-ip-configuration", required = true)
 	private String udpIpConfiguration;
 
@@ -34,7 +34,8 @@ public class UdpIpReceiver<Message> extends Receiver.Helper<Message> {
 
 	/** @deprecated Reserved to configuration building */
 	@Deprecated
-    public UdpIpReceiver() {}
+	public UdpIpReceiver() {
+	}
 
 	public UdpIpReceiver(String identifier, MessageDecoder<Message> messageBuilder, UdpIpParameters parameters) {
 		super(identifier);
@@ -66,7 +67,7 @@ public class UdpIpReceiver<Message> extends Receiver.Helper<Message> {
 				this.socket.bind(this.parameters.getDestinationInetSocketAddress());
 			}
 			if (this.messageBuilderFactory != null) {
-				this.messageBuilder = this.messageBuilderFactory.getInstance();
+				this.messageBuilder = this.messageBuilderFactory.instance();
 				this.messageBuilderFactory = null;
 			}
 			this.packet = new DatagramPacket(new byte[parameters.getMaxPacketSize()], parameters.getMaxPacketSize());

@@ -6,7 +6,7 @@ import java.io.OutputStream;
 import net.aeten.core.Configurable;
 import net.aeten.core.ConfigurationException;
 import net.aeten.core.Factory;
-import net.aeten.core.Singleton;
+import net.aeten.core.Lazy;
 import net.aeten.core.args4j.CommandLineParserHelper;
 import net.aeten.core.stream.args4j.InputStreamOptionHandler;
 import net.aeten.core.stream.args4j.OutputStreamOptionHandler;
@@ -46,36 +46,43 @@ public class StreamControllerConfiguration {
 		this.isAutoConnect = isAutoConnect;
 		try {
 			if ((inputStreamConfiguration != null) && (inputStreamClass.isAssignableFrom(Configurable.class))) {
-				this.inputStream = new Singleton<InputStream>(new Factory<InputStream>() {
+				this.inputStream = Lazy.build(new Factory<InputStream, Void>() {
 					@SuppressWarnings("unchecked")
 					@Override
-					public <Y extends InputStream> InputStream create() throws Exception {
-						InputStream instance = inputStreamClass.newInstance();
-						((Configurable<String>) instance).configure(inputStreamConfiguration);
-						return instance;
+					public InputStream create(Void context) {
+						try {
+							InputStream instance = inputStreamClass.newInstance();
+							((Configurable<String>) instance).configure(inputStreamConfiguration);
+							return instance;
+						} catch (Exception exception) {
+							throw new Error(exception);
+						}
 					}
-
-				}).getInstance();
+				}).instance();
 			} else {
-				this.inputStream = new Singleton<InputStream>(inputStreamClass).getInstance();
+				this.inputStream = Lazy.build(inputStreamClass).instance();
 			}
 		} catch (Exception exception) {
 			throw new ConfigurationException(inputStreamConfiguration, exception);
 		}
 		try {
 			if ((outputStreamConfiguration != null) && (outputStreamClass.isAssignableFrom(Configurable.class))) {
-				this.outputStream = new Singleton<OutputStream>(new Factory<OutputStream>() {
+				this.outputStream = Lazy.build(new Factory<OutputStream, Void>() {
 					@SuppressWarnings("unchecked")
 					@Override
-					public <Y extends OutputStream> OutputStream create() throws Exception {
-						OutputStream instance = outputStreamClass.newInstance();
-						((Configurable<String>) instance).configure(outputStreamConfiguration);
-						return instance;
+					public OutputStream create(Void context) {
+						try {
+							OutputStream instance = outputStreamClass.newInstance();
+							((Configurable<String>) instance).configure(outputStreamConfiguration);
+							return instance;
+						} catch (Exception exception) {
+							throw new Error(exception);
+						}
 					}
 
-				}).getInstance();
+				}).instance();
 			} else {
-				this.outputStream = new Singleton<OutputStream>(outputStreamClass).getInstance();
+				this.outputStream = Lazy.build(outputStreamClass).instance();
 			}
 		} catch (Exception exception) {
 			throw new ConfigurationException(outputStreamConfiguration, exception);

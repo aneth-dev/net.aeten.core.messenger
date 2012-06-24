@@ -9,15 +9,15 @@ import java.net.SocketException;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.aeten.core.Format;
-import net.aeten.core.Singleton;
+import net.aeten.core.Lazy;
 import net.aeten.core.args4j.UdpIpParameters;
 import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
 import net.aeten.core.messenger.MessageEncoder;
+import net.aeten.core.messenger.MessageEncoder.EncodingException;
 import net.aeten.core.messenger.MessengerEventData;
 import net.aeten.core.messenger.Sender;
-import net.aeten.core.messenger.MessageEncoder.EncodingException;
-import net.aeten.core.service.Provider;
+import net.aeten.core.spi.Provider;
 
 import org.kohsuke.args4j.Option;
 
@@ -25,18 +25,20 @@ import org.kohsuke.args4j.Option;
 @Format("args")
 public class UdpIpSender<Message> extends Sender.Helper<Message> {
 	@Option(name = "-e", aliases = "--message-encoder", required = true)
-	private Singleton<MessageEncoder<Message>> messageEncoderFactory;
+	private Lazy<MessageEncoder<Message>, ?> messageEncoderFactory;
 	@Option(name = "-udpip", aliases = "--udp-ip-configuration", required = true)
 	private String udpIpConfiguration;
 
-	private static ConcurrentHashMap<String, InetAddress> CACHE = new ConcurrentHashMap<String, InetAddress>();
+	private static ConcurrentHashMap<String, InetAddress> CACHE = new ConcurrentHashMap<>();
 
 	private MessageEncoder<Message> messageEncoder;
 	private UdpIpParameters parameters;
 	private DatagramSocket socket;
 
 	/** @deprecated Reserved to configuration building */
-	public UdpIpSender() {}
+	@Deprecated
+	public UdpIpSender() {
+	}
 
 	public UdpIpSender(String identifier, MessageEncoder<Message> messageEncoder, UdpIpParameters parameters) {
 		super(identifier);
@@ -59,7 +61,7 @@ public class UdpIpSender<Message> extends Sender.Helper<Message> {
 		try {
 			this.parameters = new UdpIpParameters(this.udpIpConfiguration);
 			this.socket = this.parameters.getSocket();
-			this.messageEncoder = this.messageEncoderFactory.getInstance();
+			this.messageEncoder = this.messageEncoderFactory.instance();
 		} catch (Exception exception) {
 			throw new IOException("Configuration: " + configuration, exception);
 		}
@@ -92,7 +94,7 @@ public class UdpIpSender<Message> extends Sender.Helper<Message> {
 			data.setContact(inetAddress.getHostAddress());
 			data.setService("" + port);
 		}
-		
+
 		try {
 			byte[] buffer = this.messageEncoder.encode(message);
 			DatagramPacket packet = new DatagramPacket(buffer, 0, buffer.length, inetAddress, port);

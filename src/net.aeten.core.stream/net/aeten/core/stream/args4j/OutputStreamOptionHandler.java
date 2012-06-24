@@ -3,6 +3,8 @@ package net.aeten.core.stream.args4j;
 import java.io.OutputStream;
 
 import net.aeten.core.Configurable;
+import net.aeten.core.args4j.ValueType;
+import net.aeten.core.spi.Provider;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -16,13 +18,15 @@ import org.kohsuke.args4j.spi.Setter;
  * 
  * @author Thomas Pérennou
  */
+//@Provider(OptionHandler.class)
+@ValueType(OutputStream.class)
 public class OutputStreamOptionHandler extends OptionHandler<OutputStream> {
 
 	public static final String OUTPUT_STREAM_OPTION_NAME = "-o";
 	public static final String[] OUTPUT_STREAM_OPTION_ALIASES = { "--over" };
 	public static final String CONFIGURATION_OPTION_NAME = "-c";
 	public static final String[] CONFIGURATION_OPTION_ALIASES = { "--configuration" };
-
+	
 	public OutputStreamOptionHandler(CmdLineParser parser, OptionDef option, Setter<OutputStream> setter) {
 		super(parser, option, setter);
 	}
@@ -95,9 +99,11 @@ public class OutputStreamOptionHandler extends OptionHandler<OutputStream> {
 	}
 
 	private static boolean contains(String element, String[] list) {
-		for (String item : list)
-			if (element.equals(item))
+		for (String item : list) {
+			if (element.equals(item)) {
 				return true;
+			}
+		}
 		return false;
 
 	}

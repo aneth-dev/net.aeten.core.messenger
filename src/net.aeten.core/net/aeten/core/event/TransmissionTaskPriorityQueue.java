@@ -14,13 +14,19 @@ public class TransmissionTaskPriorityQueue extends AbstractQueue<Runnable> imple
 	private final BlockingQueue<TransmissionTask<?>>[] queues;
 	private final ReentrantLock lock = new ReentrantLock();
 	private final Condition notEmpty = lock.newCondition();
+	private final Object[] priorityArray;
 	private boolean empty = true;
 
-	@SuppressWarnings("unchecked")
 	public TransmissionTaskPriorityQueue() {
-		queues = new LinkedBlockingQueue[Priority.values().length];
-		for (Priority priority : Priority.values()) {
-			queues[priority.ordinal()] = new LinkedBlockingQueue<TransmissionTask<?>>();
+		this(Priority.values());
+	}
+
+	@SuppressWarnings("unchecked")
+	public <P> TransmissionTaskPriorityQueue(P[] priorityArray) {
+		this.priorityArray = priorityArray.clone();
+		queues = new LinkedBlockingQueue[priorityArray.length];
+		for (int i = 0; i < this.priorityArray.length; i++) {
+			queues[i] = new LinkedBlockingQueue<TransmissionTask<?>>();
 		}
 	}
 
@@ -32,7 +38,7 @@ public class TransmissionTaskPriorityQueue extends AbstractQueue<Runnable> imple
 			private final Iterator<TransmissionTask<?>>[] iterators;
 			private int iterator = 0;
 			{
-				iterators = new Iterator[Priority.values().length];
+				iterators = new Iterator[priorityArray.length];
 				for (Priority priority : Priority.values()) {
 					iterators[priority.ordinal()] = queues[priority.ordinal()].iterator();
 				}
@@ -70,8 +76,8 @@ public class TransmissionTaskPriorityQueue extends AbstractQueue<Runnable> imple
 	@Override
 	public int size() {
 		int size = 0;
-		for (Priority priority : Priority.values()) {
-			size += queues[priority.ordinal()].size();
+		for (int i = 0; i < priorityArray.length; i++) {
+			size += queues[i].size();
 		}
 		return size;
 	}
@@ -80,7 +86,7 @@ public class TransmissionTaskPriorityQueue extends AbstractQueue<Runnable> imple
 	public int drainTo(Collection<? super Runnable> collection) {
 		int count = 0;
 		for (Runnable task : this) {
-			//TODO remove element
+			// TODO remove element
 			collection.add(task);
 			count++;
 		}
@@ -94,7 +100,7 @@ public class TransmissionTaskPriorityQueue extends AbstractQueue<Runnable> imple
 			if ((count + 1) == maxElements) {
 				return count;
 			}
-			//TODO remove element
+			// TODO remove element
 			collection.add(task);
 			count++;
 		}
@@ -147,8 +153,8 @@ public class TransmissionTaskPriorityQueue extends AbstractQueue<Runnable> imple
 			lock.unlock();
 		}
 		Runnable task = null;
-		for (Priority priority : Priority.values()) {
-			task = queues[priority.ordinal()].poll();
+		for (int i = 0; i < priorityArray.length; i++) {
+			task = queues[i].poll();
 			if (task != null) {
 				break;
 			}
@@ -175,8 +181,8 @@ public class TransmissionTaskPriorityQueue extends AbstractQueue<Runnable> imple
 	@Override
 	public int remainingCapacity() {
 		int remainingCapacity = 0;
-		for (Priority priority : Priority.values()) {
-			remainingCapacity += queues[priority.ordinal()].remainingCapacity();
+		for (int i = 0; i < priorityArray.length; i++) {
+			remainingCapacity += queues[i].remainingCapacity();
 		}
 		return remainingCapacity;
 	}
@@ -192,8 +198,8 @@ public class TransmissionTaskPriorityQueue extends AbstractQueue<Runnable> imple
 			lock.unlock();
 		}
 		Runnable task = null;
-		for (Priority priority : Priority.values()) {
-			task = queues[priority.ordinal()].poll();
+		for (int i = 0; i < priorityArray.length; i++) {
+			task = queues[i].poll();
 			if (task != null) {
 				break;
 			}
@@ -204,8 +210,8 @@ public class TransmissionTaskPriorityQueue extends AbstractQueue<Runnable> imple
 	@Override
 	public Runnable peek() {
 		Runnable task = null;
-		for (Priority priority : Priority.values()) {
-			task = queues[priority.ordinal()].peek();
+		for (int i = 0; i < priorityArray.length; i++) {
+			task = queues[i].peek();
 			if (task != null) {
 				break;
 			}
@@ -216,8 +222,8 @@ public class TransmissionTaskPriorityQueue extends AbstractQueue<Runnable> imple
 	@Override
 	public Runnable poll() {
 		Runnable task = null;
-		for (Priority priority : Priority.values()) {
-			task = queues[priority.ordinal()].poll();
+		for (int i = 0; i < priorityArray.length; i++) {
+			task = queues[i].poll();
 			if (task != null) {
 				break;
 			}

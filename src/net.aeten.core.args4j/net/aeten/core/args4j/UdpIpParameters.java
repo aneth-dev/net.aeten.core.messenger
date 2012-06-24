@@ -37,7 +37,7 @@ public class UdpIpParameters {
 
 	/** @see {@link MulticastSocket#setTrafficClass(int)} */
 	@Option(name = "-c", aliases = { "--traffic-class" }, required = false)
-	private String trafficClassOption = "0";
+	private final String trafficClassOption = "0";
 	private int trafficClass = 0;
 
 	/** @see {@link DatagramSocket#setTimeout(int)} */
@@ -85,8 +85,9 @@ public class UdpIpParameters {
 		}
 		if (this.destinationInetSocketAddress.getAddress().isMulticastAddress()) {
 			MulticastSocket multicastSocket = new MulticastSocket((SocketAddress) null);
-			if (this.sourceInetAddress != null)
+			if (this.sourceInetAddress != null) {
 				multicastSocket.setInterface(this.sourceInetAddress);
+			}
 			multicastSocket.setReuseAddress(true);
 			if (this.bind) {
 				if (!multicastSocket.isBound()) {
@@ -134,7 +135,7 @@ public class UdpIpParameters {
 		}
 		this.socket.close();
 	}
-
+        
 	public InetSocketAddress getDestinationInetSocketAddress() {
 		return this.destinationInetSocketAddress;
 	}
@@ -163,5 +164,4 @@ public class UdpIpParameters {
 	public String toString() {
 		return this.destinationInetSocketAddress.toString();
 	}
-
 }

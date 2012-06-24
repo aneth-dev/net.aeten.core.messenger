@@ -2,7 +2,7 @@ package net.aeten.core.messenger.stream;
 
 import java.nio.charset.Charset;
 
-import net.aeten.core.stream.editor.StreamEditor;
+import net.aeten.core.stream.StreamEditor;
 
 /**
 *

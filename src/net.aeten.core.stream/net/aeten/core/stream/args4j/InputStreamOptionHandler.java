@@ -3,6 +3,8 @@ package net.aeten.core.stream.args4j;
 import java.io.InputStream;
 
 import net.aeten.core.Configurable;
+import net.aeten.core.args4j.ValueType;
+import net.aeten.core.spi.Provider;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -16,13 +18,15 @@ import org.kohsuke.args4j.spi.Setter;
  * 
  * @author Thomas Pérennou
  */
+//@Provider(OptionHandler.class)
+@ValueType(InputStream.class)
 public class InputStreamOptionHandler extends OptionHandler<InputStream> {
 
 	public static final String INPUT_STREAM_OPTION_NAME = "-o";
 	public static final String[] INPUT_STREAM_OPTION_ALIASES = { "--over" };
 	public static final String CONFIGURATION_OPTION_NAME = "-c";
 	public static final String[] CONFIGURATION_OPTION_ALIASES = { "--configuration" };
-
+		
 	public InputStreamOptionHandler(CmdLineParser parser, OptionDef option, Setter<InputStream> setter) {
 		super(parser, option, setter);
 	}
@@ -33,7 +37,7 @@ public class InputStreamOptionHandler extends OptionHandler<InputStream> {
 		int i = 0;
 		try {
 			Class<InputStream> inputStreamClass = (Class<InputStream>) Thread.currentThread().getContextClassLoader().loadClass(params.getParameter(i));
-			
+
 			String configuration;
 			try {
 				if (CONFIGURATION_OPTION_NAME.equals(params.getParameter(i + 1)) || contains(params.getParameter(i + 1), CONFIGURATION_OPTION_ALIASES)) {
@@ -96,9 +100,11 @@ public class InputStreamOptionHandler extends OptionHandler<InputStream> {
 	}
 
 	private static boolean contains(String element, String[] list) {
-		for (String item : list)
-			if (element.equals(item))
+		for (String item : list) {
+			if (element.equals(item)) {
 				return true;
+			}
+		}
 		return false;
 
 	}
