@@ -19,12 +19,9 @@ import net.aeten.core.event.Transmitter;
 import net.aeten.core.event.TransmitterFactory;
 import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
-import net.aeten.core.messenger.args4j.ReceiverOptionHandler;
-import net.aeten.core.messenger.args4j.SenderOptionHandler;
 import net.aeten.core.spi.Provider;
 import net.aeten.core.spi.SpiInitializer;
 
-import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
 /**
@@ -34,10 +31,6 @@ import org.kohsuke.args4j.Option;
 @Provider(Messenger.class)
 @Format("args")
 public class MessengerProvider<Message> implements Messenger<Message>, Handler<MessengerEventData<Message>> {
-	static {
-		CmdLineParser.registerHandler(Sender.class, SenderOptionHandler.class);
-		CmdLineParser.registerHandler(Receiver.class, ReceiverOptionHandler.class);
-	}
 
 	@Option(name = "-id", aliases = "--identifier", required = true)
 	private final String identifier;

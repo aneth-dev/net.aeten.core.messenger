@@ -20,7 +20,7 @@ import org.kohsuke.args4j.Option;
 
 @Provider(Receiver.class)
 @Format("args")
-public class UdpIpReceiver<Message> extends Receiver.Helper<Message> {
+public class UdpIpReceiver<Message> extends Receiver.ReceiverAdapter<Message> {
 
 	@Option(name = "-d", aliases = "--message-decoder", required = true)
 	private Lazy<MessageDecoder<Message>, ?> messageBuilderFactory;

@@ -23,7 +23,7 @@ import org.kohsuke.args4j.Option;
 
 @Provider(Sender.class)
 @Format("args")
-public class UdpIpSender<Message> extends Sender.Helper<Message> {
+public class UdpIpSender<Message> extends Sender.SenderAdapter<Message> {
 	@Option(name = "-e", aliases = "--message-encoder", required = true)
 	private Lazy<MessageEncoder<Message>, ?> messageEncoderFactory;
 	@Option(name = "-udpip", aliases = "--udp-ip-configuration", required = true)

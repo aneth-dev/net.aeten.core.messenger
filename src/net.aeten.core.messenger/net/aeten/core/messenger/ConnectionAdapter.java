@@ -10,16 +10,16 @@ import net.aeten.core.args4j.CommandLineParserHelper;
 
 import org.kohsuke.args4j.Option;
 
-abstract class Helper implements Identifiable, Connection, Configurable<String> {
+abstract class ConnectionAdapter implements Identifiable, Connection, Configurable<String> {
 	@Option(name = "-id", aliases = "--identifier", required = true)
 	protected volatile String identifier = null;
 	
 	protected volatile String configuration;
 	protected volatile boolean connected = false;
 	
-	public Helper() {}
+	public ConnectionAdapter() {}
 
-	public Helper(String identifier) {
+	public ConnectionAdapter(String identifier) {
 		this.identifier = identifier;
 	}
 
