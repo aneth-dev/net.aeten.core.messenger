@@ -3,12 +3,11 @@ bin
 .classpath
 .project
 build.properties
-CVS
-.cvsignore
+build.xml
+manifest.mf
 .settings
 META-INF
 *~
-/dist/
-/.metadata/
-/build/
-/nbproject/private/
+dist/
+build/
+nbproject/
