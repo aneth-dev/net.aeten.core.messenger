@@ -29,6 +29,7 @@ import net.aeten.core.spi.Provider;
 @Format("aeml")
 public class AEmlParser extends AbstractParser<MarkupNode> {
 
+	@Override
 	public void parse(Reader reader, Handler<ParsingData<MarkupNode>> handler) {
 		BufferedReader bufferedReader = new BufferedReader(reader);
 		String line, indentation = null;
@@ -41,7 +42,7 @@ public class AEmlParser extends AbstractParser<MarkupNode> {
 				if ("".equals(trimed) || trimed.startsWith("#")) {
 					continue;
 				}
-				
+
 				previousLevel = currentLevel;
 				currentLevel = 0;
 				if ((indentation == null) && line.matches("^\\s.*")) {
@@ -56,9 +57,9 @@ public class AEmlParser extends AbstractParser<MarkupNode> {
 						line = line.substring(indentation.length());
 					}
 				}
-				
+
 				line = trimed;
-				
+
 				String key;
 				String value;
 				int separatorIndex = line.indexOf(':');
@@ -105,7 +106,7 @@ public class AEmlParser extends AbstractParser<MarkupNode> {
 			if (current != null) {
 				this.fireEvent(handler, ParsingEvent.END_NODE, MarkupNode.LIST, null, current);
 			}
-			
+
 		}
 		this.fireEvent(handler, ParsingEvent.END_NODE, MarkupNode.LIST, null, null);
 	}
@@ -116,58 +117,67 @@ public class AEmlParser extends AbstractParser<MarkupNode> {
 		parser.parse(new BufferedReader(new FileReader(args[0])), new Handler<ParsingData<MarkupNode>>() {
 			private int level = 0;
 
+			@Override
 			public void handleEvent(ParsingData<MarkupNode> data) {
 
 				switch (data.getEvent()) {
-					case START_NODE:
-						switch (data.getNodeType()) {
-							case TEXT:
-								System.out.print(" \"" + data.getValue());
-								break;
-							case ANCHOR:
-								break;
-							case REFERENCE:
-								break;
-							case TYPE:
-								break;
-							case MAP:
-								System.out.println();
-								this.println("{");
-								break;
-							case LIST:
-								System.out.println();
-								this.println("[");
-								break;
-							case TAG:
-								level++;
-								this.print("« " + data.getValue() + ":");
-								currentTag.add(data.getValue());
-								break;
-						}
+				case START_NODE:
+					switch (data.getNodeType()) {
+					case TEXT:
+						System.out.print(" \"" + data.getValue());
 						break;
-					case END_NODE:
-						switch (data.getNodeType()) {
-							case TEXT:
-								System.out.println("\"");
-								break;
-							case ANCHOR:
-								break;
-							case REFERENCE:
-								break;
-							case TYPE:
-								break;
-							case MAP:
-								this.println("}");
-								break;
-							case LIST:
-								this.println("]");
-								break;
-							case TAG:
-								this.println(currentTag.poll() + " »");
-								level--;
-								break;
-						}
+					case ANCHOR:
 						break;
+					case REFERENCE:
+						break;
+					case TYPE:
+						break;
+					case MAP:
+						System.out.println();
+						this.println("{");
+						break;
+					case LIST:
+						System.out.println();
+						this.println("[");
+						break;
+					case TAG:
+						level++;
+						this.print("« " + data.getValue() + ":");
+						currentTag.add(data.getValue());
+						break;
+					case DOCUMENT:
+						break;
+					default:
+						break;
+					}
+					break;
+				case END_NODE:
+					switch (data.getNodeType()) {
+					case TEXT:
+						System.out.println("\"");
+						break;
+					case ANCHOR:
+						break;
+					case REFERENCE:
+						break;
+					case TYPE:
+						break;
+					case MAP:
+						this.println("}");
+						break;
+					case LIST:
+						this.println("]");
+						break;
+					case TAG:
+						this.println(currentTag.poll() + " »");
+						level--;
+						break;
+					case DOCUMENT:
+						break;
+					default:
+						break;
+					}
+					break;
 				}
 			}
 

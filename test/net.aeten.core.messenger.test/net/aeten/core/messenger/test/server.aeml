@@ -2,21 +2,21 @@ identifier: net.aeten.core.test.messenger.server
 auto connect: false
 receiver: net.aeten.core.messenger.stream.StreamReceiver
 configuration :
-  identifier: net.aeten.core.test.messenger.server.receiver
-  input stream: net.aeten.core.stream.UdpIpInputStream
-  configuration :
-    destination inet socket address: 127.0.0.1:5200
-    max packet size: 64
-    bind: true
-    reuse: true
-  over: net.aeten.core.messenger.test.TestObjectInputStream
+	identifier: net.aeten.core.test.messenger.server.receiver
+	input stream: net.aeten.core.stream.UdpIpInputStream
+	configuration :
+		destination inet socket address: 127.0.0.1:5200
+		max packet size: 64
+		bind: true
+		reuse: true
+	over: net.aeten.core.messenger.test.TestObjectInputStream
 sender: net.aeten.core.messenger.stream.StreamSender
 configuration :
-  identifier: net.aeten.core.test.messenger.server.sender
-  output stream: net.aeten.core.stream.UdpIpOutputStream
-  configuration: 
-    destination inet socket address: 127.0.0.1:5201
-    max packet size: 64
-    bind: false
-    reuse: true
-  over: net.aeten.core.messenger.test.TestObjectOutputStream
+	identifier: net.aeten.core.test.messenger.server.sender
+	output stream: net.aeten.core.stream.UdpIpOutputStream
+	configuration: 
+		destination inet socket address: 127.0.0.1:5201
+		max packet size: 64
+		bind: false
+		reuse: true
+	over: net.aeten.core.messenger.test.TestObjectOutputStream
