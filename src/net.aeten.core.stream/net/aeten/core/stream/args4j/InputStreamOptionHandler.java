@@ -18,7 +18,7 @@ import org.kohsuke.args4j.spi.Setter;
  * 
  * @author Thomas Pérennou
  */
-//@Provider(OptionHandler.class)
+@Provider(OptionHandler.class)
 @ValueType(InputStream.class)
 public class InputStreamOptionHandler extends OptionHandler<InputStream> {
 
@@ -26,7 +26,7 @@ public class InputStreamOptionHandler extends OptionHandler<InputStream> {
 	public static final String[] INPUT_STREAM_OPTION_ALIASES = { "--over" };
 	public static final String CONFIGURATION_OPTION_NAME = "-c";
 	public static final String[] CONFIGURATION_OPTION_ALIASES = { "--configuration" };
-		
+
 	public InputStreamOptionHandler(CmdLineParser parser, OptionDef option, Setter<InputStream> setter) {
 		super(parser, option, setter);
 	}
@@ -101,9 +101,8 @@ public class InputStreamOptionHandler extends OptionHandler<InputStream> {
 
 	private static boolean contains(String element, String[] list) {
 		for (String item : list) {
-			if (element.equals(item)) {
+			if (element.equals(item))
 				return true;
-			}
 		}
 		return false;
 

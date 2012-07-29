@@ -14,7 +14,7 @@ import org.kohsuke.args4j.spi.Setter;
  * 
  * @author Thomas Pérennou
  */
-//@Provider(OptionHandler.class)
+@Provider(OptionHandler.class)
 @ValueType(Class.class)
 public class ClassOptionHandler extends OptionHandler<Class<?>> {
 

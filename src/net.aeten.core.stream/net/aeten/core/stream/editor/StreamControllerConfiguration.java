@@ -8,8 +8,6 @@ import net.aeten.core.ConfigurationException;
 import net.aeten.core.Factory;
 import net.aeten.core.Lazy;
 import net.aeten.core.args4j.CommandLineParserHelper;
-import net.aeten.core.stream.args4j.InputStreamOptionHandler;
-import net.aeten.core.stream.args4j.OutputStreamOptionHandler;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -33,9 +31,6 @@ public class StreamControllerConfiguration {
 	private StreamEditorStack editorStack;
 
 	public StreamControllerConfiguration(String... arguments) throws CmdLineException {
-		CmdLineParser.registerHandler(StreamEditorStack.class, StreamEditorStackOptionHandler.class);
-		CmdLineParser.registerHandler(InputStream.class, InputStreamOptionHandler.class);
-		CmdLineParser.registerHandler(OutputStream.class, OutputStreamOptionHandler.class);
 		CmdLineParser commandLineParser = new CmdLineParser(this);
 		commandLineParser.parseArgument(arguments);
 	}

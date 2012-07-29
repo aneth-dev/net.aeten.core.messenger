@@ -16,7 +16,7 @@ import org.kohsuke.args4j.spi.Setter;
  * 
  * @author Thomas Pérennou
  */
-//@Provider(OptionHandler.class)
+@Provider(OptionHandler.class)
 @ValueType(InetSocketAddress.class)
 public class InetSocketAddressOptionHandler extends OptionHandler<InetSocketAddress> {
 	public InetSocketAddressOptionHandler(CmdLineParser parser, OptionDef option, Setter<? super InetSocketAddress> setter) {

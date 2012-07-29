@@ -15,10 +15,10 @@ import org.kohsuke.args4j.spi.Setter;
  * 
  * @author Thomas Pérennou
  */
-//@Provider(OptionHandler.class)
+@Provider(OptionHandler.class)
 @ValueType(Lazy.class)
 public class LazyOptionHandler extends OptionHandler<Lazy<?, ?>> {
-	
+
 	public LazyOptionHandler(CmdLineParser parser, OptionDef option, Setter<Lazy<?, ?>> setter) {
 		super(parser, option, setter);
 	}
@@ -39,15 +39,5 @@ public class LazyOptionHandler extends OptionHandler<Lazy<?, ?>> {
 	@Override
 	public String getDefaultMetaVariable() {
 		return "LAZY";
-	}
-
-	private static boolean contains(String element, String[] list) {
-		for (String item : list) {
-			if (element.equals(item)) {
-				return true;
-			}
-		}
-		return false;
-
 	}
 }

@@ -11,24 +11,20 @@ import net.aeten.core.logging.Logger;
 import net.aeten.core.messenger.MessengerEventData;
 import net.aeten.core.messenger.Receiver;
 import net.aeten.core.spi.Provider;
-import net.aeten.core.stream.args4j.InputStreamOptionHandler;
 
-import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
 @Provider(Receiver.class)
 @Format("args")
-public class StreamReceiver<Message> extends Receiver.Helper<Message> {
-	static {
-		CmdLineParser.registerHandler(InputStream.class, InputStreamOptionHandler.class);
-	}
-	
+public class StreamReceiver<Message> extends Receiver.ReceiverAdapter<Message> {
+
 	@Option(name = "-is", aliases = "--input-stream", required = true)
 	private InputStream inputStream = null;
 
 	/** @deprecated Reserved to configuration building */
 	@Deprecated
-    public StreamReceiver() {}
+	public StreamReceiver() {
+	}
 
 	public StreamReceiver(String identifier, ObjectInputStream inputStream) {
 		super(identifier);

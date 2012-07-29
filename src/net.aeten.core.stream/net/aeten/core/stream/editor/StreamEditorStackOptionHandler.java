@@ -1,6 +1,8 @@
 package net.aeten.core.stream.editor;
 
 import net.aeten.core.Lazy;
+import net.aeten.core.args4j.ValueType;
+import net.aeten.core.spi.Provider;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -14,6 +16,9 @@ import org.kohsuke.args4j.spi.Setter;
  * 
  * @author Thomas Pérennou
  */
+
+@Provider(OptionHandler.class)
+@ValueType(StreamEditorStack.class)
 public class StreamEditorStackOptionHandler extends OptionHandler<StreamEditorStack> {
 	public static final String EDITOR_OPTION_NAME = "-se";
 	public static final String[] EDITOR_OPTION_ALIASES = { "--stream-editor" };
@@ -70,9 +75,8 @@ public class StreamEditorStackOptionHandler extends OptionHandler<StreamEditorSt
 
 	private static boolean contains(String element, String[] list) {
 		for (String item : list) {
-			if (element.equals(item)) {
+			if (element.equals(item))
 				return true;
-			}
 		}
 		return false;
 

@@ -1,10 +1,7 @@
 package net.aeten.core.args4j;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-
 import net.aeten.core.ConfigurationException;
-import net.aeten.core.Lazy;
+import net.aeten.core.Predicate;
 import net.aeten.core.spi.Service;
 import net.aeten.core.util.StringUtil;
 
@@ -16,16 +13,20 @@ import org.kohsuke.args4j.spi.OptionHandler;
  * 
  * @author Thomas Pérennou
  */
+@SuppressWarnings("rawtypes")
 public class CommandLineParserHelper {
 	static {
-		for (OptionHandler<?> handler : Service.getProviders(OptionHandler.class, CommandLineParserHelper.class.getClassLoader())) {
-			System.err.println(handler.getClass() + " " + handler.getClass().getAnnotation(ValueType.class).value());
-			// CmdLineParser.registerHandler(, handler.getClass());
+		// Load option handlers
+		for (@SuppressWarnings("unused")
+		OptionHandler<?> handler : Service.getProviders(OptionHandler.class, new Predicate<Class<OptionHandler>>() {
+			@Override
+			public boolean evaluate(Class<OptionHandler> handler) {
+				CmdLineParser.registerHandler(handler.getAnnotation(ValueType.class).value(), handler);
+				return false;
+			}
+		})) {
+			// Pass
 		}
-		CmdLineParser.registerHandler(Class.class, ClassOptionHandler.class);
-		CmdLineParser.registerHandler(InetAddress.class, InetAddressOptionHandler.class);
-		CmdLineParser.registerHandler(InetSocketAddress.class, InetSocketAddressOptionHandler.class);
-		CmdLineParser.registerHandler(Lazy.class, LazyOptionHandler.class);
 	}
 
 	private CommandLineParserHelper() {
