@@ -22,7 +22,7 @@ import net.aeten.core.parsing.ParsingEvent;
 import net.aeten.core.spi.Provider;
 
 /**
- * 
+ *
  * @author Thomas Pérennou
  */
 @Provider(Parser.class)
@@ -93,8 +93,40 @@ public class AEmlParser extends AbstractParser<MarkupNode> {
 					this.fireEvent(handler, ParsingEvent.START_NODE, MarkupNode.TAG, current.name, current.parent);
 				}
 				if (!"".equals(value)) {
-					this.fireEvent(handler, ParsingEvent.START_NODE, MarkupNode.TEXT, value, current.parent);
-					this.fireEvent(handler, ParsingEvent.END_NODE, MarkupNode.TEXT, value, current.parent);
+					MarkupNode node;
+					switch (value.charAt(0)) {
+						case '!':
+							node = MarkupNode.TYPE;
+							break;
+						case '&':
+							node = MarkupNode.REFERENCE;
+							break;
+						case '*':
+							node = MarkupNode.ANCHOR;
+							break;
+						default:
+							node = MarkupNode.TEXT;
+							break;
+					}
+					switch (node) {
+						case TYPE:
+						case REFERENCE:
+						case ANCHOR:
+							Pattern pattern = Pattern.compile("[!&*](\\p{Graph})(\\p{Blank})*(.*)");
+							Matcher matcher = pattern.matcher(value);
+							value = matcher.group(1);
+							this.fireEvent(handler, ParsingEvent.START_NODE, node, value, current.parent);
+							this.fireEvent(handler, ParsingEvent.END_NODE, node, value, current.parent);
+							if (matcher.group(3).isEmpty()) {
+								break;
+							}
+							value = matcher.group(3);
+						default:
+							node = MarkupNode.TEXT;
+							break;
+					}
+					this.fireEvent(handler, ParsingEvent.START_NODE, node, value, current.parent);
+					this.fireEvent(handler, ParsingEvent.END_NODE, node, value, current.parent);
 				}
 			}
 		} catch (IOException exception) {

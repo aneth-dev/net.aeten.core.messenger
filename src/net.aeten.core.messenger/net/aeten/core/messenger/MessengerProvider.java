@@ -20,7 +20,6 @@ import net.aeten.core.event.TransmitterFactory;
 import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
 import net.aeten.core.spi.Provider;
-import net.aeten.core.spi.SpiInitializer;
 
 import org.kohsuke.args4j.Option;
 
@@ -32,24 +31,32 @@ import org.kohsuke.args4j.Option;
 @Format("args")
 public class MessengerProvider<Message> implements Messenger<Message>, Handler<MessengerEventData<Message>> {
 
-	@Option(name = "-id", aliases = "--identifier", required = true)
-	private final String identifier;
+	@Option(name = "-id",
+	        aliases = "--identifier",
+	        required = true)
+	private final String	                                                                      identifier;
 
-	@Option(name = "-s", aliases = "--sender", required = false)
-	private final List<Sender<Message>> senderList = new ArrayList<>();
+	@Option(name = "-s",
+	        aliases = "--sender",
+	        required = false)
+	private final List<Sender<Message>>	                                                          senderList	= new ArrayList<>();
 
-	@Option(name = "-r", aliases = "--receiver", required = false)
-	private final List<Receiver<Message>> receiverList = new ArrayList<>();
+	@Option(name = "-r",
+	        aliases = "--receiver",
+	        required = false)
+	private final List<Receiver<Message>>	                                                      receiverList	= new ArrayList<>();
 
-	@Option(name = "-c", aliases = "--auto-connect", required = false)
-	private final boolean autoConnect;
+	@Option(name = "-c",
+	        aliases = "--auto-connect",
+	        required = false)
+	private final boolean	                                                                      autoConnect;
 
-	private final Map<String, Sender<Message>> senderMap = new LinkedHashMap<>();
+	private final Map<String, Sender<Message>>	                                                  senderMap	   = new LinkedHashMap<>();
 
-	private volatile boolean connected;
+	private volatile boolean	                                                                  connected;
 
-	private Transmitter<MessengerEventData<Message>> asyncSendEventTransmitter;
-	private RegisterableTransmitter<HookEvent<MessengerEvent, Hook>, MessengerEventData<Message>> hookTransmitter;
+	private Transmitter<MessengerEventData<Message>>	                                          asyncSendEventTransmitter;
+	private RegisterableTransmitter<HookEvent<MessengerEvent, Hook>, MessengerEventData<Message>>	hookTransmitter;
 
 	/** @deprecated Reserved to configuration building */
 	@Deprecated
@@ -65,7 +72,6 @@ public class MessengerProvider<Message> implements Messenger<Message>, Handler<M
 		this(identifier, new Sender[] { sender }, new Receiver[] { receiver }, true);
 	}
 
-	@SpiInitializer
 	protected MessengerProvider(String identifier, Sender<Message>[] senderList, Receiver<Message>[] receiverList, boolean autoConnect) {
 		this.identifier = identifier;
 		this.autoConnect = autoConnect;

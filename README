@@ -7,6 +7,8 @@ Note:
 Current version:
 	0.0.6
 
+SPI (configurable service providers) interface rebuilt. Dependence of org.kohsuke.args4j has been removed and Configurable interface has been removed to. So severals modules does not compile. For instance there are only net.aeten.core and net.aeten.core.parsing.* that are working.
+
 Provides:
 	- generic event transmitter and handler (synchronous and asynchronous)
 	- configurable service providers loading based on annotaions
@@ -14,8 +16,7 @@ Provides:
 	- stream stack editor
 
 Third party dependences: 
-	- org.kohsuke.args4j (currently use 2.0.12, under MIT license)
-	- net.jcip.annotations (Creative Commons Attribution License)
+	- net.jcip.annotations (Creative Commons Attribution License), included in sources
 
 Details of modules:
 	- net.aeten.core                    -> requires net.jcip.annotations

@@ -1,3 +1,2 @@
  - Remove Configurable
  - Replace Logger use in Exceptions catch blocks by a new FrameworkErrorHandler witch the default one will log or throws exception as appropriate
- - Add service loading synchronization (one lock by ServiceLoader use)

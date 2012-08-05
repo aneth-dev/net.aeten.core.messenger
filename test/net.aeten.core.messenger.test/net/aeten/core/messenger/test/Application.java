@@ -21,7 +21,12 @@ import net.aeten.core.spi.Configuration;
 import net.aeten.core.spi.Configurations;
 import net.aeten.core.spi.Service;
 
-@Configurations({ @Configuration(name = "server.aeml", provider = MessengerProvider.class), @Configuration(name = "client.properties", provider = MessengerProvider.class, parser = "net.aeten.core.parsing.properties.PropertiesParser", converter = "net.aeten.core.args4j.Markup2Args4j"), @Configuration(name = "client.receiver.aeml", provider = UdpIpReceiver.class) })
+@Configurations({ @Configuration(name = "server.aeml",
+        provider = MessengerProvider.class), @Configuration(name = "client.properties",
+        provider = MessengerProvider.class,
+        parser = "net.aeten.core.parsing.properties.PropertiesParser",
+        converter = "net.aeten.core.args4j.Markup2Args4j"), @Configuration(name = "client.receiver.aeml",
+        provider = UdpIpReceiver.class) })
 public class Application {
 
 	@SuppressWarnings("unchecked")
@@ -72,27 +77,25 @@ public class Application {
 		server.addEventHandler(new Handler<MessengerEventData<AbstractMessage>>() {
 			@Override
 			public void handleEvent(MessengerEventData<AbstractMessage> data) {
-				if (data.getMessage() instanceof AcknowledgeMessage) {
-					return;
-				}
+				if (data.getMessage() instanceof AcknowledgeMessage) return;
 				if (data.getMessage().getAcknowledge() == null) {
 					data.getSource().transmit(new AcknowledgeMessage(Acknowledge.INVALID_MESSAGE), "net.aeten.core.test.messenger.server.sender");
 					return;
 				}
 				switch (data.getMessage().getAcknowledge()) {
-				case SOLLICITED_NEED_ACKNOWLEDGE:
-				case UNSOLLICITED_NEED_ACKNOWLEDGE:
-					if (data.getMessage() instanceof Message) {
-						Message recievedMessage = (Message) data.getMessage();
-						if ((recievedMessage.getValue() < Message.MIN_VALUE) || (recievedMessage.getValue() > Message.MAX_VALUE)) {
-							data.getSource().transmit(new AcknowledgeMessage(Acknowledge.INVALID_DATA), "net.aeten.core.test.messenger.server.sender");
-						} else {
-							data.getSource().transmit(new AcknowledgeMessage(Acknowledge.OK), "net.aeten.core.test.messenger.server.sender");
+					case SOLLICITED_NEED_ACKNOWLEDGE:
+					case UNSOLLICITED_NEED_ACKNOWLEDGE:
+						if (data.getMessage() instanceof Message) {
+							Message recievedMessage = (Message) data.getMessage();
+							if ((recievedMessage.getValue() < Message.MIN_VALUE) || (recievedMessage.getValue() > Message.MAX_VALUE)) {
+								data.getSource().transmit(new AcknowledgeMessage(Acknowledge.INVALID_DATA), "net.aeten.core.test.messenger.server.sender");
+							} else {
+								data.getSource().transmit(new AcknowledgeMessage(Acknowledge.OK), "net.aeten.core.test.messenger.server.sender");
+							}
 						}
-					}
-					break;
-				default:
-					break;
+						break;
+					default:
+						break;
 				}
 			}
 		}, Messenger.EVENTS.get(MessengerEvent.RECEIVE, Hook.END));
@@ -107,9 +110,7 @@ public class Application {
 
 			@Override
 			public void handleEvent(MessengerEventData<AbstractMessage> data) {
-				if ((data.getEvent().getSourceEvent() == MessengerEvent.RECEIVE) && (!(data.getMessage() instanceof AcknowledgeMessage))) {
-					return;
-				}
+				if ((data.getEvent().getSourceEvent() == MessengerEvent.RECEIVE) && (!(data.getMessage() instanceof AcknowledgeMessage))) return;
 				Logger.log(data.getSource(), LogLevel.INFO, "event={" + data.getEvent() + "}; data={" + data.getMessage() + "}");
 			}
 		}, Messenger.EVENTS.get(MessengerEvent.SEND, Hook.END), Messenger.EVENTS.get(MessengerEvent.RECEIVE, Hook.END));
