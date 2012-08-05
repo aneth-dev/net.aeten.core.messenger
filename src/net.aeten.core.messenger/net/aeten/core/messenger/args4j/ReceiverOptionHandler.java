@@ -31,7 +31,7 @@ public class ReceiverOptionHandler extends OptionHandler<Receiver<?>> {
 		boolean hasConfigurationTagOption = false;
 		try {
 			try {
-				setter.addValue(Service.getProvider(Receiver.class, params.getParameter(0)));
+				setter.addValue((Receiver<?>)Service.getProvider(Receiver.class, params.getParameter(0)));
 				return 1;
 			} catch (NoSuchElementException exception) {
 				Class<Receiver<?>> recieverClass = (Class<Receiver<?>>) Thread.currentThread().getContextClassLoader().loadClass(params.getParameter(0));

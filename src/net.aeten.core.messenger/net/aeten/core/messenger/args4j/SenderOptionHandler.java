@@ -32,7 +32,7 @@ public class SenderOptionHandler extends OptionHandler<Sender<?>> {
 		boolean hasConfigurationTagOption = false;
 		try {
 			try {
-				setter.addValue(Service.getProvider(Sender.class, params.getParameter(0)));
+				setter.addValue((Sender<?>)Service.getProvider(Sender.class, params.getParameter(0)));
 				return 1;
 			} catch (NoSuchElementException exception) {
 				Class<Sender<?>> senderClass = null;
