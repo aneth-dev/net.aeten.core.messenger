@@ -8,7 +8,13 @@ import net.aeten.core.event.Priority;
 import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
 import net.aeten.core.logging.LoggingData;
-import net.aeten.core.messenger.*;
+import net.aeten.core.messenger.Messenger;
+import net.aeten.core.messenger.MessengerAcknowledgeEvent;
+import net.aeten.core.messenger.MessengerAcknowledgeEventData;
+import net.aeten.core.messenger.MessengerAcknowledgeHook;
+import net.aeten.core.messenger.MessengerEvent;
+import net.aeten.core.messenger.MessengerEventData;
+import net.aeten.core.messenger.MessengerProvider;
 import net.aeten.core.messenger.net.UdpIpReceiver;
 import net.aeten.core.spi.Configuration;
 import net.aeten.core.spi.Configurations;
@@ -16,13 +22,13 @@ import net.aeten.core.spi.Service;
 
 @Configurations({
 	@Configuration(name = "server.yaml",
-	provider = MessengerProvider.class),
+						provider = MessengerProvider.class),
 	@Configuration(name = "client.yaml",
-	provider = MessengerProvider.class,
-	parser = "net.aeten.core.parsing.yaml.YamlParser"),
+						provider = MessengerProvider.class,
+						parser = "net.aeten.core.parsing.yaml.YamlParser"),
 	@Configuration(name = "client.receiver.yaml",
-	provider = UdpIpReceiver.class)})
-public class Application {
+						provider = UdpIpReceiver.class)})
+public class MessengerTest {
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws Exception {
@@ -46,11 +52,8 @@ public class Application {
 			}
 		}, LogLevel.values());
 
-		Logger.log(Application.class, LogLevel.INFO, "Start");
+		Logger.log(MessengerTest.class, LogLevel.INFO, "Start");
 
-		// Client & server are both loaded from configuration files located in
-		// META-INF/provider/net.aeten.core.messenger.provider.
-		// MessengerProvider/
 		Messenger<AbstractMessage> client = Service.getProvider(Messenger.class, "net.aeten.core.test.messenger.client");
 		Messenger<AbstractMessage> server = Service.getProvider(Messenger.class, "net.aeten.core.test.messenger.server");
 
@@ -83,19 +86,19 @@ public class Application {
 					return;
 				}
 				switch (data.getMessage().getAcknowledge()) {
-					case SOLLICITED_NEED_ACKNOWLEDGE:
-					case UNSOLLICITED_NEED_ACKNOWLEDGE:
-						if (data.getMessage() instanceof Message) {
-							Message recievedMessage = (Message) data.getMessage();
-							if ((recievedMessage.getValue() < Message.MIN_VALUE) || (recievedMessage.getValue() > Message.MAX_VALUE)) {
-								data.getSource().transmit(new AcknowledgeMessage(Acknowledge.INVALID_DATA), "net.aeten.core.test.messenger.server.sender");
-							} else {
-								data.getSource().transmit(new AcknowledgeMessage(Acknowledge.OK), "net.aeten.core.test.messenger.server.sender");
-							}
+				case SOLLICITED_NEED_ACKNOWLEDGE:
+				case UNSOLLICITED_NEED_ACKNOWLEDGE:
+					if (data.getMessage() instanceof Message) {
+						Message recievedMessage = (Message) data.getMessage();
+						if ((recievedMessage.getValue() < Message.MIN_VALUE) || (recievedMessage.getValue() > Message.MAX_VALUE)) {
+							data.getSource().transmit(new AcknowledgeMessage(Acknowledge.INVALID_DATA), "net.aeten.core.test.messenger.server.sender");
+						} else {
+							data.getSource().transmit(new AcknowledgeMessage(Acknowledge.OK), "net.aeten.core.test.messenger.server.sender");
 						}
-						break;
-					default:
-						break;
+					}
+					break;
+				default:
+					break;
 				}
 			}
 		}, Messenger.EVENTS.get(MessengerEvent.RECEIVE, Hook.END));
@@ -131,12 +134,6 @@ public class Application {
 
 		Message invalidMessage = new Message();
 
-		// System.out.println(client.transmit(valid,
-		// "net.aeten.core.test.messenger.client.sender").get());
-		// System.out.println(client.transmit(invalidData,
-		// "net.aeten.core.test.messenger.client.sender").get());
-		// System.out.println(client.transmit(invalidMessage,
-		// "net.aeten.core.test.messenger.client.sender").get());
 		client.transmit(valid(), "net.aeten.core.test.messenger.client.sender");
 		client.transmit(valid(), "net.aeten.core.test.messenger.client.sender", Priority.LOW);
 		client.transmit(valid(), "net.aeten.core.test.messenger.client.sender", Priority.LOW);

@@ -5,13 +5,12 @@ Note:
 	API become quite stable.
 
 Current version:
-	0.0.6
-
-SPI (configurable service providers) interface rebuilt on head revision. Dependency to org.kohsuke.args4j and Configurable interface have been removed.
+	0.0.7
 
 Provides:
 	- generic event transmitter and handler (synchronous and asynchronous)
 	- configurable service providers loading based on annotaions
+	- generic parsing interface
 	- extensible messenger
 	- stream stack editor
 
@@ -24,7 +23,8 @@ Details of modules:
 	- net.aeten.core.messenger          -> requires net.aeten.core
 	- net.aeten.core.messenger.stream   -> requires net.aeten.core, net.aeten.core.messenger, net.aeten.core.stream
 	- net.aeten.core.parsing.properties -> net.aeten.core
-	- net.aeten.core.parsing.yaml       -> net.aeten.core (a YAML parser)
+	- net.aeten.core.parsing.xml        -> net.aeten.core
+	- net.aeten.core.parsing.yaml       -> net.aeten.core (a YAML parser in progress, see test/net.aeten.core.messenger.test/net/aeten/core/messenger/test/server.yaml for supported syntax)
 	- net.aeten.core.stream             -> requires net.aeten.core
 
 See test directory for samples
