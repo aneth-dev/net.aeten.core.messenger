@@ -5,46 +5,38 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-
-import net.aeten.core.Format;
-import net.aeten.core.Lazy;
-import net.aeten.core.args4j.UdpIpParameters;
 import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
 import net.aeten.core.messenger.MessageDecoder;
 import net.aeten.core.messenger.MessengerEventData;
 import net.aeten.core.messenger.Receiver;
+import net.aeten.core.net.UdpIpSocketFactory;
+import net.aeten.core.spi.FieldInit;
 import net.aeten.core.spi.Provider;
-
-import org.kohsuke.args4j.Option;
+import net.aeten.core.spi.SpiInitializer;
 
 @Provider(Receiver.class)
-@Format("args")
 public class UdpIpReceiver<Message> extends Receiver.ReceiverAdapter<Message> {
 
-	@Option(name = "-d", aliases = "--message-decoder", required = true)
-	private Lazy<MessageDecoder<Message>, ?> messageBuilderFactory;
-	@Option(name = "-udpip", aliases = "--udp-ip-configuration", required = true)
-	private String udpIpConfiguration;
-
-	private MessageDecoder<Message> messageBuilder;
-	private UdpIpParameters parameters;
+	@FieldInit
+	private final MessageDecoder<Message> messageDecoder;
+	@FieldInit(alias = {"udp ip configuration", "UDP/IP configuration"})
+	private final UdpIpSocketFactory socketFactory;
 	private DatagramSocket socket;
 	private DatagramPacket packet;
 
-	/** @deprecated Reserved to configuration building */
-	@Deprecated
-	public UdpIpReceiver() {
+	public UdpIpReceiver(@SpiInitializer UdpIpReceiverInit init) {
+		this(init.getIdentifier(), init.getMessageDecoder(), init.getSocketFactory());
 	}
 
-	public UdpIpReceiver(String identifier, MessageDecoder<Message> messageBuilder, UdpIpParameters parameters) {
+	public UdpIpReceiver(String identifier, MessageDecoder<Message> messageDecoder, UdpIpSocketFactory socketFactory) {
 		super(identifier);
-		this.messageBuilder = messageBuilder;
-		this.parameters = parameters;
+		this.messageDecoder = messageDecoder;
+		this.socketFactory = socketFactory;
 	}
 
 	public UdpIpReceiver(String identifier, MessageDecoder<Message> messageBuilder, InetSocketAddress destinationInetSocketAddress, InetAddress sourceInetAddress, boolean bind, boolean reuse, int maxPacketSize) throws IOException {
-		this(identifier, messageBuilder, new UdpIpParameters(destinationInetSocketAddress, sourceInetAddress, bind, reuse, maxPacketSize));
+		this(identifier, messageBuilder, new UdpIpSocketFactory(destinationInetSocketAddress, sourceInetAddress, bind, reuse, maxPacketSize));
 	}
 
 	@Override
@@ -55,34 +47,23 @@ public class UdpIpReceiver<Message> extends Receiver.ReceiverAdapter<Message> {
 	@Override
 	protected void doConnect() throws IOException {
 		try {
-			if (this.udpIpConfiguration != null) {
-				this.parameters = new UdpIpParameters(this.udpIpConfiguration);
-			}
-			if (this.parameters.getSocket().isClosed()) {
-				this.socket = this.parameters.createSocket();
+			if (this.socketFactory.getSocket().isClosed()) {
+				this.socket = this.socketFactory.createSocket();
 			} else {
-				this.socket = this.parameters.getSocket();
+				this.socket = this.socketFactory.getSocket();
 			}
 			if (!this.socket.isBound()) {
-				this.socket.bind(this.parameters.getDestinationInetSocketAddress());
+				this.socket.bind(this.socketFactory.getDestinationInetSocketAddress());
 			}
-			if (this.messageBuilderFactory != null) {
-				this.messageBuilder = this.messageBuilderFactory.instance();
-				this.messageBuilderFactory = null;
-			}
-			this.packet = new DatagramPacket(new byte[parameters.getMaxPacketSize()], parameters.getMaxPacketSize());
-
+			this.packet = new DatagramPacket(new byte[socketFactory.getMaxPacketSize()], socketFactory.getMaxPacketSize());
 		} catch (Exception exception) {
-			if (this.configuration == null) {
-				throw new IOException(exception);
-			}
-			throw new IOException("Configuration: " + configuration, exception);
+			throw new IOException(exception);
 		}
 	}
 
 	@Override
 	protected void doDisconnect() throws IOException {
-		this.parameters.closeSocket();
+		this.socketFactory.closeSocket();
 		this.packet = null;
 	}
 
@@ -90,9 +71,9 @@ public class UdpIpReceiver<Message> extends Receiver.ReceiverAdapter<Message> {
 	public void receive(MessengerEventData<Message> data) throws IOException {
 		this.socket.receive(this.packet);
 		data.setContact(this.packet.getAddress().getHostAddress());
-		data.setService("" + this.parameters.getDestinationInetSocketAddress().getPort());
+		data.setService("" + this.socketFactory.getDestinationInetSocketAddress().getPort());
 		try {
-			data.setMessage(this.messageBuilder.decode(this.packet.getData(), this.packet.getOffset(), this.packet.getLength()));
+			data.setMessage(this.messageDecoder.decode(this.packet.getData(), this.packet.getOffset(), this.packet.getLength()));
 		} catch (Throwable exception) {
 			Logger.log(this, LogLevel.ERROR, "Error while decoding packet from " + packet.getSocketAddress(), exception);
 			this.receive(data);

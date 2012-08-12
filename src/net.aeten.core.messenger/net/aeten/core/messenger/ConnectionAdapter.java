@@ -1,23 +1,16 @@
 package net.aeten.core.messenger;
 
-import java.io.IOException;
 
-import net.aeten.core.Configurable;
-import net.aeten.core.ConfigurationException;
+import java.io.IOException;
 import net.aeten.core.Connection;
 import net.aeten.core.Identifiable;
-import net.aeten.core.args4j.CommandLineParserHelper;
+import net.aeten.core.spi.FieldInit;
 
-import org.kohsuke.args4j.Option;
-
-abstract class ConnectionAdapter implements Identifiable, Connection, Configurable<String> {
-	@Option(name = "-id", aliases = "--identifier", required = true)
-	protected volatile String identifier = null;
+abstract class ConnectionAdapter implements Identifiable, Connection {
+	@FieldInit
+	protected final String identifier;
 	
-	protected volatile String configuration;
 	protected volatile boolean connected = false;
-	
-	public ConnectionAdapter() {}
 
 	public ConnectionAdapter(String identifier) {
 		this.identifier = identifier;
@@ -26,12 +19,6 @@ abstract class ConnectionAdapter implements Identifiable, Connection, Configurab
 	@Override
 	public String getIdentifier() {
 		return identifier;
-	}
-
-    @Override
-	public void configure(String conf) throws ConfigurationException {
-		this.configuration = conf;
-		CommandLineParserHelper.configure(this, this.configuration);
 	}
 
 	

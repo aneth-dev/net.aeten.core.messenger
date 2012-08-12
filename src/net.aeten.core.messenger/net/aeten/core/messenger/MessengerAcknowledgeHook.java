@@ -11,8 +11,9 @@ import net.aeten.core.event.TransmitterFactory;
 import net.aeten.core.event.TransmitterService;
 import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
+import net.aeten.core.spi.FieldInit;
+import net.aeten.core.spi.SpiInitializer;
 
-import org.kohsuke.args4j.Option;
 
 /**
  * 
@@ -22,13 +23,13 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>> impl
 
 	private static final Map<String, Object> MUTEX_MAP = new HashMap<>(1);
 
-	@Option(name = "-id", aliases = "--identifier", required = true)
+	@FieldInit
 	private String identifier;
 
-	@Option(name = "-ap", aliases = "--acknowledge-protocol", required = false)
+	@FieldInit(alias = "acknowledge protocol", required = false)
 	private Class<? extends MessengerAcknowledgeProtocol<Message, Acknowledge>> acknowledgeProtocolClass;
 
-	@Option(name = "-apc", aliases = "--acknowledge-protocol-configuration", required = false)
+	@FieldInit(alias = "acknowledge protocol configuration", required = false)
 	private String acknowledgeProtocolConfiguration;
 
 	private MessengerAcknowledgeProtocol<Message, Acknowledge> acknowledgeProtocol = null;
@@ -45,9 +46,9 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>> impl
 		this(identifier, null, null);
 	}
 
-	public MessengerAcknowledgeHook() {
-		this(null, null, null);
-	}
+//	public MessengerAcknowledgeHook(@SpiInitializer MessengerAcknowledgeHookInit init) {
+//		this(init.getId(), init.hasAcknowledgeProtocolClass() ? init.getAcknowledgeProtocolClass(): null, init.hasAcknowledgeProtocolConfiguration() ? init.getAcknowledgeProtocolConfiguration(): null);
+//	}
 
 	public MessengerAcknowledgeHook(String identifier, String description, MessengerAcknowledgeProtocol<Message, Acknowledge> acknowledgeProtocol) {
 		this.identifier = (identifier == null) ? this.getClass().getName() : identifier;
@@ -55,6 +56,26 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>> impl
 		this.eventTransmitter = TransmitterFactory.asynchronous("Messenger acknowledge hook \"" + this + "\" event transmitter", MessengerAcknowledgeEvent.values());
 		// this.eventTransmitter =
 		// TransmitterFactory.synchronous(MessengerAcknowledgeEvent.values());
+
+		try {
+			this.acknowledgeMutex = MUTEX_MAP.get(this.identifier);
+			if (this.acknowledgeMutex == null) {
+				this.acknowledgeMutex = new Object();
+				MUTEX_MAP.put(this.identifier, this.acknowledgeMutex);
+			}
+
+//			this.acknowledgeProtocol = acknowledgeProtocolClass.newInstance();
+//			if ((this.acknowledgeProtocolConfiguration != null) && (this.acknowledgeProtocol instanceof Configurable)) {
+//				((Configurable<String>) this.acknowledgeProtocol).configure(this.acknowledgeProtocolConfiguration);
+//			}
+
+			this.eventTransmitter = TransmitterFactory.asynchronous("Messenger acknowledge hook \"" + this.getIdentifier() + "\" event transmitter", MessengerAcknowledgeEvent.values());
+			// this.eventTransmitter =
+			// TransmitterFactory.synchronous(MessengerAcknowledgeEvent.values());
+		} catch (Exception exception) {
+			throw new IllegalArgumentException(exception);
+		}
+
 	}
 
 	@Override
@@ -117,30 +138,8 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>> impl
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	public void configure(String configuration) throws ConfigurationException {
-		try {
-			this.acknowledgeMutex = MUTEX_MAP.get(this.getIdentifier());
-			if (this.acknowledgeMutex == null) {
-				this.acknowledgeMutex = new Object();
-				MUTEX_MAP.put(this.getIdentifier(), this.acknowledgeMutex);
-			}
-
-			this.acknowledgeProtocol = acknowledgeProtocolClass.newInstance();
-//			if ((this.acknowledgeProtocolConfiguration != null) && (this.acknowledgeProtocol instanceof Configurable)) {
-//				((Configurable<String>) this.acknowledgeProtocol).configure(this.acknowledgeProtocolConfiguration);
-//			}
-
-			this.eventTransmitter = TransmitterFactory.asynchronous("Messenger acknowledge hook \"" + this.getIdentifier() + "\" event transmitter", MessengerAcknowledgeEvent.values());
-			// this.eventTransmitter =
-			// TransmitterFactory.synchronous(MessengerAcknowledgeEvent.values());
-		} catch (Exception exception) {
-			throw new ConfigurationException(configuration, exception);
-		}
-	}
-
 	@Override
-	public String getIdentifier() {
+	public final String getIdentifier() {
 		return this.identifier;
 	}
 
