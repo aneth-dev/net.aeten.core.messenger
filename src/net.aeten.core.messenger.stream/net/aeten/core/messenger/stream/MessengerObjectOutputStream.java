@@ -2,7 +2,6 @@ package net.aeten.core.messenger.stream;
 
 import java.io.IOException;
 import java.io.OutputStream;
-
 import net.aeten.core.stream.ObjectOutputStream;
 
 /**

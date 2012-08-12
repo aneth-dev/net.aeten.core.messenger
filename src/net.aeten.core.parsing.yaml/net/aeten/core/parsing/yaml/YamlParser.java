@@ -1,4 +1,4 @@
-package net.aeten.core.parsing.aeml;
+package net.aeten.core.parsing.yaml;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -9,16 +9,11 @@ import java.util.Collections;
 import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import net.aeten.core.Format;
 import net.aeten.core.event.Handler;
 import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
-import net.aeten.core.parsing.AbstractParser;
-import net.aeten.core.parsing.MarkupNode;
-import net.aeten.core.parsing.Parser;
-import net.aeten.core.parsing.ParsingData;
-import net.aeten.core.parsing.ParsingEvent;
+import net.aeten.core.parsing.*;
 import net.aeten.core.spi.Provider;
 
 /**
@@ -26,8 +21,8 @@ import net.aeten.core.spi.Provider;
  * @author Thomas Pérennou
  */
 @Provider(Parser.class)
-@Format("aeml")
-public class AEmlParser extends AbstractParser<MarkupNode> {
+@Format("yaml")
+public class YamlParser extends AbstractParser<MarkupNode> {
 
 	@Override
 	public void parse(Reader reader, Handler<ParsingData<MarkupNode>> handler) {
@@ -68,7 +63,7 @@ public class AEmlParser extends AbstractParser<MarkupNode> {
 					value = line.substring(separatorIndex + 1).trim();
 				} else {
 					key = null;
-					value = line;
+					value = line.substring(1).trim(); // List, starts with '-'
 				}
 				if (currentLevel > previousLevel) {
 					this.fireEvent(handler, ParsingEvent.START_NODE, MarkupNode.LIST, null, current);
@@ -112,8 +107,11 @@ public class AEmlParser extends AbstractParser<MarkupNode> {
 						case TYPE:
 						case REFERENCE:
 						case ANCHOR:
-							Pattern pattern = Pattern.compile("[!&*](\\p{Graph})(\\p{Blank})*(.*)");
+							Pattern pattern = Pattern.compile("[!&*](\\p{Graph}+)(\\p{Blank})*(.*)");
 							Matcher matcher = pattern.matcher(value);
+							if (!matcher.matches()) {
+								System.out.println(value);
+							}
 							value = matcher.group(1);
 							this.fireEvent(handler, ParsingEvent.START_NODE, node, value, current.parent);
 							this.fireEvent(handler, ParsingEvent.END_NODE, node, value, current.parent);
@@ -145,7 +143,7 @@ public class AEmlParser extends AbstractParser<MarkupNode> {
 
 	public static void main(String[] args) throws Exception {
 		final Queue<String> currentTag = Collections.asLifoQueue(new ArrayDeque<String>());
-		AEmlParser parser = new AEmlParser();
+		YamlParser parser = new YamlParser();
 		parser.parse(new BufferedReader(new FileReader(args[0])), new Handler<ParsingData<MarkupNode>>() {
 			private int level = 0;
 

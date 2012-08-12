@@ -1,14 +1,7 @@
-package net.aeten.core.stream.editor;
+	package net.aeten.core.stream.editor;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-
-import net.aeten.core.ConfigurationException;
+import java.io.*;
 import net.aeten.core.Connection;
-import net.aeten.core.Lazy;
 
 /**
  * 
@@ -26,40 +19,6 @@ public class StreamControllerConnection implements Connection {
 		this.input = input;
 		this.output = output;
 		this.editorStack = editorStack;
-	}
-
-	public StreamControllerConnection(final StreamControllerConfiguration configuration, final InputStream input, final OutputStream output) throws ConfigurationException {
-		this(configuration);
-		this.input = input;
-		this.output = output;
-	}
-
-	public StreamControllerConnection(final StreamControllerConfiguration configuration, final InputStream input) throws ConfigurationException {
-		this(configuration);
-		this.input = input;
-	}
-
-	public StreamControllerConnection(final StreamControllerConfiguration configuration, final OutputStream output) throws ConfigurationException {
-		this(configuration);
-		this.output = output;
-	}
-
-	public StreamControllerConnection(final StreamControllerConfiguration configuration) throws ConfigurationException {
-
-		this.input = configuration.getInputStream();
-		this.output = configuration.getOutputStream();
-
-		this.editorStack = new StreamEditor[(configuration.getEditorStack() == null) ? 0 : configuration.getEditorStack().getStack().size()];
-		if (this.editorStack.length > 0) {
-			int index = 0;
-			try {
-				for (Lazy<? extends StreamEditor, ?> editorFactory : configuration.getEditorStack().getStack()) {
-					this.editorStack[index++] = editorFactory.instance();
-				}
-			} catch (Exception exception) {
-				throw new ConfigurationException(configuration.getName(), exception);
-			}
-		}
 	}
 
 	@Override

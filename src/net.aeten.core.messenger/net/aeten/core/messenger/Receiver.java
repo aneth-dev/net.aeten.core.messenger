@@ -1,7 +1,6 @@
 package net.aeten.core.messenger;
 
 import java.io.IOException;
-
 import net.aeten.core.Connection;
 import net.aeten.core.Identifiable;
 
@@ -9,10 +8,6 @@ public interface Receiver<Message> extends Identifiable, Connection {
 	public void receive(MessengerEventData<Message> data) throws IOException;
 
 	public static abstract class ReceiverAdapter<Message> extends ConnectionAdapter implements Receiver<Message> {
-		public ReceiverAdapter() {
-			super();
-		}
-
 		public ReceiverAdapter(String identifier) {
 			super(identifier);
 		}

@@ -2,14 +2,12 @@ package net.aeten.core.messenger;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.aeten.core.ConfigurationException;
 import net.aeten.core.Format;
-import net.aeten.core.args4j.CommandLineParserHelper;
 import net.aeten.core.event.Handler;
 import net.aeten.core.event.Hook;
 import net.aeten.core.event.HookEvent;
@@ -19,49 +17,43 @@ import net.aeten.core.event.Transmitter;
 import net.aeten.core.event.TransmitterFactory;
 import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
+import net.aeten.core.spi.FieldInit;
 import net.aeten.core.spi.Provider;
-
-import org.kohsuke.args4j.Option;
+import net.aeten.core.spi.SpiInitializer;
 
 /**
- * 
+ *
  * @author Thomas Pérennou
  */
 @Provider(Messenger.class)
-@Format("args")
 public class MessengerProvider<Message> implements Messenger<Message>, Handler<MessengerEventData<Message>> {
 
-	@Option(name = "-id",
-	        aliases = "--identifier",
-	        required = true)
-	private final String	                                                                      identifier;
+	@FieldInit(alias = "id")
+	private final String identifier;
+	@FieldInit(required = false)
+	private final Map<String, Sender<Message>> senders;
+	@FieldInit(required = false)
+	private final List<Receiver<Message>> receivers;
+	@FieldInit(required = false)
+	private final boolean autoConnect;
+	private volatile boolean connected;
+	private Transmitter<MessengerEventData<Message>> asyncSendEventTransmitter;
+	private RegisterableTransmitter<HookEvent<MessengerEvent, Hook>, MessengerEventData<Message>> hookTransmitter;
 
-	@Option(name = "-s",
-	        aliases = "--sender",
-	        required = false)
-	private final List<Sender<Message>>	                                                          senderList	= new ArrayList<>();
-
-	@Option(name = "-r",
-	        aliases = "--receiver",
-	        required = false)
-	private final List<Receiver<Message>>	                                                      receiverList	= new ArrayList<>();
-
-	@Option(name = "-c",
-	        aliases = "--auto-connect",
-	        required = false)
-	private final boolean	                                                                      autoConnect;
-
-	private final Map<String, Sender<Message>>	                                                  senderMap	   = new LinkedHashMap<>();
-
-	private volatile boolean	                                                                  connected;
-
-	private Transmitter<MessengerEventData<Message>>	                                          asyncSendEventTransmitter;
-	private RegisterableTransmitter<HookEvent<MessengerEvent, Hook>, MessengerEventData<Message>>	hookTransmitter;
-
-	/** @deprecated Reserved to configuration building */
-	@Deprecated
-	public MessengerProvider() {
-		this(null, new Sender[0], new Receiver[0], true);
+	public MessengerProvider(@SpiInitializer MessengerInitializer init) throws IOException {
+		identifier = init.getIdentifier();
+		senders = init.hasSenders() ? init.getSenders() : new HashMap<>();
+		receivers = init.hasReceivers() ? init.getReceivers() : new ArrayList<>();
+		autoConnect = init.hasAutoConnect() ? init.getAutoConnect() : false;
+		this.hookTransmitter = TransmitterFactory.synchronous(EVENTS.values());
+		if (this.identifier == null) {
+			this.asyncSendEventTransmitter = null;
+		} else {
+			this.asyncSendEventTransmitter = TransmitterFactory.asynchronous("Sender transmitter of Messenger " + this.identifier, EVENTS.values(), this, EVENTS.get(MessengerEvent.SEND, Hook.PRE));
+		}
+		if (autoConnect) {
+			connect();
+		}
 	}
 
 	protected MessengerProvider(String identifier) {
@@ -69,12 +61,14 @@ public class MessengerProvider<Message> implements Messenger<Message>, Handler<M
 	}
 
 	protected MessengerProvider(String identifier, Sender<Message> sender, Receiver<Message> receiver) {
-		this(identifier, new Sender[] { sender }, new Receiver[] { receiver }, true);
+		this(identifier, new Sender[]{sender}, new Receiver[]{receiver}, true);
 	}
-
+	
 	protected MessengerProvider(String identifier, Sender<Message>[] senderList, Receiver<Message>[] receiverList, boolean autoConnect) {
 		this.identifier = identifier;
 		this.autoConnect = autoConnect;
+		senders = new HashMap<>();
+		receivers = new ArrayList<>();
 		for (Sender<Message> sender : senderList) {
 			try {
 				this.addSender(sender);
@@ -111,7 +105,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Handler<M
 
 	@Override
 	public void transmit(Message message) {
-		this.transmit(message, this.senderList.get(0).getIdentifier(), null, Priority.MEDIUM);
+		this.transmit(message, this.senders.get(0).getIdentifier(), null, Priority.MEDIUM);
 	}
 
 	@Override
@@ -150,11 +144,11 @@ public class MessengerProvider<Message> implements Messenger<Message>, Handler<M
 			if (data.doIt()) {
 				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.START));
 
-				for (Receiver<Message> reciever : this.receiverList) {
+				for (Receiver<Message> reciever : this.receivers) {
 					reciever.connect();
 					this.startReceiver(reciever);
 				}
-				for (Sender<Message> sender : this.senderMap.values()) {
+				for (Sender<Message> sender : this.senders.values()) {
 					sender.connect();
 				}
 				this.connected = true;
@@ -174,10 +168,10 @@ public class MessengerProvider<Message> implements Messenger<Message>, Handler<M
 			if (data.doIt()) {
 				this.hookTransmitter.transmit(EVENTS.hook(data, Hook.START));
 
-				for (Receiver<Message> reciever : this.receiverList) {
+				for (Receiver<Message> reciever : this.receivers) {
 					reciever.disconnect();
 				}
-				for (Sender<Message> sender : this.senderMap.values()) {
+				for (Sender<Message> sender : this.senders.values()) {
 					sender.disconnect();
 				}
 				this.connected = false;
@@ -198,27 +192,9 @@ public class MessengerProvider<Message> implements Messenger<Message>, Handler<M
 		this.hookTransmitter.removeEventHandler(eventHandler, eventList);
 	}
 
-	@SuppressWarnings("unchecked")
-	public synchronized void configure(String configuration) throws ConfigurationException {
-		CommandLineParserHelper.configure(this, configuration);
-		if (this.asyncSendEventTransmitter == null) {
-			this.asyncSendEventTransmitter = TransmitterFactory.asynchronous("Sender transmitter of Messenger " + this.identifier, EVENTS.values(), this, EVENTS.get(MessengerEvent.SEND, Hook.PRE));
-		}
-		for (Sender<Message> sender : this.senderList) {
-			this.senderMap.put(sender.getIdentifier(), sender);
-		}
-		if (this.autoConnect) {
-			try {
-				this.connect();
-			} catch (IOException exception) {
-				throw new ConfigurationException(configuration, exception);
-			}
-		}
-	}
-
 	@Override
 	public synchronized void addReceiver(final Receiver<Message> receiver) throws IOException {
-		this.receiverList.add(receiver);
+		this.receivers.add(receiver);
 		if (this.connected) {
 			receiver.connect();
 			this.startReceiver(receiver);
@@ -227,6 +203,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Handler<M
 
 	private void startReceiver(final Receiver<Message> receiver) {
 		new Thread("Receiver " + receiver.getIdentifier()) {
+
 			@Override
 			public void run() {
 				while (receiver.isConnected()) {
@@ -260,7 +237,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Handler<M
 
 	@Override
 	public synchronized void addSender(Sender<Message> sender) throws IOException {
-		this.senderMap.put(sender.getIdentifier(), sender);
+		this.senders.put(sender.getIdentifier(), sender);
 		if (this.connected) {
 			sender.connect();
 		}
@@ -269,23 +246,23 @@ public class MessengerProvider<Message> implements Messenger<Message>, Handler<M
 	@Override
 	public synchronized void removeReceiver(final Receiver<Message> reciever) throws IOException {
 		reciever.disconnect();
-		this.receiverList.remove(reciever);
+		this.receivers.remove(reciever);
 	}
 
 	@Override
 	public synchronized void removeSender(final Sender<Message> sender) throws IOException {
 		sender.disconnect();
-		this.senderMap.remove(sender);
+		this.senders.remove(sender);
 	}
 
 	@Override
 	public synchronized String[] getReceivers() {
-		return this.receiverList.toArray(new String[this.receiverList.size()]);
+		return this.receivers.toArray(new String[this.receivers.size()]);
 	}
 
 	@Override
 	public synchronized String[] getSenders() {
-		Set<String> keySet = this.senderMap.keySet();
+		Set<String> keySet = this.senders.keySet();
 		return keySet.toArray(new String[keySet.size()]);
 	}
 
@@ -293,7 +270,7 @@ public class MessengerProvider<Message> implements Messenger<Message>, Handler<M
 	public void handleEvent(MessengerEventData<Message> data) {
 
 		if (this.connected) {
-			Sender<Message> sender = MessengerProvider.this.senderMap.get(data.getSubcontractor());
+			Sender<Message> sender = MessengerProvider.this.senders.get(data.getSubcontractor());
 			// Data event is already MessengerEvent.SEND, Hook.PRE
 			this.hookTransmitter.transmit(data);
 
@@ -328,5 +305,4 @@ public class MessengerProvider<Message> implements Messenger<Message>, Handler<M
 	public String getIdentifier() {
 		return this.identifier;
 	}
-
 }

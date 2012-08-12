@@ -8,37 +8,36 @@ import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import net.aeten.core.Configurable;
-import net.aeten.core.ConfigurationException;
-import net.aeten.core.args4j.UdpIpParameters;
+import net.aeten.core.net.UdpIpSocketFactory;
+import net.aeten.core.spi.FieldInit;
+import net.aeten.core.spi.SpiInitializer;
 
 
 /**
  * 
  * @author Thomas Pérennou
  */
-public class UdpIpInputStream extends InputStream implements Configurable<String> {
+public class UdpIpInputStream extends InputStream {
 
-	private UdpIpParameters parameters;
+	@FieldInit(alias = {"udp ip configuration", "UDP/IP configuration"})
+	private final UdpIpSocketFactory socketFactory;
 
-	private Thread receptionThread;
-	private final BlockingQueue<DatagramPacket> queue = new LinkedBlockingQueue<DatagramPacket>();
+	private final Thread receptionThread;
+	private final BlockingQueue<DatagramPacket> queue = new LinkedBlockingQueue<>();
 	private int position = 0;
 	private int available = 0;
 	private DatagramPacket currentPacket = null;
 
-	public UdpIpInputStream() {
-		this.parameters = null;
-		this.receptionThread = null;
+	public UdpIpInputStream(@SpiInitializer UdpIpInputStreamInitializer init) {
+		this(init.getSocketFactory());
 	}
 
 	public UdpIpInputStream(InetSocketAddress destinationInetSocketAddress, InetAddress sourceInetAddress, boolean autoBind, boolean reuse, int maxPacketSize) throws IOException {
-		this(new UdpIpParameters(destinationInetSocketAddress, sourceInetAddress, autoBind, reuse, maxPacketSize));
+		this(new UdpIpSocketFactory(destinationInetSocketAddress, sourceInetAddress, autoBind, reuse, maxPacketSize));
 	}
 
-	public UdpIpInputStream(UdpIpParameters parameters) {
-		this.parameters = parameters;
+	public UdpIpInputStream(UdpIpSocketFactory socketFactory) {
+		this.socketFactory = socketFactory;
 		this.receptionThread = new Thread(new ReceptionThread(), this.toString());
 		this.receptionThread.start();
 	}
@@ -47,21 +46,19 @@ public class UdpIpInputStream extends InputStream implements Configurable<String
 		@Override
 		public void run() {
 			try {
-				while ((UdpIpInputStream.this.parameters.getSocket() != null) && !UdpIpInputStream.this.parameters.getSocket().isClosed()) {
-					DatagramPacket packet = new DatagramPacket(new byte[UdpIpInputStream.this.parameters.getMaxPacketSize()], UdpIpInputStream.this.parameters.getMaxPacketSize(), UdpIpInputStream.this.parameters.getDestinationInetSocketAddress().getAddress(), UdpIpInputStream.this.parameters.getDestinationInetSocketAddress().getPort());
+				while ((socketFactory.getSocket() != null) && !socketFactory.getSocket().isClosed()) {
+					DatagramPacket packet = new DatagramPacket(new byte[socketFactory.getMaxPacketSize()], socketFactory.getMaxPacketSize(), socketFactory.getDestinationInetSocketAddress().getAddress(), socketFactory.getDestinationInetSocketAddress().getPort());
 					try {
-						UdpIpInputStream.this.parameters.getSocket().receive(packet);
-						UdpIpInputStream.this.available += packet.getLength();
-						UdpIpInputStream.this.queue.put(packet);
-					} catch (SocketTimeoutException exception) {
-						continue;
-					} catch (InterruptedException exception) {
+						socketFactory.getSocket().receive(packet);
+						available += packet.getLength();
+						queue.put(packet);
+					} catch (SocketTimeoutException | InterruptedException exception) {
 						continue;
 					}
 				}
 			} catch (IOException exception) {
-				if (UdpIpInputStream.this.parameters.getSocket() != null)
-					UdpIpInputStream.this.parameters.getSocket().close();
+				if (socketFactory.getSocket() != null)
+					socketFactory.getSocket().close();
 			} finally {
 				try {
 					UdpIpInputStream.this.close();
@@ -73,21 +70,8 @@ public class UdpIpInputStream extends InputStream implements Configurable<String
 	}
 
 	@Override
-	public void configure(String configuration) throws ConfigurationException {
-		if (this.parameters != null)
-			throw new ConfigurationException(configuration, UdpIpInputStream.class.getCanonicalName() + " is already configured");
-		try {
-			this.parameters = new UdpIpParameters(configuration);
-			this.receptionThread = new Thread(new ReceptionThread(), this.toString());
-			this.receptionThread.start();
-		} catch (Exception exception) {
-			throw new ConfigurationException(configuration, exception);
-		}
-	}
-
-	@Override
 	public String toString() {
-		return UdpIpInputStream.class.getName() + " (" + this.parameters + ")";
+		return UdpIpInputStream.class.getName() + " (" + this.socketFactory + ")";
 	}
 
 	@Override

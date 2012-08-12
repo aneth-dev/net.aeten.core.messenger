@@ -3,54 +3,47 @@ package net.aeten.core.messenger.stream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
-
-import net.aeten.core.ConfigurationException;
-import net.aeten.core.Format;
 import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
 import net.aeten.core.messenger.MessengerEventData;
 import net.aeten.core.messenger.Receiver;
+import net.aeten.core.spi.FieldInit;
 import net.aeten.core.spi.Provider;
+import net.aeten.core.spi.SpiInitializer;
 
-import org.kohsuke.args4j.Option;
 
 @Provider(Receiver.class)
-@Format("args")
 public class StreamReceiver<Message> extends Receiver.ReceiverAdapter<Message> {
 
-	@Option(name = "-is", aliases = "--input-stream", required = true)
-	private InputStream inputStream = null;
+	@FieldInit
+	private volatile InputStream inputStream;
+	private final StreamReceiverInitalizer initalizer;
 
-	/** @deprecated Reserved to configuration building */
-	@Deprecated
-	public StreamReceiver() {
+	public StreamReceiver(@SpiInitializer StreamReceiverInitalizer init) throws IOException {
+		super(init.getIdentifier());
+		initalizer = init;
+		connect();
 	}
 
 	public StreamReceiver(String identifier, ObjectInputStream inputStream) {
 		super(identifier);
 		this.inputStream = inputStream;
+		initalizer = null;
+		connected = true;
 	}
 
 	@Override
 	protected void doConnect() throws IOException {
-		if (this.configuration != null) {
-			try {
-				this.configure(this.configuration);
-			} catch (ConfigurationException e) {
-				throw new IOException(e);
-			}
+		if (initalizer == null && inputStream == null) {
+			throw new IOException("Unable to re-open input stream " + identifier);
 		}
+		inputStream = initalizer.getInputStream();
 	}
 
 	@Override
 	protected void doDisconnect() throws IOException {
-		this.inputStream.close();
-	}
-
-	@Override
-	public void configure(String conf) throws ConfigurationException {
-		super.configure(conf);
-		this.connected = true;
+		inputStream.close();
+		inputStream = null;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -59,7 +52,7 @@ public class StreamReceiver<Message> extends Receiver.ReceiverAdapter<Message> {
 		try {
 			Message message = (Message) ((ObjectInputStream) this.inputStream).readObject();
 			data.setMessage(message);
-		} catch (Throwable exception) {
+		} catch (IOException | ClassNotFoundException exception) {
 			if (this.inputStream.markSupported()) {
 				Logger.log(this, LogLevel.ERROR, this.getIdentifier() + " has not been able to read object. Trying to reset the stream…", exception);
 				this.inputStream.reset();

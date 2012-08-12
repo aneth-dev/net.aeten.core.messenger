@@ -5,79 +5,71 @@ import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-
-import net.aeten.core.Configurable;
-import net.aeten.core.ConfigurationException;
-import net.aeten.core.args4j.UdpIpParameters;
-
+import net.aeten.core.net.UdpIpSocketFactory;
+import net.aeten.core.spi.FieldInit;
+import net.aeten.core.spi.SpiInitializer;
 
 /**
  *
  * @author Thomas Pérennou
  */
-public class UdpIpOutputStream extends OutputStream implements Configurable<String> {
-	private UdpIpParameters parameters;
+public class UdpIpOutputStream extends OutputStream {
+
+	@FieldInit(alias = {"udp ip configuration", "UDP/IP configuration"})
+	private final UdpIpSocketFactory socketFactory;
 	private byte[] buffer;
 	private int position = 0;
 
-	public UdpIpOutputStream(UdpIpParameters parameters) {
-	    this.parameters = parameters;
-	    this.buffer = new byte[this.parameters.getMaxPacketSize()];
+	public UdpIpOutputStream(@SpiInitializer UdpIpOutputStreamInitializer init) {
+		this(init.getSocketFactory());
 	}
-	
+
+	public UdpIpOutputStream(UdpIpSocketFactory socketFactory) {
+		this.socketFactory = socketFactory;
+		this.buffer = new byte[this.socketFactory.getMaxPacketSize()];
+	}
+
 	public UdpIpOutputStream(InetSocketAddress destinationInetSocketAddress,
-	        InetAddress sourceInetAddress, boolean autoBind, boolean reuse, int maxPacketSize)
-	        throws IOException {
-	   this(new UdpIpParameters(destinationInetSocketAddress,
-	                            sourceInetAddress, autoBind, reuse, maxPacketSize));
-	    this.buffer = new byte[this.parameters.getMaxPacketSize()];
+			  InetAddress sourceInetAddress, boolean autoBind, boolean reuse, int maxPacketSize)
+			  throws IOException {
+		this(new UdpIpSocketFactory(destinationInetSocketAddress,
+				  sourceInetAddress, autoBind, reuse, maxPacketSize));
+		this.buffer = new byte[this.socketFactory.getMaxPacketSize()];
 	}
 
 	public UdpIpOutputStream() {
-		this.parameters = null;
+		this.socketFactory = null;
 		this.buffer = null;
 	}
 
 	@Override
 	public void write(int b) throws IOException {
-		if (this.buffer == null)
+		if (this.buffer == null) {
 			throw new IOException("Stream must be configured");
-		if (this.position == this.parameters.getMaxPacketSize())
+		}
+		if (this.position == this.socketFactory.getMaxPacketSize()) {
 			this.flush();
+		}
 		this.buffer[this.position++] = (byte) b;
 	}
 
 	@Override
 	public void write(byte[] data, int offset, int length) throws IOException {
-		for (int i=offset; i<length ; i++)
+		for (int i = offset; i < length; i++) {
 			this.write(data[i]);
+		}
 	}
 
 	@Override
 	public void flush() throws IOException {
-		this.parameters.getSocket().send(
-		        new DatagramPacket(this.buffer, this.position,
-		                this.parameters.getDestinationInetSocketAddress()));
+		this.socketFactory.getSocket().send(
+				  new DatagramPacket(this.buffer, this.position,
+				  this.socketFactory.getDestinationInetSocketAddress()));
 		this.position = 0;
 	}
 
 	@Override
 	public void close() throws IOException {
-		this.parameters.getSocket().close();
+		this.socketFactory.getSocket().close();
 	}
-
-	@Override
-	public void configure(String configuration) throws ConfigurationException {
-		if (this.parameters != null)
-			throw new ConfigurationException(configuration, UdpIpInputStream.class
-			        .getCanonicalName()
-			        + " is already configured");
-		try {
-			this.parameters = new UdpIpParameters(configuration);
-		    this.buffer = new byte[this.parameters.getMaxPacketSize()];
-		} catch (Exception exception) {
-			throw new ConfigurationException(configuration, exception);
-		}
-	}
-
 }

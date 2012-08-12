@@ -1,43 +1,39 @@
-package net.aeten.core.messenger.test;
+	package net.aeten.core.messenger.test;
 
 import java.util.Calendar;
 import java.util.Date;
-
 import net.aeten.core.event.Handler;
 import net.aeten.core.event.Hook;
 import net.aeten.core.event.Priority;
 import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
 import net.aeten.core.logging.LoggingData;
-import net.aeten.core.messenger.Messenger;
-import net.aeten.core.messenger.MessengerAcknowledgeEvent;
-import net.aeten.core.messenger.MessengerAcknowledgeEventData;
-import net.aeten.core.messenger.MessengerAcknowledgeHook;
-import net.aeten.core.messenger.MessengerEvent;
-import net.aeten.core.messenger.MessengerEventData;
-import net.aeten.core.messenger.MessengerProvider;
+import net.aeten.core.messenger.*;
 import net.aeten.core.messenger.net.UdpIpReceiver;
 import net.aeten.core.spi.Configuration;
 import net.aeten.core.spi.Configurations;
 import net.aeten.core.spi.Service;
 
-@Configurations({ @Configuration(name = "server.aeml",
-        provider = MessengerProvider.class), @Configuration(name = "client.properties",
-        provider = MessengerProvider.class,
-        parser = "net.aeten.core.parsing.properties.PropertiesParser",
-        converter = "net.aeten.core.args4j.Markup2Args4j"), @Configuration(name = "client.receiver.aeml",
-        provider = UdpIpReceiver.class) })
+@Configurations({
+	@Configuration(name = "server.yaml",
+	provider = MessengerProvider.class),
+	@Configuration(name = "client.yaml",
+	provider = MessengerProvider.class,
+	parser = "net.aeten.core.parsing.yaml.YamlParser"),
+	@Configuration(name = "client.receiver.yaml",
+	provider = UdpIpReceiver.class)})
 public class Application {
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws Exception {
 		Logger.addEventHandler(new Handler<LoggingData>() {
+
 			@Override
 			public void handleEvent(LoggingData data) {
 				/*
 				 * Basic logging. Can be plugged to anyone logging tool.
-				 * net.aeten.core.messenger.Messenger exceptions can be caught
-				 * by this way
+				 * net.aeten.core.messenger.Messenger exceptions can be caught by
+				 * this way
 				 */
 				synchronized (this) {
 					Date date = Calendar.getInstance().getTime();
@@ -59,12 +55,13 @@ public class Application {
 		Messenger<AbstractMessage> server = Service.getProvider(Messenger.class, "net.aeten.core.test.messenger.server");
 
 		AcknowledgeProtocol protocol = new AcknowledgeProtocol();
-		MessengerAcknowledgeHook<AbstractMessage, Acknowledge> clientAcknowledgeHook = new MessengerAcknowledgeHook<AbstractMessage, Acknowledge>("Client acknowledge hook test", null, protocol);
-		MessengerAcknowledgeHook<AbstractMessage, Acknowledge> serverAcknowledgeHook = new MessengerAcknowledgeHook<AbstractMessage, Acknowledge>("Server acknowledge hook test", null, protocol);
+		MessengerAcknowledgeHook<AbstractMessage, Acknowledge> clientAcknowledgeHook = new MessengerAcknowledgeHook<>("Client acknowledge hook test", null, protocol);
+		MessengerAcknowledgeHook<AbstractMessage, Acknowledge> serverAcknowledgeHook = new MessengerAcknowledgeHook<>("Server acknowledge hook test", null, protocol);
 		server.addEventHandler(serverAcknowledgeHook, Messenger.EVENTS.get(MessengerEvent.SEND, Hook.POST), Messenger.EVENTS.get(MessengerEvent.RECEIVE, Hook.POST));
 		client.addEventHandler(clientAcknowledgeHook, Messenger.EVENTS.get(MessengerEvent.SEND, Hook.POST), Messenger.EVENTS.get(MessengerEvent.RECEIVE, Hook.POST));
 
 		Handler<MessengerAcknowledgeEventData<AbstractMessage, Acknowledge>> acknowledgeEventHandler = new Handler<MessengerAcknowledgeEventData<AbstractMessage, Acknowledge>>() {
+
 			@Override
 			public void handleEvent(MessengerAcknowledgeEventData<AbstractMessage, Acknowledge> data) {
 				LogLevel level = (data.getEvent() == MessengerAcknowledgeEvent.ACKNOWLEDGED) ? LogLevel.INFO : LogLevel.ERROR;
@@ -75,9 +72,12 @@ public class Application {
 		serverAcknowledgeHook.addEventHandler(acknowledgeEventHandler, MessengerAcknowledgeEvent.values());
 
 		server.addEventHandler(new Handler<MessengerEventData<AbstractMessage>>() {
+
 			@Override
 			public void handleEvent(MessengerEventData<AbstractMessage> data) {
-				if (data.getMessage() instanceof AcknowledgeMessage) return;
+				if (data.getMessage() instanceof AcknowledgeMessage) {
+					return;
+				}
 				if (data.getMessage().getAcknowledge() == null) {
 					data.getSource().transmit(new AcknowledgeMessage(Acknowledge.INVALID_MESSAGE), "net.aeten.core.test.messenger.server.sender");
 					return;
@@ -100,6 +100,7 @@ public class Application {
 			}
 		}, Messenger.EVENTS.get(MessengerEvent.RECEIVE, Hook.END));
 		server.addEventHandler(new Handler<MessengerEventData<AbstractMessage>>() {
+
 			@Override
 			public void handleEvent(MessengerEventData<AbstractMessage> data) {
 				Logger.log(data.getSource(), LogLevel.INFO, "event={" + data.getEvent() + "}; data={" + data.getMessage() + "}");
@@ -110,7 +111,9 @@ public class Application {
 
 			@Override
 			public void handleEvent(MessengerEventData<AbstractMessage> data) {
-				if ((data.getEvent().getSourceEvent() == MessengerEvent.RECEIVE) && (!(data.getMessage() instanceof AcknowledgeMessage))) return;
+				if ((data.getEvent().getSourceEvent() == MessengerEvent.RECEIVE) && (!(data.getMessage() instanceof AcknowledgeMessage))) {
+					return;
+				}
 				Logger.log(data.getSource(), LogLevel.INFO, "event={" + data.getEvent() + "}; data={" + data.getMessage() + "}");
 			}
 		}, Messenger.EVENTS.get(MessengerEvent.SEND, Hook.END), Messenger.EVENTS.get(MessengerEvent.RECEIVE, Hook.END));

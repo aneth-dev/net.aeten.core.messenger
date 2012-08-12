@@ -1,0 +1,21 @@
+identifier: net.aeten.core.test.messenger.client
+auto-connect: false
+receivers:
+  - net.aeten.core.test.messenger.client.receiver
+senders:
+  net.aeten.core.test.messenger.client.sender: !net.aeten.core.messenger.net.UdpIpSender
+    identifier: net.aeten.core.test.messenger.client.sender
+    message-encoder: !net.aeten.core.messenger.test.MessageCodec
+    udp-ip-configuration:
+      destination-inet-socket-address: 127.0.0.1:5200
+      max-packet-size: 64
+      bind: false
+      reuse: true
+  net.aeten.core.test.messenger.client.sender_bis: !net.aeten.core.messenger.net.UdpIpSender
+    identifier: net.aeten.core.test.messenger.client.sender_bis
+    message-encoder: !net.aeten.core.messenger.test.MessageCodec
+    udp-ip-configuration:
+      destination-inet-socket-address: 127.0.0.1:5203
+      max-packet-size: 64
+      bind: false
+      reuse: true

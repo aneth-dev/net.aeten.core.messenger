@@ -7,7 +7,7 @@ Note:
 Current version:
 	0.0.6
 
-SPI (configurable service providers) interface rebuilt. Dependence of org.kohsuke.args4j has been removed and Configurable interface has been removed to. So severals modules does not compile. For instance there are only net.aeten.core and net.aeten.core.parsing.* that are working.
+SPI (configurable service providers) interface rebuilt on head revision. Dependency to org.kohsuke.args4j and Configurable interface have been removed.
 
 Provides:
 	- generic event transmitter and handler (synchronous and asynchronous)
@@ -20,12 +20,11 @@ Third party dependences:
 
 Details of modules:
 	- net.aeten.core                    -> requires net.jcip.annotations
-	- net.aeten.core.alert              -> requires net.aeten.core (alert event management)
-	- net.aeten.core.args4j             -> requires org.kohsuke.args4j, net.aeten.core
-	- net.aeten.core.messenger          -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.args4j
-	- net.aeten.core.messenger.stream   -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.args4j, net.aeten.core.messenger, net.aeten.core.stream
+	- net.aeten.core.alert              -> requires net.aeten.core (alert event management for application user destination)
+	- net.aeten.core.messenger          -> requires net.aeten.core
+	- net.aeten.core.messenger.stream   -> requires net.aeten.core, net.aeten.core.messenger, net.aeten.core.stream
 	- net.aeten.core.parsing.properties -> net.aeten.core
-	- net.aeten.core.parsing.aeml       -> net.aeten.core (markup language in developement based on YAML but not based on keys)
-	- net.aeten.core.stream             -> requires org.kohsuke.args4j, net.aeten.core, net.aeten.core.args4j
+	- net.aeten.core.parsing.yaml       -> net.aeten.core (a YAML parser)
+	- net.aeten.core.stream             -> requires net.aeten.core
 
 See test directory for samples

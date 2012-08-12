@@ -3,30 +3,30 @@ package net.aeten.core.messenger.stream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-
-import net.aeten.core.ConfigurationException;
-import net.aeten.core.Format;
 import net.aeten.core.messenger.MessengerEventData;
 import net.aeten.core.messenger.Sender;
+import net.aeten.core.spi.FieldInit;
 import net.aeten.core.spi.Provider;
-
-import org.kohsuke.args4j.Option;
+import net.aeten.core.spi.SpiInitializer;
 
 @Provider(Sender.class)
-@Format("args")
 public class StreamSender<Message> extends Sender.SenderAdapter<Message> {
 
-	@Option(name = "-os", aliases = "--output-stream", required = true)
-	private OutputStream outputStream = null;
+	@FieldInit
+	private volatile OutputStream outputStream;
+	private final StreamSenderInitalizer initalizer;
 
-	/** @deprecated Reserved to configuration building */
-	@Deprecated
-	public StreamSender() {
+	public StreamSender(@SpiInitializer StreamSenderInitalizer init) throws IOException {
+		super(init.getIdentifier());
+		initalizer = init;
+		connect();
 	}
 
 	public StreamSender(String identifier, ObjectOutputStream outputStream) {
 		super(identifier);
 		this.outputStream = outputStream;
+		initalizer = null;
+		connected = true;
 	}
 
 	@Override
@@ -37,24 +37,15 @@ public class StreamSender<Message> extends Sender.SenderAdapter<Message> {
 
 	@Override
 	protected void doDisconnect() throws IOException {
-		this.outputStream.close();
+		outputStream.close();
+		outputStream = null;
 	}
 
 	@Override
 	protected void doConnect() throws IOException {
-		if (this.configuration != null) {
-			try {
-				this.configure(this.configuration);
-			} catch (ConfigurationException e) {
-				throw new IOException(e);
-			}
+	if (initalizer == null && outputStream == null) {
+			throw new IOException("Unable to re-open output stream " + identifier);
 		}
+		outputStream = initalizer.getOutputStream();
 	}
-
-	@Override
-	public void configure(String conf) throws ConfigurationException {
-		super.configure(conf);
-		this.connected = true;
-	}
-
 }
