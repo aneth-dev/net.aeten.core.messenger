@@ -5,7 +5,6 @@ import java.io.ObjectOutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.net.InetSocketAddress;
-
 import net.aeten.core.stream.UdpIpOutputStream;
 import net.aeten.core.stream.editor.StreamControllerConnection;
 
@@ -24,13 +23,11 @@ public class Emission {
 		int i = 0;
 		while (true) {
 			try {
-				String object = new String("command/" + ++i);
+				String object = "command/" + ++i;
 				outputStream.writeObject(object);
 				System.out.println("Object sent by emission: " + object);
 				Thread.sleep(2000);
-			} catch (IOException exception) {
-				exception.printStackTrace();
-			} catch (InterruptedException exception) {
+			} catch (IOException | InterruptedException exception) {
 				exception.printStackTrace();
 			}
 		}

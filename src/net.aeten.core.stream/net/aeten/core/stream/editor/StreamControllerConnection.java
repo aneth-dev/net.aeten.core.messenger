@@ -1,6 +1,10 @@
 	package net.aeten.core.stream.editor;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import net.aeten.core.Connection;
 
 /**
@@ -9,8 +13,8 @@ import net.aeten.core.Connection;
  */
 public class StreamControllerConnection implements Connection {
 
-	private InputStream input;
-	private OutputStream output;
+	private final InputStream input;
+	private final OutputStream output;
 	private final StreamEditor[] editorStack;
 	private StreamEditorController[] controllerStack;
 	private boolean isConnected;

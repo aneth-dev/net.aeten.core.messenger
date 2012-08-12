@@ -5,7 +5,6 @@ import java.io.ObjectInputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.net.InetSocketAddress;
-
 import net.aeten.core.stream.UdpIpInputStream;
 import net.aeten.core.stream.editor.StreamControllerConnection;
 
@@ -15,6 +14,7 @@ import net.aeten.core.stream.editor.StreamControllerConnection;
  */
 public class Reception {
 
+	@SuppressWarnings("CallToThreadDumpStack")
 	public static void main(String[] arguments) throws Exception {
 		final PipedOutputStream pipedOut = new PipedOutputStream();
 		final StreamControllerConnection connection = new StreamControllerConnection(new UdpIpInputStream(new InetSocketAddress("230.2.15.2", 5200), null, true, true, 64), pipedOut, new Decoder());
@@ -25,9 +25,7 @@ public class Reception {
 		while (true) {
 			try {
 				System.out.println("Object recieved from reception: " + inputStream.readObject());
-			} catch (IOException exception) {
-				exception.printStackTrace();
-			} catch (ClassNotFoundException exception) {
+			} catch (IOException | ClassNotFoundException exception) {
 				exception.printStackTrace();
 			}
 		}
