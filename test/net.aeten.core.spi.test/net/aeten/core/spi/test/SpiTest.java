@@ -3,7 +3,11 @@ package net.aeten.core.spi.test;
 import java.util.HashMap;
 import java.util.Map;
 import net.aeten.core.Identifiable;
-import net.aeten.core.spi.*;
+import net.aeten.core.spi.Configuration;
+import net.aeten.core.spi.FieldInit;
+import net.aeten.core.spi.Provider;
+import net.aeten.core.spi.Service;
+import net.aeten.core.spi.SpiInitializer;
 
 public interface SpiTest {
 
@@ -56,4 +60,5 @@ public interface SpiTest {
 			}
 		}
 	}
+
 }
