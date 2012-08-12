@@ -1,4 +1,4 @@
-	package net.aeten.core.messenger.test;
+package net.aeten.core.messenger.test;
 
 import java.util.Calendar;
 import java.util.Date;
