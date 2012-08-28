@@ -3,7 +3,9 @@
         simple example build file
     </description>
 	<!-- set global properties for this build -->
+	<property name="javac" location="/usr/local/java/jdk1.7.0_05/bin/javac" />
 	<property name="src" location="src/net.aeten.core" />
+	<property name="jcip" location="src/net.jcip.annotations" />
 	<property name="build" location="build" />
 	<property name="dist" location="dist" />
 
@@ -23,7 +25,10 @@
 
 	<target name="compile" depends="init" description="compile the source ">
 		<!-- Compile the java code from ${src} into ${build} -->
-		<javac srcdir="${src}" destdir="${build}" includeantruntime="false" executable="/usr/local/java/jdk1.7.0_05/bin/javac" compiler="javac1.7" debuglevel="DEBUG" fork="true">
+
+		<javac destdir="${build}" includeantruntime="false" executable="${javac}" compiler="javac1.7" debuglevel="DEBUG" fork="true">
+			<src path="${jcip}"/>
+			<src path="${src}"/>
 			<compilerarg line="-classpath" />
 		</javac>
 	</target>

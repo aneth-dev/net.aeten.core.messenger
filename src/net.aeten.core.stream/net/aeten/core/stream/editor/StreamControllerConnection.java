@@ -1,4 +1,4 @@
-	package net.aeten.core.stream.editor;
+package net.aeten.core.stream.editor;
 
 import java.io.IOException;
 import java.io.InputStream;
