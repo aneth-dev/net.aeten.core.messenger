@@ -1,3 +1,4 @@
+--- !net.aeten.core.messenger.MessengerProvider
 identifier: net.aeten.core.test.messenger.server
 auto connect: false
 receivers:
@@ -10,7 +11,7 @@ receivers:
           max packet size: 64
           bind: true
           reuse: true
-senders:	
+senders:
   net.aeten.core.test.messenger.server.sender: !net.aeten.core.messenger.stream.StreamSender
     identifier: net.aeten.core.test.messenger.server.sender
     output stream: !net.aeten.core.messenger.test.TestObjectOutputStream

@@ -3,7 +3,6 @@ package net.aeten.core.messenger;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.aeten.core.ConfigurationException;
 import net.aeten.core.Identifiable;
 import net.aeten.core.event.Handler;
 import net.aeten.core.event.HandlerRegister;
@@ -12,7 +11,6 @@ import net.aeten.core.event.TransmitterService;
 import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
 import net.aeten.core.spi.FieldInit;
-import net.aeten.core.spi.SpiInitializer;
 
 
 /**
