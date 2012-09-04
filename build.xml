@@ -1,34 +1,27 @@
 <project name="core" default="dist" basedir=".">
 	<description>
-        simple example build file
+        net.aeten.core build file (contains SPI)
     </description>
-	<!-- set global properties for this build -->
-	<property name="javac" location="/usr/local/java/jdk1.7.0_05/bin/javac" />
-	<property name="src" location="src/net.aeten.core" />
-	<property name="jcip" location="src/net.jcip.annotations" />
+	<property name="src.core" location="src/net.aeten.core" />
+	<property name="src.jcip" location="src/net.jcip.annotations" />
 	<property name="build" location="build" />
 	<property name="dist" location="dist" />
 
 	<target name="init">
-		<!-- Create the time stamp -->
-		<tstamp />
-		<!-- Create the build directory structure used by compile -->
 		<mkdir dir="${build}" />
 		<mkdir dir="${build}/META-INF" />
 		<mkdir dir="${build}/META-INF/services" />
 		<copy todir="${build}/META-INF/services">
-			<fileset dir="${src}/META-INF/services">
+			<fileset dir="${src.core}/META-INF/services">
 				<include name="*" />
 			</fileset>
 		</copy>
 	</target>
 
 	<target name="compile" depends="init" description="compile the source ">
-		<!-- Compile the java code from ${src} into ${build} -->
-
-		<javac destdir="${build}" includeantruntime="false" executable="${javac}" compiler="javac1.7" debuglevel="DEBUG" fork="true">
-			<src path="${jcip}"/>
-			<src path="${src}"/>
+		<javac destdir="${build}" includeantruntime="false" compiler="javac1.7" debuglevel="DEBUG" fork="false">
+			<src path="${src.jcip}"/>
+			<src path="${src.core}"/>
 			<compilerarg line="-classpath" />
 		</javac>
 	</target>
@@ -40,7 +33,6 @@
 	<target name="dist" depends="jar" description="generate the distribution" />
 
 	<target name="clean" description="clean up">
-		<!-- Delete the ${build} and ${dist} directory trees -->
 		<delete dir="${build}" />
 		<delete dir="${dist}" />
 	</target>

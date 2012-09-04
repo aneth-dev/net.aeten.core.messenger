@@ -37,11 +37,6 @@ public class UdpIpOutputStream extends OutputStream {
 		this.buffer = new byte[this.socketFactory.getMaxPacketSize()];
 	}
 
-	public UdpIpOutputStream() {
-		this.socketFactory = null;
-		this.buffer = null;
-	}
-
 	@Override
 	public void write(int b) throws IOException {
 		if (this.buffer == null) {

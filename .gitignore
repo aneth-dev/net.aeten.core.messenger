@@ -1,13 +1,8 @@
-bin
-.fr-ekvpx8
 .classpath
 .project
-build.properties
-build.xml
-manifest.mf
 .settings
-META-INF
+.gitignore
 *~
+bin/
 dist/
 build/
-nbproject/

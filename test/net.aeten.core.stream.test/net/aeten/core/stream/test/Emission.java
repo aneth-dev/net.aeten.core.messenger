@@ -17,18 +17,18 @@ public class Emission {
 	public static void main(String[] arguments) throws Exception {
 		final PipedInputStream pipedIn = new PipedInputStream();
 		final StreamControllerConnection connection = new StreamControllerConnection(pipedIn, new UdpIpOutputStream(new InetSocketAddress("230.2.15.2", 5200), null, true, true, 64), new Encoder());
-		final ObjectOutputStream outputStream = new ObjectOutputStream(new PipedOutputStream(pipedIn));
-
-		connection.connect();
-		int i = 0;
-		while (true) {
-			try {
-				String object = "command/" + ++i;
-				outputStream.writeObject(object);
-				System.out.println("Object sent by emission: " + object);
-				Thread.sleep(2000);
-			} catch (IOException | InterruptedException exception) {
-				exception.printStackTrace();
+		try (final ObjectOutputStream outputStream = new ObjectOutputStream(new PipedOutputStream(pipedIn))) {
+			connection.connect();
+			int i = 0;
+			while (true) {
+				try {
+					String object = "command/" + ++i;
+					outputStream.writeObject(object);
+					System.out.println("Object sent by emission: " + object);
+					Thread.sleep(2000);
+				} catch (IOException | InterruptedException exception) {
+					exception.printStackTrace();
+				}
 			}
 		}
 
