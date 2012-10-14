@@ -5,7 +5,7 @@ Note:
 	API become quite stable.
 
 Current version:
-	0.0.7
+	0.0.8
 
 Provides:
 	- generic event transmitter and handler (synchronous and asynchronous)
@@ -26,5 +26,8 @@ Details of modules:
 	- net.aeten.core.parsing.xml        -> net.aeten.core
 	- net.aeten.core.parsing.yaml       -> net.aeten.core (a YAML parser in progress, see test/net.aeten.core.parsing.test/net/aeten/core/parsing/test/test.yaml in parsing branch for supported syntax)
 	- net.aeten.core.stream             -> requires net.aeten.core
+
+	- net.aeten.core.jna                -> requires com.sun.jna
+Not under MIT license, contains one class with copy/past of code from a JNA part. Need to be recode in order to be fully integrated
 
 See test directory for samples

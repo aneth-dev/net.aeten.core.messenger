@@ -1,1 +1,1 @@
- - Replace Logger use in Exceptions catch blocks by a new FrameworkErrorHandler witch the default one will log or throws exception as appropriate
+ - Replace Logger use in Exceptions catch blocks by a new FrameworkErrorHandler witch the default one will log or throws exception as appropriate, replace the rest with SLF4J (MIT License).
