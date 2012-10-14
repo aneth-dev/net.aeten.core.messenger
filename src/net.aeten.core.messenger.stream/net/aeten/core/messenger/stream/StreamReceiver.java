@@ -3,6 +3,8 @@ package net.aeten.core.messenger.stream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.util.concurrent.atomic.AtomicReference;
+
 import net.aeten.core.logging.LogLevel;
 import net.aeten.core.logging.Logger;
 import net.aeten.core.messenger.MessengerEventData;
@@ -16,47 +18,56 @@ import net.aeten.core.spi.SpiInitializer;
 public class StreamReceiver<Message> extends Receiver.ReceiverAdapter<Message> {
 
 	@FieldInit
-	private volatile InputStream inputStream;
+	private final AtomicReference<InputStream> inputStream;
 	private final StreamReceiverInitalizer initalizer;
 
 	public StreamReceiver(@SpiInitializer StreamReceiverInitalizer init) throws IOException {
 		super(init.getIdentifier());
+		inputStream = new AtomicReference<>();
 		initalizer = init;
-		connect();
 	}
 
-	public StreamReceiver(String identifier, ObjectInputStream inputStream) {
+	public StreamReceiver(String identifier, InputStream inputStream) {
 		super(identifier);
-		this.inputStream = inputStream;
+		this.inputStream = new AtomicReference<>(inputStream);
 		initalizer = null;
-		connected = true;
 	}
 
 	@Override
 	protected void doConnect() throws IOException {
-		if (initalizer == null && inputStream == null) {
+		InputStream in = inputStream.get();
+		if (initalizer == null && in == null) {
 			throw new IOException("Unable to re-open input stream " + identifier);
 		}
-		inputStream = initalizer.getInputStream();
+		inputStream.compareAndSet(null, (ObjectInputStream) initalizer.getInputStream());
 	}
 
 	@Override
+	public final void disconnect() throws IOException {
+		InputStream in = inputStream.get();
+		in.close();
+		synchronized(this) {
+			inputStream.compareAndSet(in, null);
+			connected = false;
+		}
+	}
+	
+	@Override
 	protected void doDisconnect() throws IOException {
-		inputStream.close();
-		inputStream = null;
+		// Not used (disconnect overrides)
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void receive(MessengerEventData<Message> data) throws IOException {
+	public synchronized void receive(MessengerEventData<Message> data) throws IOException {
 		try {
-			Message message = (Message) ((ObjectInputStream) this.inputStream).readObject();
+			Message message = (Message) ((ObjectInputStream) inputStream.get()).readObject();
 			data.setMessage(message);
 		} catch (IOException | ClassNotFoundException exception) {
-			if (this.inputStream.markSupported()) {
-				Logger.log(this, LogLevel.ERROR, this.getIdentifier() + " has not been able to read object. Trying to reset the stream…", exception);
-				this.inputStream.reset();
-				this.receive(data);
+			if (inputStream.get().markSupported()) {
+				Logger.log(this, LogLevel.ERROR, getIdentifier() + " has not been able to read object. Trying to reset the stream…", exception);
+				inputStream.get().reset();
+				receive(data);
 			}
 			throw new IOException(exception);
 		}

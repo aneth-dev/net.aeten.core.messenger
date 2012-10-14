@@ -41,7 +41,7 @@ abstract class ConnectionAdapter implements Identifiable, Connection {
 	}
 
 	@Override
-	public final synchronized void disconnect() throws IOException {
+	public synchronized void disconnect() throws IOException {
 		if (this.isConnected()) {
 			try {
 				this.doDisconnect();
