@@ -60,8 +60,7 @@ public abstract class ObjectInputStream extends java.io.ObjectInputStream {
 	}
 
 
-
-	protected abstract Class<?> readClass() throws IOException;
+	protected Class<?> readClass() throws IOException { return null; };
 
 	/**
 	 * @see java.io.ObjectInputStream#close()

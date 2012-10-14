@@ -172,7 +172,7 @@ public abstract class ObjectOutputStream extends java.io.ObjectOutputStream {
 	 * @see java.io.DataOutputStream#writeFloat(float)
 	 */
 	@Override
-	public final void writeFloat(float v) throws IOException {
+	public void writeFloat(float v) throws IOException {
 		out.writeFloat(v);
 	}
 
@@ -182,7 +182,7 @@ public abstract class ObjectOutputStream extends java.io.ObjectOutputStream {
 	 * @see java.io.DataOutputStream#writeInt(int)
 	 */
 	@Override
-	public final void writeInt(int v) throws IOException {
+	public void writeInt(int v) throws IOException {
 		out.writeInt(v);
 	}
 
@@ -192,7 +192,7 @@ public abstract class ObjectOutputStream extends java.io.ObjectOutputStream {
 	 * @see java.io.DataOutputStream#writeLong(long)
 	 */
 	@Override
-	public final void writeLong(long v) throws IOException {
+	public void writeLong(long v) throws IOException {
 		out.writeLong(v);
 	}
 
@@ -202,7 +202,7 @@ public abstract class ObjectOutputStream extends java.io.ObjectOutputStream {
 	 * @see java.io.DataOutputStream#writeShort(int)
 	 */
 	@Override
-	public final void writeShort(int v) throws IOException {
+	public void writeShort(int v) throws IOException {
 		out.writeShort(v);
 	}
 
