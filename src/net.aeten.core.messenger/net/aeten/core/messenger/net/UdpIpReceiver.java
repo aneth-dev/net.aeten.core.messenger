@@ -40,7 +40,7 @@ public class UdpIpReceiver<Message> extends Receiver.ReceiverAdapter<Message> {
 	}
 
 	@Override
-	public boolean isConnected() {
+	public synchronized boolean isConnected() {
 		return (this.socket != null) && !this.socket.isClosed() && this.socket.isBound();
 	}
 
