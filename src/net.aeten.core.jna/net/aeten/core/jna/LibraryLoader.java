@@ -12,6 +12,11 @@ import com.sun.jna.Native;
 import com.sun.jna.Platform;
 
 public class LibraryLoader {
+	static {
+		for (File file: getTempDir ().listFiles ()) {
+			file.delete ();
+		}
+	}
 
 	@SuppressWarnings("unchecked")
 	public static <T> T loadFromJar(Class<T> interfaceClass,
@@ -52,9 +57,9 @@ public class LibraryLoader {
 				throw new Error ("File URL " + url + " could not be properly decoded");
 			}
 		} else {
-			InputStream is = Native.class.getResourceAsStream (resourceName);
+			InputStream is = loadinClass.getResourceAsStream (resourceName);
 			if (is == null) {
-				throw new Error ("Can't obtain jnidispatch InputStream");
+				throw new Error ("Can't obtain jnidispatch InputStream (" + resourceName + ")");
 			}
 
 			FileOutputStream fos = null;
@@ -63,7 +68,10 @@ public class LibraryLoader {
 				 * except on windows, to avoid problems with Web Start.
 				 */
 				File dir = getTempDir ();
-				lib = File.createTempFile ("jna", Platform.isWindows () ? ".dll" : null, dir);
+				lib = new File(dir, lname + (Platform.isWindows () ? ".dll" : ""));
+				if (lib.exists ()) {
+					return;
+				}
 				lib.deleteOnExit ();
 				fos = new FileOutputStream (lib);
 				int count;
