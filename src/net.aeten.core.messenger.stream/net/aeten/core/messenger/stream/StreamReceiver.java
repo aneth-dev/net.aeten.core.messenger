@@ -68,8 +68,9 @@ public class StreamReceiver<Message> extends Receiver.ReceiverAdapter<Message> {
 				Logger.log(this, LogLevel.ERROR, getIdentifier() + " has not been able to read object. Trying to reset the stream…", exception);
 				inputStream.get().reset();
 				receive(data);
+			} else {
+				throw new IOException(exception);
 			}
-			throw new IOException(exception);
 		}
 	}
 }
