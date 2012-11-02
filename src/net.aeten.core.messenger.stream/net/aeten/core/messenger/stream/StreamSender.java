@@ -31,8 +31,13 @@ public class StreamSender<Message> extends Sender.SenderAdapter<Message> {
 
 	@Override
 	public void send(MessengerEventData<Message> data) throws IOException {
-		((ObjectOutputStream) this.outputStream).writeObject(data.getMessage());
-		this.outputStream.flush();
+		ObjectOutputStream objectOutputStream = ((ObjectOutputStream) outputStream);
+		if (objectOutputStream == null) {
+			throw new IOException("Stream is closed");
+		}
+		Message message = data.getMessage();
+		objectOutputStream.writeObject(message);
+		objectOutputStream.flush();
 	}
 
 	@Override
