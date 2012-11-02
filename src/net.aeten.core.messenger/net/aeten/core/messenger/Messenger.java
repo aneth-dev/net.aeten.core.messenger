@@ -1,6 +1,7 @@
 package net.aeten.core.messenger;
 
 import java.io.IOException;
+import java.util.concurrent.Future;
 
 import net.aeten.core.Connection;
 import net.aeten.core.Identifiable;
@@ -18,19 +19,19 @@ public interface Messenger<Message> extends HandlerRegister<HookEvent<MessengerE
 
 	public static final HookEventGroup<MessengerEvent, Hook> EVENTS = HookEventGroup.build(MessengerEvent.values());
 
-	public void transmit(Message message);
+	public Future<MessengerEventData<Message>> transmit(Message message);
 
-	public void transmit(Message message, String sender);
+	public Future<MessengerEventData<Message>> transmit(Message message, String sender);
 
-	public void transmit(Message message, String sender, Priority priority);
+	public Future<MessengerEventData<Message>> transmit(Message message, String sender, Priority priority);
 
-	public void transmit(Message message, String sender, String contact);
+	public Future<MessengerEventData<Message>> transmit(Message message, String sender, String contact);
 
-	public void transmit(Message message, String sender, String contact, String service);
+	public Future<MessengerEventData<Message>> transmit(Message message, String sender, String contact, String service);
 
-	public void transmit(Message message, String sender, String contact, Priority priority);
+	public Future<MessengerEventData<Message>> transmit(Message message, String sender, String contact, Priority priority);
 
-	public void transmit(Message message, String sender, String contact, String service, Priority priority);
+	public Future<MessengerEventData<Message>> transmit(Message message, String sender, String contact, String service, Priority priority);
 
 	public void addReceiver(Receiver<Message> reciever) throws IOException;
 
