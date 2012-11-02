@@ -1,5 +1,7 @@
 package net.aeten.core.stream;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -17,62 +19,76 @@ public class TcpIpClient {
 	/**
 	 * @see {@link Socket#bind(SocketAddress)} (IP address)
 	 */
-	@FieldInit(alias = "interface")
+	@FieldInit (alias = "interface")
 	final InetSocketAddress destination;
 
 	/**
 	 * @see {@link Socket#setReuseAddress(boolean)}
 	 */
-	@FieldInit(required = false)
+	@FieldInit (required = false)
 	final boolean reuse;
 
 	/**
 	 * @see {@link Socket#bind(SocketAddress)}
 	 */
-	@FieldInit(required = false)
+	@FieldInit (required = false)
 	final boolean bind;
 
 	/**
 	 * @see {@link Socket#setSoTimeout(int)}
 	 */
-	@FieldInit(	alias = "time out",
+	@FieldInit (alias = "time out",
 					required = false)
 	final Integer timeout;
 
-	@GuardedBy("self")
-	private static final Map<InetSocketAddress, Socket> SOCKETS = new HashMap<> ();
-	@GuardedBy("SOCKETS")
-	private static final Map<Class<?>, Socket> OWNED = new HashMap<> ();
+	@GuardedBy ("CLIENTS")
+	private static final Map <InetSocketAddress, TcpIpClient> CLIENTS = new HashMap <> ();
+	@GuardedBy ("CLIENTS")
+	private static final Map <InetSocketAddress, Integer> USES = new HashMap <> ();
 
 	protected final Socket socket;
 
-	public TcpIpClient(InetSocketAddress destination,
-			boolean bind,
-			boolean reuse,
-			int timeout)
+	private TcpIpClient (InetSocketAddress destination,
+								boolean bind,
+								boolean reuse,
+								int timeout)
 			throws IOException {
 		this.destination = destination;
 		this.bind = bind;
 		this.reuse = reuse;
 		this.timeout = timeout;
-
-		synchronized (SOCKETS) {
-			Socket socket = SOCKETS.get (destination);
-			if ((socket != null) && !socket.isClosed () && OWNED.get (getClass ()) != null) {
-				throw new IOException ("Socket not closed");
-			}
-			if (socket == null || socket.isClosed ()) {
-				socket = createSocket ();
-				OWNED.put (getClass (), socket);
-				SOCKETS.put (destination, socket);
-			}
-			this.socket = socket;
-		}
-
+		socket = createSocket ();
 	}
 
-	private Socket createSocket()
-			throws IOException {
+	static TcpIpClient get (InetSocketAddress destination,
+									boolean bind,
+									boolean reuse,
+									int timeout) throws IOException {
+		synchronized (CLIENTS) {
+			Integer uses = USES.get (destination);
+			USES.put (destination, (uses == null) ? 1 : uses++);
+			TcpIpClient client = CLIENTS.get (destination);
+			if (client == null) {
+				client = new TcpIpClient (destination, bind, reuse, timeout);
+				CLIENTS.put (destination, client);
+			}
+			return client;
+		}
+	}
+	
+	static void release(InetSocketAddress destination) {
+		synchronized (CLIENTS) {
+			Integer uses = USES.get (destination) - 1;
+			if (uses == 0) {
+				CLIENTS.remove (destination);
+				USES.remove (destination);
+			} else {
+				USES.put (destination, uses);
+			}
+		}
+	}
+
+	private Socket createSocket () throws IOException {
 		Socket socket = new Socket (destination.getAddress (), destination.getPort ());
 		if (bind) {
 			if (!socket.isBound ()) {
@@ -92,125 +108,125 @@ public class TcpIpClient {
 	public static class InputStream extends
 			java.io.InputStream {
 
-		private final TcpIpClient client;
+		private final java.io.InputStream in;
+		private final InetSocketAddress destination;
 
-		public InputStream(@SpiInitializer TcpIpClientInputStreamInitializer init)
+		public InputStream (@SpiInitializer TcpIpClientInputStreamInitializer init)
 				throws IOException {
-			this (init.getDestination (), init.hasBind () ? init.getBind () : false, init.hasReuse () ? init.getReuse () : false, init.hasTimeout () ? init.getTimeout () : -1);
+			this (init.getDestination (), init.hasBind ()? init.getBind (): false, init.hasReuse ()? init.getReuse (): false, init.hasTimeout ()? init.getTimeout (): -1);
 		}
 
-		public InputStream(InetSocketAddress destination)
+		public InputStream (InetSocketAddress destination)
 				throws IOException {
 			this (destination, false, false, -1);
 		}
 
-		public InputStream(InetSocketAddress destination,
-				boolean bind,
-				boolean reuse,
-				int timeout)
+		public InputStream (	InetSocketAddress destination,
+									boolean bind,
+									boolean reuse,
+									int timeout)
 				throws IOException {
-			client = new TcpIpClient (destination, bind, reuse, timeout);
+			in = new BufferedInputStream (TcpIpClient.get (destination, bind, reuse, timeout).socket.getInputStream ());
+			this.destination = destination;
 		}
 
 		@Override
-		public String toString() {
-			return InputStream.class.getName () + " (" + client.destination + ")";
+		public String toString () {
+			return InputStream.class.getName () + " (" + destination + ")";
 		}
 
 		@Override
-		public int read()
-				throws IOException {
-			return client.socket.getInputStream ().read ();
+		public int read () throws IOException {
+			return in.read ();
 		}
 
 		@Override
-		public int available()
-				throws IOException {
-			return client.socket.getInputStream ().available ();
+		public int available () throws IOException {
+			return in.available ();
 		}
 
 		@Override
-		public void close()
-				throws IOException {
-			client.socket.close ();
+		public void close () throws IOException {
+			in.close ();
 		}
 
 		@Override
-		public synchronized void reset()
-				throws IOException {
-			client.socket.getInputStream ().reset ();
+		public synchronized void reset () throws IOException {
+			in.reset ();
 		}
 
 		@Override
-		public synchronized void mark(int readlimit) {
-			try {
-				client.socket.getInputStream ().mark (readlimit);
-			} catch (IOException exception) {
-				throw new IllegalStateException (exception);
-			}
+		public synchronized void mark (int readlimit) {
+			in.mark (readlimit);
 		}
 
 		@Override
-		public boolean markSupported() {
-			try {
-				return client.socket.getInputStream ().markSupported ();
-			} catch (IOException exception) {
-				throw new IllegalStateException (exception);
-			}
+		public boolean markSupported () {
+			return in.markSupported ();
+		}
+
+		@Override
+		protected void finalize () throws Throwable {
+			TcpIpClient.release (destination);
+			super.finalize ();
 		}
 	}
 
 	public static class OutputStream extends
 			java.io.OutputStream {
-		private final TcpIpClient client;
+		private final java.io.OutputStream out;
+		private final InetSocketAddress destination;
 
-		public OutputStream(@SpiInitializer TcpIpClientOutputStreamInitializer init)
+		public OutputStream (@SpiInitializer TcpIpClientOutputStreamInitializer init)
 				throws IOException {
-			this (init.getDestination (), init.hasBind () ? init.getBind () : false, init.hasReuse () ? init.getReuse () : false, init.hasTimeout () ? init.getTimeout () : -1);
+			this (init.getDestination (), init.hasBind ()? init.getBind (): false, init.hasReuse ()? init.getReuse (): false, init.hasTimeout ()? init.getTimeout (): -1);
 		}
 
-		public OutputStream(InetSocketAddress destination)
+		public OutputStream (InetSocketAddress destination)
 				throws IOException {
 			this (destination, false, false, -1);
 		}
 
-		public OutputStream(InetSocketAddress destination,
-				boolean bind,
-				boolean reuse,
-				int timeout)
+		public OutputStream (InetSocketAddress destination,
+									boolean bind,
+									boolean reuse,
+									int timeout)
 				throws IOException {
-			client = new TcpIpClient (destination, bind, reuse, timeout);
+			out = new BufferedOutputStream (TcpIpClient.get (destination, bind, reuse, timeout).socket.getOutputStream ());
+			this.destination = destination;
 		}
 
 		@Override
-		public String toString() {
-			return OutputStream.class.getName () + " (" + client.destination + ")";
+		public String toString () {
+			return OutputStream.class.getName () + " (" + destination + ")";
 		}
 
 		@Override
-		public void write(int b)
-				throws IOException {
-			client.socket.getOutputStream ().write (b);
+		public void write (int b) throws IOException {
+			out.write (b);
 		}
 
 		@Override
-		public void write(byte[] data,
-				int offset,
-				int length)
-				throws IOException {
-			client.socket.getOutputStream ().write (data, offset, length);
+		public void write (	byte[] data,
+									int offset,
+									int length) throws IOException {
+			out.write (data, offset, length);
 		}
 
 		@Override
-		public void flush()
-				throws IOException {
-			client.socket.getOutputStream ().flush ();
+		public void flush () throws IOException {
+			out.flush ();
 		}
 
 		@Override
-		public void close()
-				throws IOException {
-			client.socket.close ();
+		public void close () throws IOException {
+			out.close ();
+		}
+
+		@Override
+		protected void finalize () throws Throwable {
+			TcpIpClient.release (destination);
+			super.finalize ();
 		}
 	}
 
