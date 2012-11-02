@@ -10,11 +10,12 @@ import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.aeten.core.logging.LogLevel;
-import net.aeten.core.logging.Logger;
 import net.aeten.core.spi.FieldInit;
 import net.aeten.core.spi.SpiInitializer;
 import net.jcip.annotations.GuardedBy;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TcpIpServer {
 	/**
@@ -52,6 +53,7 @@ public class TcpIpServer {
 					required = false)
 	final Integer timeout;
 
+	private static final Logger LOGGER = LoggerFactory.getLogger (TcpIpClient.class);
 	@GuardedBy ("SERVERS")
 	private static final Map <InetSocketAddress, TcpIpServer> SERVERS = new HashMap <> ();
 	@GuardedBy ("SERVERS")
@@ -85,7 +87,7 @@ public class TcpIpServer {
 									int backlog) throws IOException {
 		synchronized (SERVERS) {
 			Integer uses = USES.get (destination);
-			USES.put (destination, (uses == null) ? 1 : uses++);
+			USES.put (destination, (uses == null)? 1: uses++);
 			TcpIpServer server = SERVERS.get (destination);
 			if (server == null) {
 				server = new TcpIpServer (destination, bind, reuse, timeout, backlog);
@@ -94,8 +96,8 @@ public class TcpIpServer {
 			return server;
 		}
 	}
-	
-	static void release(InetSocketAddress destination) {
+
+	static void release (InetSocketAddress destination) {
 		synchronized (SERVERS) {
 			Integer uses = USES.get (destination) - 1;
 			if (uses == 0) {
@@ -106,7 +108,7 @@ public class TcpIpServer {
 			}
 		}
 	}
-	
+
 	final java.io.InputStream getInputStream () throws IOException {
 		synchronized (serverSocket) {
 			if (!serverSocket.isBound ()) {
@@ -120,18 +122,19 @@ public class TcpIpServer {
 			return in;
 		}
 	}
-	
+
 	final java.io.OutputStream getOutputStream () throws IOException {
 		synchronized (serverSocket) {
 			return out;
 		}
 	}
+
 	protected void bind () throws IOException {
 		if (!serverSocket.isBound ()) {
-			Logger.log (this, LogLevel.INFO, "Bind on " + destination);
+			LOGGER.info ("Bind on {}", destination);
 			serverSocket.bind (destination, backlog);
 		} else {
-			Logger.log (this, LogLevel.WARN, "Inet socket address" + destination + " already bound");
+			LOGGER.warn ("Inet socket address {} already bound", destination);
 		}
 	}
 
@@ -175,7 +178,6 @@ public class TcpIpServer {
 		public String toString () {
 			return InputStream.class.getName () + " (" + server.destination + ")";
 		}
-
 
 		@Override
 		public int read () throws IOException {
@@ -245,7 +247,7 @@ public class TcpIpServer {
 
 		@Override
 		protected void finalize () throws Throwable {
-			TcpIpClient.release (server.destination);
+			TcpIpServer.release (server.destination);
 			super.finalize ();
 		}
 	}
@@ -302,7 +304,7 @@ public class TcpIpServer {
 
 		@Override
 		protected void finalize () throws Throwable {
-			TcpIpClient.release (server.destination);
+			TcpIpServer.release (server.destination);
 			super.finalize ();
 		}
 	}

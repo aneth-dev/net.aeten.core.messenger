@@ -5,17 +5,18 @@ Note:
 	API become quite stable.
 
 Current version:
-	0.0.8
+	0.0.9
 
 Provides:
 	- generic event transmitter and handler (synchronous and asynchronous)
-	- configurable service providers loading based on annotaions
+	- configurable service providers loading based on annotations
 	- generic parsing interface (API is under construction, see parsing branch)
 	- extensible messenger
 	- stream stack editor
 
 Third party dependences: 
 	- net.jcip.annotations (Creative Commons Attribution License), included in sources
+	- org.slf4j (MIT License)
 
 Details of modules:
 	- net.aeten.core                    -> requires net.jcip.annotations

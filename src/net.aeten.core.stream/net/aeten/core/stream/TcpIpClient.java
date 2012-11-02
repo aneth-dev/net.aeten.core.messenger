@@ -9,11 +9,12 @@ import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.aeten.core.logging.LogLevel;
-import net.aeten.core.logging.Logger;
 import net.aeten.core.spi.FieldInit;
 import net.aeten.core.spi.SpiInitializer;
 import net.jcip.annotations.GuardedBy;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TcpIpClient {
 	/**
@@ -41,6 +42,7 @@ public class TcpIpClient {
 					required = false)
 	final Integer timeout;
 
+	private static final Logger LOGGER = LoggerFactory.getLogger (TcpIpClient.class);
 	@GuardedBy ("CLIENTS")
 	private static final Map <InetSocketAddress, TcpIpClient> CLIENTS = new HashMap <> ();
 	@GuardedBy ("CLIENTS")
@@ -66,7 +68,7 @@ public class TcpIpClient {
 									int timeout) throws IOException {
 		synchronized (CLIENTS) {
 			Integer uses = USES.get (destination);
-			USES.put (destination, (uses == null) ? 1 : uses++);
+			USES.put (destination, (uses == null)? 1: uses++);
 			TcpIpClient client = CLIENTS.get (destination);
 			if (client == null) {
 				client = new TcpIpClient (destination, bind, reuse, timeout);
@@ -75,8 +77,8 @@ public class TcpIpClient {
 			return client;
 		}
 	}
-	
-	static void release(InetSocketAddress destination) {
+
+	static void release (InetSocketAddress destination) {
 		synchronized (CLIENTS) {
 			Integer uses = USES.get (destination) - 1;
 			if (uses == 0) {
@@ -92,10 +94,10 @@ public class TcpIpClient {
 		Socket socket = new Socket (destination.getAddress (), destination.getPort ());
 		if (bind) {
 			if (!socket.isBound ()) {
-				Logger.log (this, LogLevel.INFO, "Bind on " + destination);
+				LOGGER.info ("Bind on {}", destination);
 				socket.bind (destination);
 			} else {
-				Logger.log (this, LogLevel.WARN, "Inet socket address" + destination + " already bound");
+				LOGGER.warn ("Inet socket address {} already bound", destination);
 			}
 		}
 		if (this.timeout != -1) {

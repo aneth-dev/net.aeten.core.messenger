@@ -15,60 +15,63 @@ import net.aeten.core.event.Priority;
 import net.aeten.core.event.RegisterableTransmitter;
 import net.aeten.core.event.Transmitter;
 import net.aeten.core.event.TransmitterFactory;
-import net.aeten.core.logging.LogLevel;
-import net.aeten.core.logging.Logger;
 import net.aeten.core.spi.FieldInit;
 import net.aeten.core.spi.Provider;
 import net.aeten.core.spi.SpiInitializer;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author Thomas Pérennou
  */
-@Provider(Messenger.class)
-public class MessengerProvider<Message> implements
-		Messenger<Message>,
-		Handler<MessengerEventData<Message>> {
+@Provider (Messenger.class)
+public class MessengerProvider <Message> implements
+		Messenger <Message>,
+		Handler <MessengerEventData <Message>> {
 
-	@FieldInit(alias = "id")
+	private static final Logger LOGGER = LoggerFactory.getLogger (MessengerProvider.class);
+
+	@FieldInit (alias = "id")
 	private final String identifier;
-	@FieldInit(required = false)
-	private final Map<String, Sender<Message>> senders;
-	@FieldInit(required = false)
-	private final List<Receiver<Message>> receivers;
-	@FieldInit(required = false)
+	@FieldInit (required = false)
+	private final Map <String, Sender <Message>> senders;
+	@FieldInit (required = false)
+	private final List <Receiver <Message>> receivers;
+	@FieldInit (required = false)
 	private final boolean autoConnect;
 	private volatile boolean connected;
-	private Transmitter<MessengerEventData<Message>> asyncSendEventTransmitter;
-	private RegisterableTransmitter<HookEvent<MessengerEvent, Hook>, MessengerEventData<Message>> hookTransmitter;
+	private Transmitter <MessengerEventData <Message>> asyncSendEventTransmitter;
+	private RegisterableTransmitter <HookEvent <MessengerEvent, Hook>, MessengerEventData <Message>> hookTransmitter;
 
-	@SuppressWarnings("unchecked")
-	public MessengerProvider(@SpiInitializer MessengerInitializer init)
+	@SuppressWarnings ("unchecked")
+	public MessengerProvider (@SpiInitializer MessengerInitializer init)
 			throws IOException {
 		identifier = init.getIdentifier ();
-		senders = init.hasSenders () ? init.getSenders () : new HashMap<> ();
-		receivers = init.hasReceivers () ? init.getReceivers () : new ArrayList<> ();
-		autoConnect = init.hasAutoConnect () ? init.getAutoConnect () : false;
-		this.hookTransmitter = TransmitterFactory.synchronous (EVENTS.values ());
-		if (this.identifier == null) {
-			this.asyncSendEventTransmitter = null;
+		senders = init.hasSenders ()? init.getSenders (): new HashMap <> ();
+		receivers = init.hasReceivers ()? init.getReceivers (): new ArrayList <> ();
+		autoConnect = init.hasAutoConnect ()? init.getAutoConnect (): false;
+		hookTransmitter = TransmitterFactory.synchronous (EVENTS.values ());
+		if (identifier == null) {
+			asyncSendEventTransmitter = null;
 		} else {
-			this.asyncSendEventTransmitter = TransmitterFactory.asynchronous ("Sender transmitter of Messenger " + this.identifier, EVENTS.values (), this, EVENTS.get (MessengerEvent.SEND, Hook.PRE));
+			asyncSendEventTransmitter = TransmitterFactory.asynchronous ("Sender transmitter of Messenger " + identifier, EVENTS.values (), this, EVENTS.get (MessengerEvent.SEND, Hook.PRE));
 		}
 		if (autoConnect) {
 			connect ();
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	protected MessengerProvider(String identifier) {
+	@SuppressWarnings ("unchecked")
+	protected MessengerProvider (String identifier) {
 		this (identifier, new Sender[0], new Receiver[0], true);
 	}
 
-	@SuppressWarnings("unchecked")
-	protected MessengerProvider(String identifier,
-			Sender<Message> sender,
-			Receiver<Message> receiver) {
+	@SuppressWarnings ("unchecked")
+	protected MessengerProvider (	String identifier,
+											Sender <Message> sender,
+											Receiver <Message> receiver) {
 		this (identifier, new Sender[] {
 			sender
 		}, new Receiver[] {
@@ -76,174 +79,171 @@ public class MessengerProvider<Message> implements
 		}, true);
 	}
 
-	@SuppressWarnings("unchecked")
-	protected MessengerProvider(String identifier,
-			Sender<Message>[] senderList,
-			Receiver<Message>[] receiverList,
-			boolean autoConnect) {
+	@SuppressWarnings ("unchecked")
+	protected MessengerProvider (	String identifier,
+											Sender <Message>[] senderList,
+											Receiver <Message>[] receiverList,
+											boolean autoConnect) {
 		this.identifier = identifier;
 		this.autoConnect = autoConnect;
-		senders = new HashMap<> ();
-		receivers = new ArrayList<> ();
-		for (Sender<Message> sender : senderList) {
+		senders = new HashMap <> ();
+		receivers = new ArrayList <> ();
+		for (Sender <Message> sender: senderList) {
 			try {
 				this.addSender (sender);
 			} catch (IOException exception) {
-				Logger.log (sender, LogLevel.ERROR, "Sender \"" + sender.getIdentifier () + "\" has thrown an exception.", exception);
+				LOGGER.error ("Sender \"" + sender.getIdentifier () + "\" has thrown an exception.", exception);
 			}
 		}
 
-		for (Receiver<Message> reciever : receiverList) {
+		for (Receiver <Message> reciever: receiverList) {
 			try {
 				this.addReceiver (reciever);
 			} catch (IOException exception) {
-				Logger.log (reciever, LogLevel.ERROR, "Receiver \"" + reciever.getIdentifier () + "\" has thrown an exception.", exception);
+				LOGGER.error ("Receiver \"" + reciever.getIdentifier () + "\" has thrown an exception.", exception);
 			}
 		}
 
-		this.hookTransmitter = TransmitterFactory.synchronous (EVENTS.values ());
-		if (this.identifier == null) {
-			this.asyncSendEventTransmitter = null;
+		hookTransmitter = TransmitterFactory.synchronous (EVENTS.values ());
+		if (identifier == null) {
+			asyncSendEventTransmitter = null;
 		} else {
-			this.asyncSendEventTransmitter = TransmitterFactory.asynchronous ("Sender transmitter of Messenger " + this.identifier, EVENTS.values (), this, EVENTS.get (MessengerEvent.SEND, Hook.PRE));
+			asyncSendEventTransmitter = TransmitterFactory.asynchronous ("Sender transmitter of Messenger " + identifier, EVENTS.values (), this, EVENTS.get (MessengerEvent.SEND, Hook.PRE));
 		}
 	}
 
 	@Override
-	public Future<MessengerEventData<Message>> transmit(Message message,
-			String sender,
-			Priority priority) {
-		return this.transmit (message, sender, null, Priority.MEDIUM);
+	public Future <MessengerEventData <Message>> transmit (	Message message,
+																				String sender,
+																				Priority priority) {
+		return transmit (message, sender, null, Priority.MEDIUM);
 	}
 
 	@Override
-	public Future<MessengerEventData<Message>> transmit(Message message,
-			String sender) {
-		return this.transmit (message, sender, null, Priority.MEDIUM);
+	public Future <MessengerEventData <Message>> transmit (	Message message,
+																				String sender) {
+		return transmit (message, sender, null, Priority.MEDIUM);
 	}
 
 	@Override
-	public Future<MessengerEventData<Message>> transmit(Message message) {
-		return this.transmit (message, this.senders.get (0).getIdentifier (), null, Priority.MEDIUM);
+	public Future <MessengerEventData <Message>> transmit (Message message) {
+		return transmit (message, this.senders.get (0).getIdentifier (), null, Priority.MEDIUM);
 	}
 
 	@Override
-	public Future<MessengerEventData<Message>> transmit(Message message,
-			String sender,
-			String contact) {
-		return this.transmit (message, sender, contact, Priority.MEDIUM);
+	public Future <MessengerEventData <Message>> transmit (	Message message,
+																				String sender,
+																				String contact) {
+		return transmit (message, sender, contact, Priority.MEDIUM);
 	}
 
 	@Override
-	public Future<MessengerEventData<Message>> transmit(Message message,
-			String sender,
-			String contact,
-			String service) {
-		return this.transmit (message, sender, contact, service, Priority.MEDIUM);
+	public Future <MessengerEventData <Message>> transmit (	Message message,
+																				String sender,
+																				String contact,
+																				String service) {
+		return transmit (message, sender, contact, service, Priority.MEDIUM);
 	}
 
 	@Override
-	public Future<MessengerEventData<Message>> transmit(Message message,
-			String sender,
-			String contact,
-			Priority priority) {
-		return this.transmit (message, sender, contact, null, priority);
+	public Future <MessengerEventData <Message>> transmit (	Message message,
+																				String sender,
+																				String contact,
+																				Priority priority) {
+		return transmit (message, sender, contact, null, priority);
 	}
 
 	@Override
-	public Future<MessengerEventData<Message>> transmit(Message message,
-			String sender,
-			String contact,
-			String service,
-			Priority priority) {
-		MessengerEventData<Message> data = new MessengerEventData<Message> (this, contact, service, MessengerEvent.SEND, Hook.PRE, message, priority);
+	public Future <MessengerEventData <Message>> transmit (	Message message,
+																				String sender,
+																				String contact,
+																				String service,
+																				Priority priority) {
+		MessengerEventData <Message> data = new MessengerEventData <Message> (this, contact, service, MessengerEvent.SEND, Hook.PRE, message, priority);
 		data.setSubcontractor (sender);
-		return this.asyncSendEventTransmitter.transmit (data);
+		return asyncSendEventTransmitter.transmit (data);
 	}
 
 	@Override
-	public String toString() {
-		return "Messenger \"" + this.getIdentifier () + "\"";
+	public String toString () {
+		return "Messenger \"" + getIdentifier () + "\"";
 	}
 
 	@Override
-	public synchronized void connect()
-			throws IOException {
-		if (!this.connected) {
-			MessengerEventData<Message> data = new MessengerEventData<Message> (this, null, MessengerEvent.CONNECT, Hook.PRE, null);
-			this.hookTransmitter.transmit (data);
+	public synchronized void connect () throws IOException {
+		if (!connected) {
+			MessengerEventData <Message> data = new MessengerEventData <Message> (this, null, MessengerEvent.CONNECT, Hook.PRE, null);
+			hookTransmitter.transmit (data);
 
 			if (data.doIt ()) {
-				this.hookTransmitter.transmit (EVENTS.hook (data, Hook.START));
+				hookTransmitter.transmit (EVENTS.hook (data, Hook.START));
 
-				for (Receiver<Message> reciever : this.receivers) {
+				for (Receiver <Message> reciever: receivers) {
 					reciever.connect ();
-					this.startReceiver (reciever);
+					startReceiver (reciever);
 				}
-				for (Sender<Message> sender : this.senders.values ()) {
+				for (Sender <Message> sender: senders.values ()) {
 					sender.connect ();
 				}
-				this.connected = true;
+				connected = true;
 
-				this.hookTransmitter.transmit (EVENTS.hook (data, Hook.END));
-				this.hookTransmitter.transmit (EVENTS.hook (data, Hook.POST));
+				hookTransmitter.transmit (EVENTS.hook (data, Hook.END));
+				hookTransmitter.transmit (EVENTS.hook (data, Hook.POST));
 			}
 		}
 	}
 
 	@Override
-	public synchronized void disconnect()
-			throws IOException {
-		if (this.connected) {
-			MessengerEventData<Message> data = new MessengerEventData<Message> (this, null, MessengerEvent.DISCONNECT, Hook.PRE, null);
-			this.hookTransmitter.transmit (data);
+	public synchronized void disconnect () throws IOException {
+		if (connected) {
+			MessengerEventData <Message> data = new MessengerEventData <Message> (this, null, MessengerEvent.DISCONNECT, Hook.PRE, null);
+			hookTransmitter.transmit (data);
 
 			if (data.doIt ()) {
-				this.hookTransmitter.transmit (EVENTS.hook (data, Hook.START));
+				hookTransmitter.transmit (EVENTS.hook (data, Hook.START));
 
-				for (Receiver<Message> reciever : this.receivers) {
+				for (Receiver <Message> reciever: receivers) {
 					reciever.disconnect ();
 				}
-				for (Sender<Message> sender : this.senders.values ()) {
+				for (Sender <Message> sender: senders.values ()) {
 					sender.disconnect ();
 				}
-				this.connected = false;
+				connected = false;
 
-				this.hookTransmitter.transmit (EVENTS.hook (data, Hook.END));
-				this.hookTransmitter.transmit (EVENTS.hook (data, Hook.POST));
+				hookTransmitter.transmit (EVENTS.hook (data, Hook.END));
+				hookTransmitter.transmit (EVENTS.hook (data, Hook.POST));
 			}
 		}
 	}
 
 	@Override
-	public void addEventHandler(Handler<MessengerEventData<Message>> eventHandler,
-			@SuppressWarnings("unchecked") HookEvent<MessengerEvent, Hook>... eventList) {
-		this.hookTransmitter.addEventHandler (eventHandler, eventList);
+	public void addEventHandler (	Handler <MessengerEventData <Message>> eventHandler,
+											@SuppressWarnings ("unchecked") HookEvent <MessengerEvent, Hook>... eventList) {
+		hookTransmitter.addEventHandler (eventHandler, eventList);
 	}
 
 	@Override
-	public void removeEventHandler(Handler<MessengerEventData<Message>> eventHandler,
-			@SuppressWarnings("unchecked") HookEvent<MessengerEvent, Hook>... eventList) {
-		this.hookTransmitter.removeEventHandler (eventHandler, eventList);
+	public void removeEventHandler (	Handler <MessengerEventData <Message>> eventHandler,
+												@SuppressWarnings ("unchecked") HookEvent <MessengerEvent, Hook>... eventList) {
+		hookTransmitter.removeEventHandler (eventHandler, eventList);
 	}
 
 	@Override
-	public synchronized void addReceiver(final Receiver<Message> receiver)
-			throws IOException {
-		this.receivers.add (receiver);
-		if (this.connected) {
+	public synchronized void addReceiver (final Receiver <Message> receiver) throws IOException {
+		receivers.add (receiver);
+		if (connected) {
 			receiver.connect ();
-			this.startReceiver (receiver);
+			startReceiver (receiver);
 		}
 	}
 
-	private void startReceiver(final Receiver<Message> receiver) {
+	private void startReceiver (final Receiver <Message> receiver) {
 		new Thread ("Receiver " + receiver.getIdentifier ()) {
 
 			@Override
-			public void run() {
+			public void run () {
 				while (receiver.isConnected ()) {
-					MessengerEventData<Message> data = new MessengerEventData<Message> (MessengerProvider.this, null, MessengerEvent.RECEIVE, Hook.PRE, null);
+					MessengerEventData <Message> data = new MessengerEventData <Message> (MessengerProvider.this, null, MessengerEvent.RECEIVE, Hook.PRE, null);
 					data.setSubcontractor (receiver.getIdentifier ());
 					MessengerProvider.this.hookTransmitter.transmit (data);
 
@@ -256,13 +256,13 @@ public class MessengerProvider<Message> implements
 							MessengerProvider.this.hookTransmitter.transmit (EVENTS.hook (data, Hook.POST));
 						} catch (IOException exception) {
 							try {
-								Logger.log (receiver, LogLevel.ERROR, exception);
+								LOGGER.error ("Receiver \"" + receiver.getIdentifier () + "\" I/O error", exception);
 								receiver.disconnect ();
 							} catch (IOException disconnectException) {
-								Logger.log (receiver, LogLevel.ERROR, "Unable to disconnect receiver \"" + receiver.getIdentifier () + "\"", disconnectException);
+								LOGGER.error ("Unable to disconnect receiver \"" + receiver.getIdentifier () + "\"", disconnectException);
 							}
 						} catch (Throwable exception) {
-							Logger.log (receiver, LogLevel.ERROR, exception);
+							LOGGER.error ("Receiver \"" + receiver.getIdentifier () + "\" error", exception);
 						}
 					}
 
@@ -272,77 +272,74 @@ public class MessengerProvider<Message> implements
 	}
 
 	@Override
-	public synchronized void addSender(Sender<Message> sender)
-			throws IOException {
-		this.senders.put (sender.getIdentifier (), sender);
-		if (this.connected) {
+	public synchronized void addSender (Sender <Message> sender) throws IOException {
+		senders.put (sender.getIdentifier (), sender);
+		if (connected) {
 			sender.connect ();
 		}
 	}
 
 	@Override
-	public synchronized void removeReceiver(final Receiver<Message> reciever)
-			throws IOException {
+	public synchronized void removeReceiver (final Receiver <Message> reciever) throws IOException {
 		reciever.disconnect ();
-		this.receivers.remove (reciever);
+		receivers.remove (reciever);
 	}
 
 	@Override
-	public synchronized void removeSender(final Sender<Message> sender)
-			throws IOException {
+	public synchronized void removeSender (final Sender <Message> sender) throws IOException {
 		sender.disconnect ();
-		this.senders.remove (sender);
+		senders.remove (sender);
 	}
 
 	@Override
-	public synchronized String[] getReceivers() {
-		return this.receivers.toArray (new String[this.receivers.size ()]);
+	public synchronized String[] getReceivers () {
+		return receivers.toArray (new String[this.receivers.size ()]);
 	}
 
 	@Override
-	public synchronized String[] getSenders() {
-		Set<String> keySet = this.senders.keySet ();
+	public synchronized String[] getSenders () {
+		Set <String> keySet = senders.keySet ();
 		return keySet.toArray (new String[keySet.size ()]);
 	}
 
 	@Override
-	public void handleEvent(MessengerEventData<Message> data) {
+	public void handleEvent (MessengerEventData <Message> data) {
 
-		if (this.connected) {
-			Sender<Message> sender = MessengerProvider.this.senders.get (data.getSubcontractor ());
+		if (connected) {
+			Sender <Message> sender = MessengerProvider.this.senders.get (data.getSubcontractor ());
 			// Data event is already MessengerEvent.SEND, Hook.PRE
-			this.hookTransmitter.transmit (data);
+			hookTransmitter.transmit (data);
 
 			if (data.doIt ()) {
-				this.hookTransmitter.transmit (EVENTS.hook (data, Hook.START));
+				hookTransmitter.transmit (EVENTS.hook (data, Hook.START));
 
 				try {
 					sender.send (data);
 				} catch (IOException exception) {
 					try {
-						Logger.log (sender, LogLevel.ERROR, exception);
+						LOGGER.error ("Sender \"" + sender.getIdentifier () + "\" I/O error", exception);
 						sender.disconnect ();
 					} catch (IOException disconnectException) {
-						Logger.log (sender, LogLevel.ERROR, "Unable to disconnect sender \"" + sender.getIdentifier () + "\"", disconnectException);
+						LOGGER.error ("Unable to disconnect sender \"" + sender.getIdentifier () + "\"", disconnectException);
 					}
 				} catch (Throwable exception) {
-					Logger.log (sender, LogLevel.ERROR, exception);
+					LOGGER.error ("Sender \"" + sender.getIdentifier () + "\" error", exception);
 				}
 
-				this.hookTransmitter.transmit (EVENTS.hook (data, Hook.END));
-				this.hookTransmitter.transmit (EVENTS.hook (data, Hook.POST));
+				hookTransmitter.transmit (EVENTS.hook (data, Hook.END));
+				hookTransmitter.transmit (EVENTS.hook (data, Hook.POST));
 			}
 		}
 	}
 
 	@Override
-	public boolean isConnected() {
-		return this.connected;
+	public boolean isConnected () {
+		return connected;
 	}
 
 	@Override
-	public String getIdentifier() {
-		return this.identifier;
+	public String getIdentifier () {
+		return identifier;
 	}
 
 }
