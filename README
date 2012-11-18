@@ -5,7 +5,7 @@ Note:
 	API become quite stable.
 
 Current version:
-	0.0.9
+	0.0.10
 
 Provides:
 	- generic event transmitter and handler (synchronous and asynchronous)
@@ -21,14 +21,14 @@ Third party dependences:
 Details of modules:
 	- net.aeten.core                    -> requires net.jcip.annotations
 	- net.aeten.core.alert              -> requires net.aeten.core (alert event management for application user destination)
+	- net.aeten.core.gui                -> GUI tools, independent from any GUI framework
+	- net.aeten.core.gui.swing          -> requires net.aeten.core (SWING part of GUI tools)
 	- net.aeten.core.messenger          -> requires net.aeten.core
 	- net.aeten.core.messenger.stream   -> requires net.aeten.core, net.aeten.core.messenger, net.aeten.core.stream
 	- net.aeten.core.parsing.properties -> net.aeten.core
 	- net.aeten.core.parsing.xml        -> net.aeten.core
-	- net.aeten.core.parsing.yaml       -> net.aeten.core (a YAML parser in progress, see test/net.aeten.core.parsing.test/net/aeten/core/parsing/test/test.yaml in parsing branch for supported syntax)
+	- net.aeten.core.parsing.yaml       -> net.aeten.core (a YAML parser in progress, see test/net.aeten.core.parsing.test/net/aeten/core/parsing/test/test.yaml)
 	- net.aeten.core.stream             -> requires net.aeten.core
-
-	- net.aeten.core.jna                -> requires com.sun.jna
-Not under MIT license, contains one class with copy/past of code from a JNA part. Need to be recode in order to be fully integrated
+	- net.aeten.core.jna                -> requires com.sun.jna (Not under MIT license, contains one class with copy/past of code from a JNA part witch is under LGPL version 2.1. Need to be re-implemented in order to be fully integrated)
 
 See test directory for samples
