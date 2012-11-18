@@ -21,21 +21,22 @@ public class HSxSelector extends
 		JComponent {
 	private static final long serialVersionUID = 8194893126074967510L;
 	private final HSx hsx;
+	private final boolean extentChroma;
 	private double hue;
 	private int x, y;
 	private Color color;
 	private final List <ChangeListener> listeners = new ArrayList <> ();
 
-	private void select (int x,
-								int y) {
-		int width = getWidth ();
-		int height = getHeight ();
-		setColor (AwtColors.fromRGB (hsx.rgb (hue, (double) x / width, (double) (getHeight () - y) / height)));
+	public HSxSelector (	final HSx hsx,
+								final HueSelector hueSelector) {
+		this (hsx, hueSelector, true);
 	}
 
 	public HSxSelector (	final HSx hsx,
-								final HueSelector hueSelector) {
+								final HueSelector hueSelector,
+								boolean extentChroma) {
 		this.hsx = hsx;
+		this.extentChroma = extentChroma;
 		addMouseListener (new MouseAdapter () {
 			@Override
 			public void mouseClicked (MouseEvent event) {
@@ -53,10 +54,11 @@ public class HSxSelector extends
 			@Override
 			public void stateChanged (ChangeEvent event) {
 				hue = hueSelector.getHue ();
-				int width = getWidth ();
 				int height = getHeight ();
-				color = AwtColors.fromRGB (hsx.rgb (hue, (double) x / width, (double) (y) / height));
-				if (color == null) {
+				double[] rgb = hsx.rgb (hue, getSaturation (x, y), (double) y / height);
+				if (AwtColors.isValidRGB (rgb)) {
+					setColor (AwtColors.fromRGB (rgb));
+				} else {
 					select (0, 0);
 				}
 				repaint ();
@@ -80,10 +82,11 @@ public class HSxSelector extends
 					graphics.setColor (Color.BLACK);
 					graphics.drawLine (x, height - y, x, height - y);
 				} else {
-					Color color = AwtColors.fromRGB (hsx.rgb (hue, (double) x / (double) width, (double) y / height));
-					if (color == null) {
+					double[] rgb = hsx.rgb (hue, getSaturation (x, height - y), (double) y / height);
+					if (!AwtColors.isValidRGB (rgb)) {
 						continue;
 					}
+					Color color = AwtColors.fromRGB (rgb);
 					graphics.setColor (color);
 					graphics.drawLine (x, height - y, x, height - y);
 				}
@@ -104,24 +107,45 @@ public class HSxSelector extends
 	}
 
 	public void setColor (Color c) {
-		if (c != null) {
-			Color oldColor = color;
-			if (c.equals (color)) {
-				return;
-			}
-			color = c;
+		Color oldColor = color;
+		if (c.equals (color)) {
+			return;
+		}
+		color = c;
 
-			double[] rgb = AwtColors.rgb (c);
-			x = (int) (hsx.getSaturation (rgb) * getWidth ());
-			y = (int) (hsx.getLightness (rgb) * getHeight ());
-			repaint ();
+		double[] rgb = AwtColors.rgb (c);
+		x = getX (rgb);
+		y = (int) (hsx.getLightness (rgb) * getHeight ());
+		repaint ();
 
-			firePropertyChange (AccessibleContext.ACCESSIBLE_VALUE_PROPERTY, oldColor, color);
-			ChangeEvent event = new ChangeEvent (this);
-			for (ChangeListener listener: listeners) {
-				listener.stateChanged (event);
-			}
+		firePropertyChange (AccessibleContext.ACCESSIBLE_VALUE_PROPERTY, oldColor, color);
+		ChangeEvent event = new ChangeEvent (this);
+		for (ChangeListener listener: listeners) {
+			listener.stateChanged (event);
 		}
 	}
 
+	private void select (int x,
+								int y) {
+		int height = getHeight ();
+		double[] rgb = hsx.rgb (hue, getSaturation (x, y), (double) (height - y) / height);
+		if (AwtColors.isValidRGB (rgb)) {
+			setColor (AwtColors.fromRGB (rgb));
+		}
+	}
+
+	private double getSaturation (int x,
+											int y) {
+		if (!extentChroma && (hsx == HSx.HSI || hsx == HSx.HSYp)) {
+			return hsx.getSaturationFromChroma ((double) x / (double) getWidth (), hue, (double) (getHeight () - y) / (double) getHeight ());
+		}
+		return (double) x / (double) getWidth ();
+	}
+
+	private int getX (double[] rgb) {
+		if (!extentChroma && (hsx == HSx.HSI || hsx == HSx.HSYp)) {
+			return (int) (hsx.getChroma (rgb) * getWidth ());
+		}
+		return (int) (hsx.getSaturation (rgb) * getWidth ());
+	}
 }

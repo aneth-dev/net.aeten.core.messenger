@@ -30,7 +30,7 @@ public class ColorsTest {
 				frame.add (colorPanel);
 				final HSxSelector[] selectors = new HSxSelector[Colors.HSx.values ().length];
 				for (Colors.HSx hsx: Colors.HSx.values ()) {
-					final HSxSelector selector = new HSxSelector (hsx, hue);
+					final HSxSelector selector = new HSxSelector (hsx, hue, false);
 					selectors[hsx.ordinal ()] = selector;
 					selector.addChangeListener (new ChangeListener () {
 						@Override

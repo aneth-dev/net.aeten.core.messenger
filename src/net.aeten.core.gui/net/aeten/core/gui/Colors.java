@@ -58,7 +58,6 @@ public class Colors {
 				double lightness = getLightness (r, g, b);
 				return lightness > 0.5? getChroma (r, g, b) / (2 - 2 * lightness): getChroma (r, g, b) / (2 * lightness);
 			}
-
 		},
 		HSI {
 			@Override
@@ -139,6 +138,12 @@ public class Colors {
 															double g,
 															double b);
 
+		public double getSaturationFromChroma (double chroma,
+															double hue,
+															double lightness) {
+			return chroma / getMaxChroma (hue, lightness);
+		}
+
 		public double getChroma (	double r,
 											double g,
 											double b) {
@@ -192,9 +197,6 @@ public class Colors {
 											double relativeToLightness) {
 			double[] rgb = HSV.rgb (hue, 1, 1);
 			double perseptualLightness = getLightness (rgb);
-//			if (perseptualLightness > optimalLightness) {
-//				return rgb;
-//			}
 
 			double rho = StrictMath.sqrt (1 + (1 - perseptualLightness) * (1 - perseptualLightness));
 			double theta = StrictMath.PI / 2 - StrictMath.acos (1 / rho);
@@ -203,7 +205,12 @@ public class Colors {
 			rho = (1.0 - lightness) / (StrictMath.cos (theta));
 			double chroma = rho * StrictMath.sin (theta);
 
-			return rgb (hue, chroma, lightness);
+			rgb = rgb (hue, chroma, lightness);
+			for (int i = 0; i < rgb.length; i++) {
+				rgb[i] = StrictMath.abs (rgb[i]);
+			}
+
+			return rgb;
 		}
 
 		public double getLightness (double[] rgb) {
@@ -219,12 +226,6 @@ public class Colors {
 											int size) {
 			double backgroundLightness = getLightness (background);
 			double[][] colors = new double[size][];
-
-//			for (int i = 0; i < size; i++) {
-//				double hue = rgbStartHue + i * 360.0 / size;
-//				if (hue > 360.0) hue -= 360.0;
-//				colors[i] = rgbBest (hue , backgroundLightness);
-//			}
 
 			int steps = (int) StrictMath.floor ((double) size / 3) + 1;
 			for (int iStep = 0, iColor = 0; iStep < steps; iStep++) {
@@ -243,10 +244,6 @@ public class Colors {
 												double m) {
 			for (int i = 0; i < r1g1b1.length; i++) {
 				r1g1b1[i] = r1g1b1[i] + m;
-				// r1g1b1[i] may be like 1.0000000001
-				if ((int) r1g1b1[i] > 1) {
-					r1g1b1[i] = StrictMath.nextDown (r1g1b1[i]);
-				}
 			}
 			return r1g1b1;
 		}
