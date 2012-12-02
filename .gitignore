@@ -1,8 +1,9 @@
 .classpath
 .project
 .settings
-.gitignore
+.factorypath
 *~
 bin/
 dist/
 build/
+generated/
