@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * @author Thomas Pérennou
  */
 @Provider (Messenger.class)
-public class MessengerProvider <Message> implements
+public class MessengerProvider<Message> implements
 		Messenger <Message>,
 		Handler <MessengerEventData <Message>> {
 
@@ -179,7 +179,7 @@ public class MessengerProvider <Message> implements
 		if (!connected) {
 			if (init != null) {
 				Map <String, Sender <Message>> newSenders = init.hasSenders ()? init.getSenders (): Collections.emptyMap ();
-				Map <String, Sender <Message>> oldSenders = new HashMap<> ();
+				Map <String, Sender <Message>> oldSenders = new HashMap <> ();
 				oldSenders.putAll (senders);
 				for (String newSender: newSenders.keySet ()) {
 					oldSenders.remove (newSender);

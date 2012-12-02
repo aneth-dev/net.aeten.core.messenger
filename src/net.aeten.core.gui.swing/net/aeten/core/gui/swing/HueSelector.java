@@ -26,7 +26,7 @@ public class HueSelector extends
 	private final List <ChangeListener> listeners = new ArrayList <> ();
 
 	public HueSelector () {
-		addMouseListener (new MouseAdapter() {
+		addMouseListener (new MouseAdapter () {
 			@Override
 			public void mouseClicked (MouseEvent event) {
 				setHue (getHue (event.getX ()));
@@ -47,7 +47,7 @@ public class HueSelector extends
 	}
 
 	private final int getX (double hue) {
-		return (int) StrictMath.floor ( ( ((double) getWidth ()) * hue / 360.0));
+		return (int) StrictMath.floor ((((double) getWidth ()) * hue / 360.0));
 	}
 
 	@Override

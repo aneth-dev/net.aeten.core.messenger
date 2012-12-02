@@ -39,7 +39,7 @@ public class Colors {
 			public double[] rgb (double hue,
 										double saturation,
 										double lightness) {
-				double chroma = saturation * (1 - StrictMath.abs ( (2 * lightness) - 1));
+				double chroma = saturation * (1 - StrictMath.abs ((2 * lightness) - 1));
 				double[] r1g1b1 = r1g1b1 (hue, chroma);
 				double m = lightness - (chroma / 2);
 				return addM (r1g1b1, m);
@@ -182,15 +182,15 @@ public class Colors {
 			if (r >= g && g >= b) {
 				return 60.0 * (g - b) / (r - b);
 			} else if (g > r && r >= b) {
-				return 60.0 * (2 - ( (r - b) / (g - b)));
+				return 60.0 * (2 - ((r - b) / (g - b)));
 			} else if (g >= b && b > r) {
-				return 60.0 * (2 + ( (b - r) / (g - r)));
+				return 60.0 * (2 + ((b - r) / (g - r)));
 			} else if (b > g && g > r) {
-				return 60.0 * (4 - ( (g - r) / (b - r)));
+				return 60.0 * (4 - ((g - r) / (b - r)));
 			} else if (b > r && r >= g) {
-				return 60.0 * (4 + ( (r - g) / (b - g)));
+				return 60.0 * (4 + ((r - g) / (b - g)));
 			}
-			return 60.0 * (6 - ( (b - g) / (r - g)));
+			return 60.0 * (6 - ((b - g) / (r - g)));
 		}
 
 		public double[] rgbBest (	double hue,
@@ -201,7 +201,7 @@ public class Colors {
 			double rho = StrictMath.sqrt (1 + (1 - perseptualLightness) * (1 - perseptualLightness));
 			double theta = StrictMath.PI / 2 - StrictMath.acos (1 / rho);
 
-			double lightness = relativeToLightness > 0.5? (relativeToLightness - (relativeToLightness * optimalLightness)): relativeToLightness + ( (1.0 - relativeToLightness) * optimalLightness);
+			double lightness = relativeToLightness > 0.5? (relativeToLightness - (relativeToLightness * optimalLightness)): relativeToLightness + ((1.0 - relativeToLightness) * optimalLightness);
 			rho = (1.0 - lightness) / (StrictMath.cos (theta));
 			double chroma = rho * StrictMath.sin (theta);
 

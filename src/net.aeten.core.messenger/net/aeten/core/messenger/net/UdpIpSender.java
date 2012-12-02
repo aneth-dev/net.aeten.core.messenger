@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Provider (Sender.class)
-public class UdpIpSender <Message> extends
+public class UdpIpSender<Message> extends
 		Sender.SenderAdapter <Message> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger (UdpIpSender.class);
@@ -86,7 +86,7 @@ public class UdpIpSender <Message> extends
 		String service = data.getService ();
 		InetAddress inetAddress;
 		int port;
-		if ( (contact != null) && (service != null)) {
+		if ((contact != null) && (service != null)) {
 			String key = contact + ":" + service;
 			inetAddress = CACHE.get (contact);
 			if (inetAddress == null) {

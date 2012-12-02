@@ -87,7 +87,7 @@ public class TcpIpServer {
 									int backlog) throws IOException {
 		synchronized (SERVERS) {
 			Integer uses = USES.get (destination);
-			USES.put (destination, (uses == null)? 1: uses+1);
+			USES.put (destination, (uses == null)? 1: uses + 1);
 			TcpIpServer server = SERVERS.get (destination);
 			if (server == null) {
 				server = new TcpIpServer (destination, bind, reuse, timeout, backlog);
@@ -114,7 +114,7 @@ public class TcpIpServer {
 			if (!serverSocket.isBound ()) {
 				bind ();
 			}
-			if ( (socket == null || socket.isInputShutdown ()) && !serverSocket.isClosed ()) {
+			if ((socket == null || socket.isInputShutdown ()) && !serverSocket.isClosed ()) {
 				socket = serverSocket.accept ();
 				in = new BufferedInputStream (socket.getInputStream ());
 				out = new BufferedOutputStream (socket.getOutputStream ());

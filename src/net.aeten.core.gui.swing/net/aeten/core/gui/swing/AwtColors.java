@@ -14,10 +14,10 @@ public class AwtColors {
 		int b = (int) StrictMath.round (rgb[2] * 255.0);
 		return new Color (r, g, b);
 	}
-	
+
 	public static boolean isValidRGB (double[] rgb) {
 		return !(rgb[0] < 0.0 || rgb[0] > 1.0 || rgb[1] < 0.0 || rgb[1] > 1.0 || rgb[2] < 0.0 || rgb[2] > 1.0);
-	}	
+	}
 
 	public static double[] rgb (Color color) {
 		return new double[] {

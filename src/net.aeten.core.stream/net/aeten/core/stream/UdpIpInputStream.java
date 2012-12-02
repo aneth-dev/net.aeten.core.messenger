@@ -20,32 +20,32 @@ import net.aeten.core.spi.SpiInitializer;
 public class UdpIpInputStream extends
 		InputStream {
 
-	@FieldInit(alias = {
+	@FieldInit (alias = {
 			"udp ip configuration",
 			"UDP/IP configuration"
 	})
 	private final UdpIpSocketFactory socketFactory;
 
 	private final Thread receptionThread;
-	private final BlockingQueue<DatagramPacket> queue = new LinkedBlockingQueue<> ();
+	private final BlockingQueue <DatagramPacket> queue = new LinkedBlockingQueue <> ();
 	private int position = 0;
 	private int available = 0;
 	private DatagramPacket currentPacket = null;
 
-	public UdpIpInputStream(@SpiInitializer UdpIpInputStreamInitializer init) {
+	public UdpIpInputStream (@SpiInitializer UdpIpInputStreamInitializer init) {
 		this (init.getSocketFactory ());
 	}
 
-	public UdpIpInputStream(InetSocketAddress destinationInetSocketAddress,
-			InetAddress sourceInetAddress,
-			boolean autoBind,
-			boolean reuse,
-			int maxPacketSize)
+	public UdpIpInputStream (	InetSocketAddress destinationInetSocketAddress,
+										InetAddress sourceInetAddress,
+										boolean autoBind,
+										boolean reuse,
+										int maxPacketSize)
 			throws IOException {
 		this (new UdpIpSocketFactory (destinationInetSocketAddress, sourceInetAddress, autoBind, reuse, maxPacketSize));
 	}
 
-	public UdpIpInputStream(UdpIpSocketFactory socketFactory) {
+	public UdpIpInputStream (UdpIpSocketFactory socketFactory) {
 		this.socketFactory = socketFactory;
 		this.receptionThread = new Thread (new ReceptionThread (), this.toString ());
 		this.receptionThread.start ();
@@ -54,7 +54,7 @@ public class UdpIpInputStream extends
 	private class ReceptionThread implements
 			Runnable {
 		@Override
-		public void run() {
+		public void run () {
 			try {
 				while ((socketFactory.getSocket () != null) && !socketFactory.getSocket ().isClosed ()) {
 					DatagramPacket packet = new DatagramPacket (new byte[socketFactory.getMaxPacketSize ()], socketFactory.getMaxPacketSize (), socketFactory.getDestinationInetSocketAddress ().getAddress (), socketFactory.getDestinationInetSocketAddress ().getPort ());
@@ -63,7 +63,7 @@ public class UdpIpInputStream extends
 						available += packet.getLength ();
 						queue.put (packet);
 					} catch (SocketTimeoutException
-							| InterruptedException exception) {
+								| InterruptedException exception) {
 						continue;
 					}
 				}
@@ -80,13 +80,12 @@ public class UdpIpInputStream extends
 	}
 
 	@Override
-	public String toString() {
+	public String toString () {
 		return UdpIpInputStream.class.getName () + " (" + this.socketFactory + ")";
 	}
 
 	@Override
-	public int read()
-			throws IOException {
+	public int read () throws IOException {
 		if (this.currentPacket == null) {
 			try {
 				this.currentPacket = this.queue.take ();
@@ -104,32 +103,29 @@ public class UdpIpInputStream extends
 	}
 
 	@Override
-	public int available()
-			throws IOException {
+	public int available () throws IOException {
 		return this.available;
 	}
 
 	@Override
-	public void close()
-			throws IOException {
+	public void close () throws IOException {
 		this.receptionThread.interrupt ();
 	}
 
 	@Override
-	public synchronized void reset()
-			throws IOException {
+	public synchronized void reset () throws IOException {
 		this.currentPacket = null;
 		// TODO: reset on mark if >= 0
 	}
 
 	@Override
-	public synchronized void mark(int readlimit) {
+	public synchronized void mark (int readlimit) {
 		this.position = readlimit;
 		// TODO: make a mark field instead of position use
 	}
 
 	@Override
-	public boolean markSupported() {
+	public boolean markSupported () {
 		return true;
 	}
 

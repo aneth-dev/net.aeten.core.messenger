@@ -1,6 +1,5 @@
 package net.aeten.core.alert;
 
-
 /**
  *
  * @author Thomas Pérennou

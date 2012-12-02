@@ -17,7 +17,7 @@ import net.aeten.core.spi.SpiInitializer;
 public class UdpIpOutputStream extends
 		OutputStream {
 
-	@FieldInit(alias = {
+	@FieldInit (alias = {
 			"udp ip configuration",
 			"UDP/IP configuration"
 	})
@@ -25,28 +25,27 @@ public class UdpIpOutputStream extends
 	private byte[] buffer;
 	private int position = 0;
 
-	public UdpIpOutputStream(@SpiInitializer UdpIpOutputStreamInitializer init) {
+	public UdpIpOutputStream (@SpiInitializer UdpIpOutputStreamInitializer init) {
 		this (init.getSocketFactory ());
 	}
 
-	public UdpIpOutputStream(UdpIpSocketFactory socketFactory) {
+	public UdpIpOutputStream (UdpIpSocketFactory socketFactory) {
 		this.socketFactory = socketFactory;
 		this.buffer = new byte[this.socketFactory.getMaxPacketSize ()];
 	}
 
-	public UdpIpOutputStream(InetSocketAddress destinationInetSocketAddress,
-			InetAddress sourceInetAddress,
-			boolean autoBind,
-			boolean reuse,
-			int maxPacketSize)
+	public UdpIpOutputStream (	InetSocketAddress destinationInetSocketAddress,
+										InetAddress sourceInetAddress,
+										boolean autoBind,
+										boolean reuse,
+										int maxPacketSize)
 			throws IOException {
 		this (new UdpIpSocketFactory (destinationInetSocketAddress, sourceInetAddress, autoBind, reuse, maxPacketSize));
 		this.buffer = new byte[this.socketFactory.getMaxPacketSize ()];
 	}
 
 	@Override
-	public void write(int b)
-			throws IOException {
+	public void write (int b) throws IOException {
 		if (this.buffer == null) {
 			throw new IOException ("Stream must be configured");
 		}
@@ -57,25 +56,22 @@ public class UdpIpOutputStream extends
 	}
 
 	@Override
-	public void write(byte[] data,
-			int offset,
-			int length)
-			throws IOException {
+	public void write (	byte[] data,
+								int offset,
+								int length) throws IOException {
 		for (int i = offset; i < length; i++) {
 			this.write (data[i]);
 		}
 	}
 
 	@Override
-	public void flush()
-			throws IOException {
+	public void flush () throws IOException {
 		this.socketFactory.getSocket ().send (new DatagramPacket (this.buffer, this.position, this.socketFactory.getDestinationInetSocketAddress ()));
 		this.position = 0;
 	}
 
 	@Override
-	public void close()
-			throws IOException {
+	public void close () throws IOException {
 		this.socketFactory.getSocket ().close ();
 	}
 }
