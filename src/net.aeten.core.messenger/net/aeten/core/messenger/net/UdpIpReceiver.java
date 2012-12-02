@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Provider (Receiver.class)
-public class UdpIpReceiver <Message> extends
+public class UdpIpReceiver<Message> extends
 		Receiver.ReceiverAdapter <Message> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger (UdpIpReceiver.class);

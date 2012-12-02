@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author Thomas Pérennou
  */
-public class MessengerAcknowledgeHook <Message, Acknowledge extends Enum <?>> implements
+public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum <?>> implements
 		Handler <MessengerEventData <Message>>,
 		HandlerRegister <MessengerAcknowledgeEvent, MessengerAcknowledgeEventData <Message, Acknowledge>>,
 		Identifiable {
