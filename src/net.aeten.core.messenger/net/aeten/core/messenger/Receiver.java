@@ -1,6 +1,7 @@
 package net.aeten.core.messenger;
 
 import java.io.IOException;
+
 import net.aeten.core.Connection;
 import net.aeten.core.Identifiable;
 
