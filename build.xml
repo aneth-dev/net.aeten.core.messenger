@@ -4,8 +4,13 @@
     </description>
 	<property name="src.core" location="src/net.aeten.core" />
 	<property name="src.jcip" location="src/net.jcip.annotations" />
+	<property name="src.slf4j" location="src/org.slf4j" />
+	<property name="src.generated" location="generated" />
+
 	<property name="build" location="build" />
 	<property name="dist" location="dist" />
+	<property name="core-jar" location="${dist}/net.aeten.core.jar" />
+	<property name="full-jar" location="${dist}/net.aeten.core-full.jar" />
 
 	<target name="init">
 		<mkdir dir="${build}" />
@@ -18,22 +23,48 @@
 		</copy>
 	</target>
 
-	<target name="compile" depends="init" description="compile the source ">
+	<target name="compile-core" depends="init" description="compile the source ">
 		<javac destdir="${build}" includeantruntime="false" compiler="javac1.7" debuglevel="DEBUG" fork="false">
-			<src path="${src.jcip}"/>
-			<src path="${src.core}"/>
+			<src path="${src.jcip}" />
+			<src path="${src.slf4j}" />
+			<src path="${src.core}" />
 			<compilerarg line="-classpath" />
+		</javac>
+
+	</target>
+
+
+	<target name="dist-core" depends="compile-core">
+		<mkdir dir="${dist}" />
+		<jar jarfile="${core-jar}" basedir="${build}" />
+	</target>
+	
+	<target name="spi" depends="dist-core" />
+	
+	<target name="compile-full" depends="spi" description="compile the source ">
+		<delete dir="generated" failonerror="false" />
+		<mkdir dir="generated"/>
+		<javac destdir="${build}" includeantruntime="false" compiler="javac1.7" debuglevel="DEBUG" fork="false">
+			<compilerarg line="-processorpath dist/net.aeten.core.jar -s ${src.generated}" />
+			<src path="${src.generated}" />
+			<src>
+				<dirset dir="src">
+					<include name="*"/>
+					<exclude name="${src.jcip}" />
+					<exclude name="${src.slf4j}" />
+					<exclude name="${src.core}"/>
+				</dirset>
+			</src>
 		</javac>
 	</target>
 
-	<target name="jar" depends="compile">
-		<mkdir dir="${dist}" />
-		<jar jarfile="${dist}/net.aeten.core.jar" basedir="${build}" />
+	<target name="dist" depends="compile-full" description="generate the distribution">
+		<jar jarfile="${full-jar}" basedir="${build}" />
 	</target>
-	<target name="dist" depends="jar" description="generate the distribution" />
 
 	<target name="clean" description="clean up">
 		<delete dir="${build}" />
 		<delete dir="${dist}" />
+		<delete dir="${src.generated}" />
 	</target>
 </project>
