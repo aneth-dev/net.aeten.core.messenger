@@ -87,7 +87,7 @@ public class TcpIpServer {
 									int backlog) throws IOException {
 		synchronized (SERVERS) {
 			Integer uses = USES.get (destination);
-			USES.put (destination, (uses == null)? 1: uses++);
+			USES.put (destination, (uses == null)? 1: uses+1);
 			TcpIpServer server = SERVERS.get (destination);
 			if (server == null) {
 				server = new TcpIpServer (destination, bind, reuse, timeout, backlog);
@@ -114,7 +114,7 @@ public class TcpIpServer {
 			if (!serverSocket.isBound ()) {
 				bind ();
 			}
-			if (socket == null || socket.isInputShutdown ()) {
+			if ( (socket == null || socket.isInputShutdown ()) && !serverSocket.isClosed ()) {
 				socket = serverSocket.accept ();
 				in = new BufferedInputStream (socket.getInputStream ());
 				out = new BufferedOutputStream (socket.getOutputStream ());
@@ -154,6 +154,9 @@ public class TcpIpServer {
 			java.io.InputStream {
 
 		private final TcpIpServer server;
+		@GuardedBy ("server.serverSocket")
+		/* volatile for finalize, lock for close */
+		private volatile boolean released = false;
 
 		public InputStream (@SpiInitializer TcpIpServerInputStreamInitializer init)
 				throws IOException {
@@ -203,9 +206,16 @@ public class TcpIpServer {
 
 		@Override
 		public void close () throws IOException {
+			server.serverSocket.close ();
+			server.getInputStream ().close ();
+			server.getOutputStream ().close ();
 			Socket client;
 			synchronized (server.serverSocket) {
 				client = server.socket;
+				if (!released) {
+					release (server.destination);
+					released = true;
+				}
 			}
 			if (client != null) {
 				client.close ();
@@ -247,7 +257,9 @@ public class TcpIpServer {
 
 		@Override
 		protected void finalize () throws Throwable {
-			TcpIpServer.release (server.destination);
+			if (!released) {
+				TcpIpServer.release (server.destination);
+			}
 			super.finalize ();
 		}
 	}
@@ -255,6 +267,9 @@ public class TcpIpServer {
 	public static class OutputStream extends
 			java.io.OutputStream {
 		private final TcpIpServer server;
+		@GuardedBy ("server.serverSocket")
+		/* volatile for finalize, lock for close */
+		private volatile boolean released = false;
 
 		public OutputStream (@SpiInitializer TcpIpServerOutputStreamInitializer init)
 				throws IOException {
@@ -300,11 +315,21 @@ public class TcpIpServer {
 		@Override
 		public void close () throws IOException {
 			server.serverSocket.close ();
+			server.getInputStream ().close ();
+			server.getOutputStream ().close ();
+			synchronized (server.serverSocket) {
+				if (!released) {
+					release (server.destination);
+					released = true;
+				}
+			}
 		}
 
 		@Override
 		protected void finalize () throws Throwable {
-			TcpIpServer.release (server.destination);
+			if (!released) {
+				TcpIpServer.release (server.destination);
+			}
 			super.finalize ();
 		}
 	}
