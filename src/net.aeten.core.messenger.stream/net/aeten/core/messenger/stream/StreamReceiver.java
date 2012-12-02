@@ -50,9 +50,11 @@ public class StreamReceiver <Message> extends
 	@Override
 	public final void disconnect () throws IOException {
 		InputStream in = inputStream.get ();
-		in.close ();
-		synchronized (this) {
+		if (in != null) {
+			in.close ();
 			inputStream.compareAndSet (in, null);
+		}
+		synchronized (this) {
 			connected = false;
 		}
 	}
