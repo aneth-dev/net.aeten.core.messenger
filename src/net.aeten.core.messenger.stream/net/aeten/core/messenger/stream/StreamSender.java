@@ -3,6 +3,7 @@ package net.aeten.core.messenger.stream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+
 import net.aeten.core.messenger.MessengerEventData;
 import net.aeten.core.messenger.Sender;
 import net.aeten.core.spi.FieldInit;
