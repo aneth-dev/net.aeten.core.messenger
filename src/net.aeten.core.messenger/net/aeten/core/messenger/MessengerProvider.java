@@ -2,6 +2,7 @@ package net.aeten.core.messenger;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * @author Thomas Pérennou
  */
 @Provider (Messenger.class)
-public class MessengerProvider <Message> implements
+public class MessengerProvider<Message> implements
 		Messenger <Message>,
 		Handler <MessengerEventData <Message>> {
 
@@ -44,13 +45,15 @@ public class MessengerProvider <Message> implements
 	private volatile boolean connected;
 	private Transmitter <MessengerEventData <Message>> asyncSendEventTransmitter;
 	private RegisterableTransmitter <HookEvent <MessengerEvent, Hook>, MessengerEventData <Message>> hookTransmitter;
+	private final MessengerInitializer init;
 
 	@SuppressWarnings ("unchecked")
 	public MessengerProvider (@SpiInitializer MessengerInitializer init)
 			throws IOException {
+		this.init = init;
 		identifier = init.getIdentifier ();
-		senders = init.hasSenders ()? init.getSenders (): new HashMap <> ();
-		receivers = init.hasReceivers ()? init.getReceivers (): new ArrayList <> ();
+		senders = new HashMap <> ();
+		receivers = new ArrayList <> ();
 		autoConnect = init.hasAutoConnect ()? init.getAutoConnect (): false;
 		hookTransmitter = TransmitterFactory.synchronous (EVENTS.values ());
 		if (identifier == null) {
@@ -84,6 +87,7 @@ public class MessengerProvider <Message> implements
 											Sender <Message>[] senderList,
 											Receiver <Message>[] receiverList,
 											boolean autoConnect) {
+		init = null;
 		this.identifier = identifier;
 		this.autoConnect = autoConnect;
 		senders = new HashMap <> ();
@@ -169,9 +173,31 @@ public class MessengerProvider <Message> implements
 		return "Messenger \"" + getIdentifier () + "\"";
 	}
 
+	@SuppressWarnings ("unchecked")
 	@Override
 	public synchronized void connect () throws IOException {
 		if (!connected) {
+			if (init != null) {
+				Map <String, Sender <Message>> newSenders = init.hasSenders ()? init.getSenders (): Collections.emptyMap ();
+				Map <String, Sender <Message>> oldSenders = new HashMap <> ();
+				oldSenders.putAll (senders);
+				for (String newSender: newSenders.keySet ()) {
+					oldSenders.remove (newSender);
+				}
+				senders.putAll (newSenders);
+
+				List <Receiver <Message>> newReceivers = init.hasReceivers ()? init.getReceivers (): Collections.emptyList ();
+				List <Receiver <Message>> oldReceivers = new ArrayList <> (receivers.size ());
+				oldReceivers.addAll (receivers);
+				for (Receiver <Message> newReceiver: newReceivers) {
+					for (Receiver <Message> receiver: oldReceivers) {
+						if (receiver.getIdentifier ().equals (newReceiver.getIdentifier ())) {
+							receivers.remove (receiver);
+						}
+					}
+				}
+				receivers.addAll (newReceivers);
+			}
 			MessengerEventData <Message> data = new MessengerEventData <Message> (this, null, MessengerEvent.CONNECT, Hook.PRE, null);
 			hookTransmitter.transmit (data);
 
