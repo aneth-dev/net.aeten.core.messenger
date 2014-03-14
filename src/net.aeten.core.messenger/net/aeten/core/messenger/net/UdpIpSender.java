@@ -20,96 +20,85 @@ import net.aeten.core.spi.SpiInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Provider (Sender.class)
-public class UdpIpSender<Message> extends
-		Sender.SenderAdapter <Message> {
+@Provider(Sender.class)
+public class UdpIpSender<Message> extends Sender.SenderAdapter<Message> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger (UdpIpSender.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(UdpIpSender.class);
 
 	@FieldInit
-	private final MessageEncoder <Message> messageEncoder;
-	@FieldInit (alias = {
-			"udp ip configuration",
-			"UDP/IP configuration"
+	private final MessageEncoder<Message> messageEncoder;
+	@FieldInit(alias = { "udp ip configuration",
+								"UDP/IP configuration"
 	})
 	private final UdpIpSocketFactory socketFactory;
-	private static ConcurrentHashMap <String, InetAddress> CACHE = new ConcurrentHashMap <> ();
+	private static ConcurrentHashMap<String, InetAddress> CACHE = new ConcurrentHashMap<>();
 	private DatagramSocket socket;
 
-	public UdpIpSender (@SpiInitializer UdpIpSenderInit init) {
-		this (init.getIdentifier (), init.getMessageEncoder (), init.getSocketFactory ());
+	public UdpIpSender(@SpiInitializer UdpIpSenderInit init) {
+		this(init.getIdentifier(), init.getMessageEncoder(), init.getSocketFactory());
 	}
 
-	public UdpIpSender (	String identifier,
-								MessageEncoder <Message> messageEncoder,
-								UdpIpSocketFactory socketFactory) {
-		super (identifier);
+	public UdpIpSender(String identifier, MessageEncoder<Message> messageEncoder, UdpIpSocketFactory socketFactory) {
+		super(identifier);
 		this.messageEncoder = messageEncoder;
 		this.socketFactory = socketFactory;
-		socket = this.socketFactory.getSocket ();
+		socket = this.socketFactory.getSocket();
 	}
 
-	public UdpIpSender (	String identifier,
-								MessageEncoder <Message> messageEncoder,
-								InetSocketAddress destinationInetSocketAddress,
-								InetAddress sourceInetAddress,
-								boolean bind,
-								boolean reuse,
-								int maxPacketSize)
-			throws IOException {
-		this (identifier, messageEncoder, new UdpIpSocketFactory (destinationInetSocketAddress, sourceInetAddress, bind, reuse, maxPacketSize));
+	public UdpIpSender(String identifier, MessageEncoder<Message> messageEncoder, InetSocketAddress destinationInetSocketAddress, InetAddress sourceInetAddress, boolean bind, boolean reuse, int maxPacketSize) throws IOException {
+		this(identifier, messageEncoder, new UdpIpSocketFactory(destinationInetSocketAddress, sourceInetAddress, bind, reuse, maxPacketSize));
 	}
 
 	@Override
-	public boolean isConnected () {
-		return (socket != null) && !socket.isClosed ();
+	public boolean isConnected() {
+		return (socket != null) && !socket.isClosed();
 	}
 
 	@Override
-	protected void doConnect () throws IOException {
-		if (socketFactory.getSocket ().isClosed ()) {
-			socket = socketFactory.createSocket ();
+	protected void doConnect() throws IOException {
+		if (socketFactory.getSocket().isClosed()) {
+			socket = socketFactory.createSocket();
 		} else {
-			socket = socketFactory.getSocket ();
+			socket = socketFactory.getSocket();
 		}
 	}
 
 	@Override
-	protected void doDisconnect () throws IOException {
-		socket.close ();
+	protected void doDisconnect() throws IOException {
+		socket.close();
 	}
 
 	@Override
-	public void send (MessengerEventData <Message> data) throws IOException {
-		Message message = data.getMessage ();
-		String contact = data.getContact ();
-		String service = data.getService ();
+	public void send(MessengerEventData<Message> data) throws IOException {
+		Message message = data.getMessage();
+		String contact = data.getContact();
+		String service = data.getService();
 		InetAddress inetAddress;
 		int port;
 		if ((contact != null) && (service != null)) {
 			String key = contact + ":" + service;
-			inetAddress = CACHE.get (contact);
+			inetAddress = CACHE.get(contact);
 			if (inetAddress == null) {
-				inetAddress = InetAddress.getByName (contact);
-				CACHE.putIfAbsent (key, inetAddress);
+				inetAddress = InetAddress.getByName(contact);
+				CACHE.putIfAbsent(key, inetAddress);
 			}
-			port = Integer.parseInt (service);
+			port = Integer.parseInt(service);
 		} else {
-			InetSocketAddress inetSocketAddress = this.socketFactory.getDestinationInetSocketAddress ();
-			inetAddress = inetSocketAddress.getAddress ();
-			port = inetSocketAddress.getPort ();
-			data.setContact (inetAddress.getHostAddress ());
-			data.setService ("" + port);
+			InetSocketAddress inetSocketAddress = this.socketFactory.getDestinationInetSocketAddress();
+			inetAddress = inetSocketAddress.getAddress();
+			port = inetSocketAddress.getPort();
+			data.setContact(inetAddress.getHostAddress());
+			data.setService("" + port);
 		}
 
 		try {
-			byte[] buffer = this.messageEncoder.encode (message);
-			DatagramPacket packet = new DatagramPacket (buffer, 0, buffer.length, inetAddress, port);
-			socket.send (packet);
+			byte[] buffer = this.messageEncoder.encode(message);
+			DatagramPacket packet = new DatagramPacket(buffer, 0, buffer.length, inetAddress, port);
+			socket.send(packet);
 		} catch (SocketException exception) {
-			LOGGER.error ("Error while creating datagram packet for message " + message, exception);
+			LOGGER.error("Error while creating datagram packet for message " + message, exception);
 		} catch (EncodingException exception) {
-			LOGGER.error ("Error while encoding message " + message, exception);
+			LOGGER.error("Error while encoding message " + message, exception);
 		}
 	}
 }

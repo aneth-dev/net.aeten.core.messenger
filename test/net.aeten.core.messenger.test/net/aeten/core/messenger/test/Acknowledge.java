@@ -1,7 +1,5 @@
 package net.aeten.core.messenger.test;
 
-
-
 /**
  *
  * @author Thomas Pérennou

@@ -6,9 +6,9 @@ import java.io.InputStream;
 import net.aeten.core.stream.ObjectInputStream;
 
 /**
-*
-* @author Thomas Pérennou
-*/
+ *
+ * @author Thomas Pérennou
+ */
 public class TestObjectInputStream extends ObjectInputStream {
 
 	public TestObjectInputStream(InputStream in) throws IOException {

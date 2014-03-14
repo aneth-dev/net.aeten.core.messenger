@@ -1,6 +1,5 @@
 package net.aeten.core.messenger.test;
 
-
 /**
  *
  * @author Thomas Pérennou
@@ -8,8 +7,7 @@ package net.aeten.core.messenger.test;
 public class AcknowledgeMessage extends AbstractMessage {
 	private static final long serialVersionUID = -3235378810942042205L;
 
-	public AcknowledgeMessage() {
-	}
+	public AcknowledgeMessage() {}
 
 	public AcknowledgeMessage(Acknowledge acknowledge) {
 		this.setAcknowledge(acknowledge);

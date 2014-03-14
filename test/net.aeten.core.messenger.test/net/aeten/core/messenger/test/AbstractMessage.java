@@ -27,16 +27,14 @@ public abstract class AbstractMessage implements Serializable {
 
 	protected void readObject(ObjectInputStream in) throws IOException {
 		final int size = in.readInt();
-		if (size != (this.getSize() + 4)) {
-			throw new IOException("Invalid size. Recieved=" + size + " expected=" + this.getSize() + 4);
-		}
+		if (size != (this.getSize() + 4)) { throw new IOException("Invalid size. Recieved=" + size + " expected=" + this.getSize() + 4); }
 		final int ordinal = in.readInt();
-		this.acknowledge = ((ordinal >= 0) && (ordinal < Acknowledge.values().length)) ? Acknowledge.values()[ordinal] : null;
+		this.acknowledge = ((ordinal >= 0) && (ordinal < Acknowledge.values().length))? Acknowledge.values()[ordinal]: null;
 	}
 
 	protected void writeObject(ObjectOutputStream out) throws IOException {
 		out.writeInt(4 + this.getSize());
-		out.writeInt((this.acknowledge == null) ? -1 : this.acknowledge.ordinal());
+		out.writeInt((this.acknowledge == null)? -1: this.acknowledge.ordinal());
 	}
 
 	protected abstract int getSize();

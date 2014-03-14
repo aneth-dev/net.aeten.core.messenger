@@ -5,9 +5,9 @@ import java.io.OutputStream;
 import net.aeten.core.stream.ObjectOutputStream;
 
 /**
-*
-* @author Thomas Pérennou
-*/
+ *
+ * @author Thomas Pérennou
+ */
 public class TestObjectOutputStream extends ObjectOutputStream {
 
 	public TestObjectOutputStream(OutputStream out) throws IOException {
