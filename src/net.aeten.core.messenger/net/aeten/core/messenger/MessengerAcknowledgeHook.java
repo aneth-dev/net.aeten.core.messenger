@@ -47,7 +47,8 @@ public class MessengerAcknowledgeHook<Message, Acknowledge extends Enum<?>> impl
 		this(identifier, null, null);
 	}
 
-//	public MessengerAcknowledgeHook(@SpiInitializer MessengerAcknowledgeHookInit init) {
+//	@SpiConstructor
+//	public MessengerAcknowledgeHook(MessengerAcknowledgeHookInit init) {
 //		this(init.getId(), init.hasAcknowledgeProtocolClass() ? init.getAcknowledgeProtocolClass(): null, init.hasAcknowledgeProtocolConfiguration() ? init.getAcknowledgeProtocolConfiguration(): null);
 //	}
 

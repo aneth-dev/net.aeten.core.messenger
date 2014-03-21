@@ -12,7 +12,7 @@ import net.aeten.core.messenger.Receiver;
 import net.aeten.core.net.UdpIpSocketFactory;
 import net.aeten.core.spi.FieldInit;
 import net.aeten.core.spi.Provider;
-import net.aeten.core.spi.SpiInitializer;
+import net.aeten.core.spi.SpiConstructor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,8 @@ public class UdpIpReceiver<Message> extends Receiver.ReceiverAdapter<Message> {
 	private DatagramSocket socket;
 	private DatagramPacket packet;
 
-	public UdpIpReceiver(@SpiInitializer UdpIpReceiverInit init) {
+	@SpiConstructor
+	public UdpIpReceiver(UdpIpReceiverInit init) {
 		this(init.getIdentifier(), init.getMessageDecoder(), init.getSocketFactory());
 	}
 

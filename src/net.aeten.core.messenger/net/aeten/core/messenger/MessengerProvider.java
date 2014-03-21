@@ -18,7 +18,7 @@ import net.aeten.core.event.Transmitter;
 import net.aeten.core.event.TransmitterFactory;
 import net.aeten.core.spi.FieldInit;
 import net.aeten.core.spi.Provider;
-import net.aeten.core.spi.SpiInitializer;
+import net.aeten.core.spi.SpiConstructor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,8 @@ public class MessengerProvider<Message> implements Messenger<Message>, Handler<M
 	private final MessengerInitializer init;
 
 	@SuppressWarnings("unchecked")
-	public MessengerProvider(@SpiInitializer MessengerInitializer init) throws IOException {
+	@SpiConstructor
+	public MessengerProvider(MessengerInitializer init) throws IOException {
 		this.init = init;
 		identifier = init.getIdentifier();
 		senders = new HashMap<>();

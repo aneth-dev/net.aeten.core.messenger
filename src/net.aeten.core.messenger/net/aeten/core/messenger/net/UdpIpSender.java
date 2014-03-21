@@ -15,7 +15,7 @@ import net.aeten.core.messenger.Sender;
 import net.aeten.core.net.UdpIpSocketFactory;
 import net.aeten.core.spi.FieldInit;
 import net.aeten.core.spi.Provider;
-import net.aeten.core.spi.SpiInitializer;
+import net.aeten.core.spi.SpiConstructor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +34,8 @@ public class UdpIpSender<Message> extends Sender.SenderAdapter<Message> {
 	private static ConcurrentHashMap<String, InetAddress> CACHE = new ConcurrentHashMap<>();
 	private DatagramSocket socket;
 
-	public UdpIpSender(@SpiInitializer UdpIpSenderInit init) {
+	@SpiConstructor
+	public UdpIpSender(UdpIpSenderInit init) {
 		this(init.getIdentifier(), init.getMessageEncoder(), init.getSocketFactory());
 	}
 
